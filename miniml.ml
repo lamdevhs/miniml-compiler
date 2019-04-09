@@ -2,7 +2,7 @@ type var = string
 
 (* Unary operators *)
 type unop = Fst | Snd
-    
+
 (* Binary Arithmetic operators *)
 type barith = BAadd | BAsub | BAmul | BAdiv | BAmod
 
@@ -59,6 +59,8 @@ let pp_primop : primop ->  string = function
   | UnOp x -> pp_unop x
   | BinOp x -> pp_binop x
 ;;
+
+
 let rec pp_exp : mlexp -> string = function
   | Var v -> v
   | Bool b -> string_of_bool b
@@ -66,8 +68,7 @@ let rec pp_exp : mlexp -> string = function
   | PrimOp po -> pp_primop po
   | Cond (i, t, e) -> "if " ^ pp_exp i ^ " then " ^ pp_exp t ^ " else " ^ pp_exp e
   | Pair (x, y) -> "(" ^ pp_exp x ^ "," ^ pp_exp y ^ ")"
-  | App (PrimOp op, Pair (x, y)) -> "(" ^ pp_exp x ^ " " ^ pp_primop op ^ " " ^ pp_exp y ^ ")"
-  | App (f, x) -> "(" ^ pp_exp f ^ " " ^ pp_exp x ^ ")"
+  | App (PrimOp op, Pair (x, y)) -> "(" ^ pp_exp x ^ " " ^ pp_primop op ^ " " ^ pp_exp y ^ ")"  | App (f, x) -> "(" ^ pp_exp f ^ " " ^ pp_exp x ^ ")"
   | Fn (v, b) -> "(fun " ^ v ^ " -> " ^ pp_exp b ^ ")"
   | Fix _ -> "fix"
 ;;
@@ -75,3 +76,5 @@ let rec pp_exp : mlexp -> string = function
 let pp : prog -> string = function
   Prog (_, exp) -> pp_exp exp
 ;;
+
+(* todo list: fix the if-then-else in pair bug in the parser *)
