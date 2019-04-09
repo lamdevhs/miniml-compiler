@@ -1,7 +1,7 @@
 %{
 open Miniml
 
-let primop_of_token = function
+let primop_of_token = (function
   | ADD -> BinOp (BArith BAadd)
   | SUB -> BinOp (BArith BAsub)
   | MUL -> BinOp (BArith BAmul)
@@ -13,7 +13,7 @@ let primop_of_token = function
   | LE -> BinOp (BCompar BCle)
   | LT -> BinOp (BCompar BClt)
   | NE -> BinOp (BCompar BCne)
-  | _ -> failwith "in primop_of_token: unknown token"
+  | _ -> failwith "in primop_of_token: unknown token")
 
 let binary_exp e1 oper e2 = App(PrimOp (primop_of_token oper), Pair(e1, e2))
 %}
@@ -61,14 +61,47 @@ typedef:
   {  Some ($2) }
 ;
 
-mult_exp:
-  primary_exp_list_as_mlexp
-    { $1 }
-| mult_exp MUL primary_exp_list_as_mlexp
+pair_exp:
+  bool_and_exp { $1 }
+| LPAREN pair_exp COMMA pair_exp RPAREN { Pair ($2, $4) }
+;
+
+bool_and_exp:
+  bool_or_exp { $1 }
+| bool_and_exp BLAND bool_or_exp { Cond($1, $3, Bool(false)) }
+;
+
+bool_or_exp:
+  comp_exp { $1 }
+| bool_or_exp BLOR comp_exp { Cond($1, Bool(true), $3) }
+;
+
+
+comp_exp:
+  add_exp { $1 }
+| add_exp EQ add_exp { binary_exp $1 EQ $3 }
+| add_exp GE add_exp { binary_exp $1 GE $3 }
+| add_exp GT add_exp { binary_exp $1 GT $3 }
+| add_exp LE add_exp { binary_exp $1 LE $3 }
+| add_exp LT add_exp { binary_exp $1 LT $3 }
+| add_exp NE add_exp { binary_exp $1 NE $3 }
+;
+
+add_exp:
+  mul_exp { $1 }
+| add_exp ADD mul_exp
+     { binary_exp $1 ADD $3 }
+| add_exp SUB mul_exp
+     { binary_exp $1 SUB $3 }
+;
+
+mul_exp:
+  primary_exp_list_as_mlexp { $1 }
+| mul_exp MUL primary_exp_list_as_mlexp
      { binary_exp $1 MUL $3 }
-| mult_exp DIV primary_exp_list_as_mlexp
+| mul_exp DIV primary_exp_list_as_mlexp
      { binary_exp $1 DIV $3 }
-| mult_exp MOD primary_exp_list_as_mlexp
+| mul_exp MOD primary_exp_list_as_mlexp
      { binary_exp $1 MOD $3 }
 ;
 
@@ -111,16 +144,26 @@ primary_exp_list_as_mlexp:
 ;
 
 mlexp:
-  mult_exp
+  pair_exp
     { $1 }
 | IF mlexp THEN mlexp ELSE mlexp
     { Cond($2, $4, $6) }
-| FUN IDENTIFIER ARROW mlexp
-    { Fn ($2, $4) }
+| fun_exp { $1 }
 | LET REC let_binding_list IN mlexp
       /*    { Fix (List.map fst $3, List.map snd $3, $5) } */
     { Fix ($3, $5) }
 ;
+
+fun_exp:
+  FUN IDENTIFIER after_fun
+  { Fn ($2, $3) }
+;;
+
+after_fun:
+  ARROW mlexp
+  { $2 }
+| IDENTIFIER after_fun { Fn ($1, $2) }
+;;
 
 let_binding:
   IDENTIFIER EQ mlexp
