@@ -1,1 +1,7 @@
 /IGNORED/
+/lexer.ml
+/parser.ml
+/parser.output
+/*.mli
+/*.cmi
+/*.cmo
