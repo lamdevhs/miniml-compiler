@@ -8,7 +8,8 @@ type instr =
 | Push
 | Swap
 | Return
-| Quote of value
+| QuoteB of bool
+| QuoteI of int
 | Cur of code
 | App
 | Branch of code * code
@@ -24,7 +25,7 @@ and value =
 | PairV of value * value
 | ClosureV of code * value
 and code = instr list
-  
+
 type stackelem = Val of value | Cod of code
 
 let iSnd = PrimInstr (UnOp Snd);;
@@ -93,8 +94,8 @@ let rec access : string -> compilation_env -> instr list =
 let rec compile : compilation_env -> mlexp -> instr list =
   fun env x -> match x with
   | Var v -> access v env
-  | Bool x -> [Quote (BoolV x)]
-  | Int x -> [Quote (IntV x)]
+  | Bool x -> [QuoteB x]
+  | Int x -> [QuoteI x]
   | Pair(a, b) -> Push :: compile env a @ [Swap] @ compile env b @ [Cons]
   | App(PrimOp op, e) -> compile env e @ [PrimInstr op]
   | App(f, x) -> Push :: compile env f @ [Swap] @ compile env x @ [Cons; App]
@@ -105,4 +106,3 @@ let rec compile : compilation_env -> mlexp -> instr list =
     Push :: compile env cond @ [branches]
   | otherwise -> failwith "this compiler is somehow buggy 1"
 ;;
-  
