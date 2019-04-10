@@ -183,7 +183,7 @@ enum Status exec_App(MachineState *ms) {
   Value *y = closure.value;
   Bin *new_code = closure.code;
   Stack *st = ms->stack;
-  Bin *old_code = ms->code;
+  Bin *old_code = ms->code + 1;
   
   ms->term = value_Pair(y, z);
   ms->code = new_code;

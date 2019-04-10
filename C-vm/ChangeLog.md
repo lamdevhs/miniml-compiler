@@ -12,3 +12,9 @@ behavior and uncover all the bugs I've missed.
 # Add pretty printers for instructions and Values
 
 # instrs.ml: Replace Quote with QuoteI/B
+
+# Fix a bug in exec_App
+
+Instead of storing the address of the next instruction on the stack,
+exec_App used to store the address of the current instruction (App).
+With this fix, the mini program works as expected! :)
