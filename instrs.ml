@@ -42,7 +42,8 @@ let eval_compar : bcompar -> 'a -> 'a -> bool = function
 let eval_one
 : (value * instr list * stackelem list) -> (value * instr list * stackelem list) =
   function
-  | (_, Quote(v) :: c, st) -> (v, c, st)
+  | (_, QuoteB(x) :: c, st) -> (BoolV(x), c, st)
+  | (_, QuoteI(x) :: c, st) -> (IntV(x), c, st)
   (* --------- paires --------- *)
   | (x, Cons :: c, Val(y) :: st) -> (PairV(y, x), c, st)
   | (x, Push :: c, st) -> (x, c, Val x :: st)
@@ -73,10 +74,9 @@ let rec till_no_change : ('a -> 'a) -> 'a -> 'a = fun f x ->
 
 let initial_cfg x = (NullV, x, []);;
 
-let test_prog = initial_cfg
-  [Push; Cur [Push; iSnd; Swap; Quote (IntV 1); Cons;
+let test_prog = [Push; Cur [Push; iSnd; Swap; QuoteI(1); Cons;
               PrimInstr (BinOp (BArith BAadd)); Return];
-   Swap; Quote (IntV 2); Cons; App]
+   Swap; QuoteI(2); Cons; App]
 ;;
 let eval_prog instrs = till_no_change eval_one (initial_cfg instrs)
 ;;

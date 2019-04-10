@@ -9,4 +9,6 @@ behavior and uncover all the bugs I've missed.
 
 # Add /comp to .gitignore
 
-# Add pretty printers for instructions and Value
+# Add pretty printers for instructions and Values
+
+# instrs.ml: Replace Quote with QuoteI/B
