@@ -1,0 +1,424 @@
+### ideas
+
+- add a special instruction called "Halt" (or similar) to simulate the end-of-list effect
+- return could just be end-of-list
+- closures are immediately called apparently? No, nevermind, they aren't
+- value.VarV not used
+- use integers instead of var=string to identify rec defs
+
+### Instructions
+Cons/Push/Swap/App/Return: constants
+QuoteB/I: prefix * value
+Cur: prefix * code pointer
+Branch: prefix * code pointer * code pointer
+AddDefs: array of pointers (with NULL as final value?)
+	OR: pointer to an array of code pointer that would be saved to the virtmem,
+	then the deflist contains a list of (arrays of) pointers to arrays of code pointers?
+	with lengths saved to skip over quickly
+RmDefs: just remove the latest link of the chain, so we don't need to save a value:
+	thus it can be a constant
+
+### Terms can be
+- pairs (Term + Term)
+- booleans,
+- ints,
+- closure (Code + Term)
+- Null (empty term)
+
+### execute one instruction
+- input:
+	pointer to next instruction
+	term
+	stack (linked list?)
+	defstack
+
+- output:
+	next instruction
+	new term
+	new stack
+	new defstack
+
+### decisions
+- stop taking care of every risk/possibility
+- stop trying to optimize stupid stuff
+- use a structure to split a stack in two
+- replace term with value?
+- clean code is good code, nothing implicit as possible 
+
+
+### study of memory creations/destructions while evaluating instructions
+here we're gonna call "objects" the values that we store at malloc'ed locations.
+
+let eval_one
+: (value * instr list * stackelem list) -> (value * instr list * stackelem list) =
+  function
+  
+--> Quote:
+  | (_, Quote(v) :: c, st) -> (v, c, st)
+  match old term (recursively)
+  new term out of the quoting
+  increment code pointer
+  st unchanged
+  => stack and term are separate
+  
+  new objects: new term from nothing
+  free: old term, recursively
+  (* --------- paires --------- *)
+  
+--> Cons:
+  | (x, Cons :: c, Val(y) :: st) -> (PairV(y, x), c, st)
+  match old stack into {y :: st}
+  new term out of y and old term
+  increment code pointer
+  new st = st
+  => stack and term are separate
+  
+  new objects: new term from objects x and y
+  free: old Stack
+
+--> Push:
+  | (x, Push :: c, st) -> (x, c, Val x :: st)
+  duplicate x recursively into x'
+  term unchanged
+  code incremented
+  new stack out of st and x'
+  => stack and term are separate via duplication
+  
+  new objects: x' (recursively), new stack from x' and old stack
+  free: none
+
+--> Swap:
+  | (x, Swap :: c, Val(y) :: st) -> (y, c, Val (x) :: st)
+  match old stack into {y, st}
+  new term out of y
+  increment code pointer
+  new stack out of x and st
+  => stack and term are separate
+  
+  new objects: new Stack from x and st
+  free: old Stack
+  
+  (* --------- clotures --------- *)
+--> Cur:
+  | (x, Cur (c1) :: c, st) -> (ClosureV(c1, x), c, st)
+  new closure out of reading code and term
+  new term = closure
+  code += 2 ?
+  st untouched
+  => stack and term are separate
+  
+  new objects: Closure from x and tiny value c1.
+  free: none
+
+--> App:
+  | (PairV(ClosureV(cd, y), z), App :: c, st) -> (PairV(y, z), cd, Cod(c) :: st)
+  match term into {cd, y, z}
+  new term out of y and z
+  new code from value of cd
+  new stack out of current code ptr and st
+  => stack and term are separate
+  
+  free: Pair and Closure
+  new objects: Stack(tiny c, st), Pair(y, z)
+  
+--> Return:
+  | (x, Return :: c, Cod(c1) :: st) -> (x, c1, st)
+  match stack into {c1, st}
+  term untouched
+  code = c1
+  new stack as st
+  => stack and term are separate
+  
+  free: Stack
+  new objects: none
+  
+  (* --------- primInstr --------- *)
+--> PrimOp:
+  read Op from code
+    | (PairV(x, y), PrimInstr (UnOp Fst) :: c, st) -> (x, c, st)
+    | (PairV(x, y), PrimInstr (UnOp Snd) :: c, st) -> (y, c, st)
+    destructure term into {x, y}
+    new term = x if Fst else y
+    free the other term recursively
+    | (PairV(IntV x, IntV y), PrimInstr (BinOp (BArith op)) :: c, st) ->
+      (IntV (eval_arith op x y), c, st)
+    | (PairV(IntV x, IntV y), PrimInstr (BinOp (BCompar op)) :: c, st) ->
+      (BoolV (eval_compar op x y), c, st)
+    | (PairV(BoolV x, BoolV y), PrimInstr (BinOp (BCompar op)) :: c, st) ->
+    (BoolV (eval_compar op x y), c, st)
+    check types: if errors, break loop
+    call evalop with x and y
+    new term out of eval result, the type only depending on the op
+  code += 2
+  st untouched
+  => stack and term are separate
+
+  free: Pair and maybe Bool/Int x2
+  new objects: Int/Bool(tiny result)
+  
+  (* --------- Branch --------- *)
+--> Branch:
+  | (BoolV(b), Branch (if_then, if_else) :: c, Val(x) :: st) ->
+    (x, (if b then if_then else if_else), Cod(c) :: st)
+  read {Branch, if_then, if_else} from code
+  destructure term into b (nothing left)
+  destructure stack into {x, st}
+  new term = x
+  code = if b then if_then else if_else
+  new stack = old code ptr :: st
+  => stack and term are separate
+  
+  free: Bool, Stack
+  new objects: Stack(tiny c, st)
+  (* --------- otherwise --------- *)
+  | otherwise -> otherwise
+;;
+
+
+### Draft the new exec_zzzz functions:
+
+enum Err exec_Push(MachineState *ms) {
+  //| (x, Push :: c, st) -> (x, c, Val(x) :: st)
+  Value *x = ms->term;
+  Stack *stack = ms->stack;
+  Value *cloned_x = deepcopy_value(x);
+  
+  //| ms->term unchanged
+  ms->code += 1;
+  ms->stack = value_onto_stack(cloned_x, stack);
+  return AllOk;
+}
+
+enum Err exec_Cons(MachineState *ms) {
+  //| (x, Cons :: c, Val(y) :: st) -> (PairV(y, x), c, st)
+  enum Err err = AllOk;
+  StackWithValue pattern = match_stack_with_value(ms->stack, &err);
+  if (err != AllOk) return err;
+  Value *x = ms->term;
+  
+  ms->term = value_Pair(pattern.head, x);
+  ms->code += 1;
+  ms->stack = pattern.tail;
+  return AllOk;
+}
+
+enum Err exec_QuoteBool(MachineState *ms) {
+  //| (_, QuoteBool(v) :: c, st) -> (BoolV(v), c, st)
+  deepfree_term(ms->term);
+  int v = ms->code[1];
+  
+  ms->term = value_Bool(v);
+  ms->code += 2;
+  // ms->stack unchanged
+  return AllOk;
+}
+
+enum Err exec_QuoteInt(MachineState *ms) {
+  //| (_, QuoteInt(v) :: c, st) -> (IntV(v), c, st)
+  deepfree_term(ms->term);
+  int v = ms->code[1];
+  
+  ms->term = value_Int(v);
+  ms->code += 2;
+  // ms->stack unchanged
+  return AllOk;
+}
+
+enum Err exec_Swap(MachineState *ms) {
+  //| (x, Swap :: c, Val(y) :: st) -> (y, c, Val (x) :: st)
+  enum Err err = AllOk;
+  StackWithValue pattern = match_stack_with_value(ms->stack, &err);
+  if (err != AllOk) return err;
+  Value *x = ms->term;
+  
+  ms->term = pattern.head;
+  ms->code += 1;
+  ms->stack = value_onto_stack(x, pattern.tail);
+  return AllOk;
+}
+
+
+enum Err exec_App(MachineState *ms) {
+  //| (PairV(ClosureV(new_code, y), z), App :: old_code, st)
+  //| -> (PairV(y, z), new_code, Cod(old_code) :: st)
+  enum Err err = AllOk;
+  Pair pair = match_value_with_pair(ms->term, &err);
+  if (err != AllOk) return err;
+  Closure closure = match_value_with_closure(pair.first, &err);
+  if (err != AllOk) return err;
+  
+  Value *z = pair.second;
+  Value *y = closure.value;
+  Binary new_code = closure.code;
+  Stack *st = ms->stack;
+  Binary old_code = ms->code;
+  
+  ms->term = value_Pair(y, z);
+  ms->code = new_code;
+  ms->stack = code_onto_stack(old_code, st);
+  return AllOk;
+}
+
+enum Err exec_Return(MachineState *ms) {
+  //| (x, Return :: c, Cod(new_code) :: st) -> (x, new_code, st)
+  enum Err err = AllOk;
+  StackWithCode pattern = match_stack_with_code(ms->stack, &err);
+  if (err != AllOk) return err;
+  
+  // ms->term unchanged
+  ms->code = pattern.head;
+  ms->stack = pattern.tail;
+  return AllOk;
+}
+
+enum Err exec_Branch(MachineState *ms) {
+  //| (BoolV(b), Branch (if_then, if_else) :: c, Val(x) :: st)
+  //| -> (x, (if b then if_then else if_else), Cod(c) :: st)
+  enum Err err = AllOk;
+  StackWithValue pattern = match_stack_with_value(ms->stack, &err);
+  if (err != AllOk) return err;
+  int b = match_value_with_boolean(ms->term, &err);
+  if (err != AllOk) return err;
+  
+  Binary code = ms->code;
+  Binary if_then = code[1];
+  Binary if_else = code[2];
+  Binary c = code + 3;
+  
+  ms->term = pattern.head;
+  ms->code = (b ? if_then : if_else);
+  ms->stack = code_onto_stack(c, pattern.tail);
+  return AllOk;
+}
+
+
+
+### Draft the matches
+
+new stack type:
+
+typedef struct Stack {
+  enum StackItemTag head_tag;
+  union {
+    Term *term;
+    Binary code;
+  } head;
+  struct Stack *tail;
+} Stack;
+
+
+
+typedef struct StackWithValue {
+  Value *head;
+  Stack *tail;
+} StackWithValue;
+
+StackWithValue match_stack_with_value(Stack *stack, enum Err *err) {
+  StackWithValue output = {NULL, NULL};
+  if (stack == NULL) {
+    *err = ErrEmptyStack;
+    return output;
+  }
+  // else:
+  if (stack->head_tag != StackTerm) {
+    *err = ErrNoValueOnStack;
+    return output;
+  }
+  // else:
+  output.head = stack->head.term;
+  output.tail = stack->tail;
+  
+  free(stack);
+  return output;
+}
+
+
+typedef struct StackWithCode {
+  Binary head;
+  Stack *tail;
+} StackWithCode;
+
+StackWithCode match_stack_with_code(Stack *stack, enum Err *err) {
+  StackWithCode output = {NULL, NULL};
+  if (stack == NULL) {
+    *err = ErrEmptyStack;
+    return output;
+  }
+  // else:
+  if (stack->head_tag != StackCode) {
+    *err = ErrNoCodeOnStack;
+    return output;
+  }
+  // else:
+  output.head = stack->head.code;
+  output.tail = stack->tail;
+  
+  free(stack);
+  return output;
+}
+
+
+
+typedef struct Value {
+  enum ValueTag tag;
+  union {
+    int integer;
+    int boolean;
+    struct Pair pair;
+    struct Closure closure;
+  } v;
+} Value;
+
+Pair match_value_with_pair(Value *value, enum Err *err) {
+  Pair output = {NULL, NULL};
+  if (value == NULL) {
+    *err = ErrNULLValue;
+    return output;
+  }
+  // else:
+  if (value->tag != PairValue) {
+    *err = ErrNotAPair;
+    return output;
+  }
+  // else:
+  output = value->v.pair;
+  
+  free(value);
+  return output;
+}
+
+Closure match_value_with_closure(Value *value, enum Err *err) {
+  Closure output = {NULL, NULL};
+  if (value == NULL) {
+    *err = ErrNULLValue;
+    return output;
+  }
+  // else:
+  if (value->tag != ClosureValue) {
+    *err = ErrNotAClosure;
+    return output;
+  }
+  // else:
+  output = value->v.closure;
+  
+  free(value);
+  return output;
+}
+
+int match_value_with_boolean(Value *value, enum Err *err) {
+  int output = 0;
+  if (value == NULL) {
+    *err = ErrNULLValue;
+    return output;
+  }
+  // else:
+  if (value->tag != BoolValue) {
+    *err = ErrNotABool;
+    return output;
+  }
+  // else:
+  output = value->v.boolean;
+  
+  free(value);
+  return output;
+}
