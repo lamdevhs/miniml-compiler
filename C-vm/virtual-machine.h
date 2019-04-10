@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #define DBG printf
+#define NL "\n"
 
 enum instructions {
 //| there are just int constants,
