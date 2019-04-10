@@ -160,6 +160,8 @@ Pair match_value_with_pair(Value *value, enum Status *status);
 Closure match_value_with_closure(Value *value, enum Status *status);
 long match_value_with_boolean(Value *value, enum Status *status);
 long match_value_with_integer(Value *value, enum Status *status);
+  ///
+void print_value(Value *value);
 
 
 //| stack.c
@@ -194,5 +196,6 @@ enum Status exec_Return(MachineState *ms);
 enum Status exec_Branch(MachineState *ms);
   ///
 long eval_primop(long operation, long a, long b, enum Status *status);
+void print_instruction(long instruction);
 
 #endif

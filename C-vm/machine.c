@@ -13,6 +13,8 @@ MachineState *blank_machine(Bin *code) {
 enum Status run_machine(MachineState *ms) {
   enum Status status = AllOk;
   while (status == AllOk) {
+    printf("Term = "); print_value(ms->term); printf(NL);
+    printf("Instruction = "); print_instruction(ms->code[0]); printf(NL);
     status = exec(ms);
   }
   return status;
@@ -255,5 +257,24 @@ long eval_primop(long operation, long a, long b, enum Status *status) {
     break;
   default: *status = UnknownOperation; return 0;
     break;
+  }
+}
+
+void print_instruction(long instruction) {
+  switch(instruction) {
+    case Halt: printf("Halt"); break;
+    case Unary: printf("Unary"); break;
+    case Arith: printf("Arith"); break;
+    case Compare: printf("Compare"); break;
+    case Cons: printf("Cons"); break;
+    case Push: printf("Push"); break;
+    case Swap: printf("Swap"); break;
+    case App: printf("App"); break;
+    case Return: printf("Return"); break;
+    case QuoteInt: printf("QuoteInt"); break;
+    case QuoteBool: printf("QuoteBool"); break;
+    case Cur: printf("Cur"); break;
+    case Branch: printf("Branch"); break;
+    default: printf("<Unknown>"); break;
   }
 }

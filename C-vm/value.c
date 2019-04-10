@@ -145,3 +145,37 @@ long match_value_with_integer(Value *value, enum Status *status) {
   free(value);
   return output;
 }
+
+void print_value(Value *value) {
+  if (value == NULL) {
+    printf("<NULL Value>");
+  }
+  else {
+    enum ValueTag tag = value->tag;
+    if (tag == NullValue) {
+      printf("NullValue");
+    }
+    else if (tag == BoolValue) {
+      printf("BoolValue(%c)", value->as.boolean ? 'T' : 'F');
+    }
+    else if (tag == IntValue) {
+      printf("IntValue(%ld)", value->as.integer);
+    }
+    else if (tag == PairValue) {
+      printf("PairValue(");
+      print_value(value->as.pair.first);
+      printf(", ");
+      print_value(value->as.pair.second);
+      printf(")");
+    }
+    else if (tag == ClosureValue) {
+      printf("ClosureValue(@%ld, ", (long)value->as.closure.code);
+      print_value(value->as.closure.value);
+      printf(")");
+    }
+    else {
+      printf("<ERROR Value>");
+    }
+  }
+}
+      
