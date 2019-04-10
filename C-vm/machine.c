@@ -10,13 +10,21 @@ MachineState *blank_machine(Bin *code) {
   return ms;
 }
 
+enum Status run_machine(MachineState *ms) {
+  enum Status status = AllOk;
+  while (status == AllOk) {
+    status = exec(ms);
+  }
+  return status;
+}
+
 enum Status exec(MachineState *ms) {
   long instruction = ms->code[0];
   enum Status status = AllOk;
   switch (instruction) {
     case Halt: status = exec_Halt(ms); break;
-    // case Unary: status = exec_Unary(ms); break;
-    // case Arith: status = exec_Arith(ms); break;
+    case Unary: status = exec_Unary(ms); break;
+    case Arith: status = exec_Arith(ms); break;
     // case Compare: status = exec_Compare(ms); break;
     case Cons: status = exec_Cons(ms); break;
     case Push: status = exec_Push(ms); break;
@@ -25,7 +33,7 @@ enum Status exec(MachineState *ms) {
     case Return: status = exec_Return(ms); break;
     case QuoteInt: status = exec_QuoteInt(ms); break;
     case QuoteBool: status = exec_QuoteBool(ms); break;
-    // case Cur: status = exec_Cur(ms); break;
+    case Cur: status = exec_Cur(ms); break;
     case Branch: status = exec_Branch(ms); break;
     // AddDefs
     // RmDefs
@@ -35,20 +43,58 @@ enum Status exec(MachineState *ms) {
   return status;
 }
 
-enum Status run_machine(MachineState *ms) {
-  enum Status status = AllOk;
-  while (status == AllOk) {
-    status = exec(ms);
-  }
-  return status;
-}
 
+
+//| individual instructions:
 
 enum Status exec_Halt(MachineState *ms) {  
   //| ms->term unchanged
   ms->code += 1; //| kind of an arbitrary choice
   //| ms->stack unchanged
   return Halted; //| <-- <-- <-- !
+}
+
+enum Status exec_Arith(MachineState *ms) {
+  //| (PairV(IntV x, IntV y), PrimInstr (BinOp (BArith op)) :: c, st)
+  //| -> (IntV (eval_arith op x y), c, st)
+  enum Status status = AllOk;
+  Pair pair = match_value_with_pair(ms->term, &status);
+  if (status != AllOk) return status;
+  long x = match_value_with_integer(pair.first, &status);
+  if (status != AllOk) return status;
+  long y = match_value_with_integer(pair.second, &status);
+  if (status != AllOk) return status;
+  long operation = ms->code[1];
+  long result = eval_primop(operation, x, y, &status);
+  if (status != AllOk) return status;
+  
+  ms->term = value_Int(result);
+  ms->code += 2;
+  //| ms->stack unchanged
+  return AllOk;
+}
+
+enum Status exec_Unary(MachineState *ms) {
+  //| (PairV(x, y), PrimInstr (UnOp Fst) :: c, st) -> (x, c, st)
+  //| (PairV(x, y), PrimInstr (UnOp Snd) :: c, st) -> (y, c, st)
+  enum Status status = AllOk;
+  Pair pair = match_value_with_pair(ms->term, &status);
+  if (status != AllOk) return status;
+  Value *x = pair.first;
+  Value *y = pair.second;
+  long instruction = ms->code[1];
+  
+  if (instruction == Fst) {
+    ms->term = x;
+    deepfree_value(y);
+  }
+  else {
+    ms->term = y;
+    deepfree_value(x);
+  }
+  ms->code += 2;
+  //| ms->stack unchanged
+  return AllOk;
 }
 
 enum Status exec_Push(MachineState *ms) {
@@ -173,4 +219,41 @@ enum Status exec_Branch(MachineState *ms) {
   ms->code = (b ? if_then : if_else);
   ms->stack = code_onto_stack(c, pattern.tail);
   return AllOk;
+}
+
+
+
+//| utilitary:
+
+long eval_primop(long operation, long a, long b, enum Status *status) {
+  switch (operation) {
+  case Plus: return a + b;
+    break;
+  case Sub: return a - b;
+    break;
+  case Mul: return a * b;
+    break;
+  case Div:
+    if (b == 0) { *status = DivZero; return 0; }
+    else { return a / b; }
+    break;
+  case Mod:
+    if (b == 0) { *status = DivZero; return 0; }
+    else { return a % b; }
+    break;
+  case Eq: return a == b;
+    break;
+  case Neq: return a != b;
+    break;
+  case Ge: return a >= b;
+    break;
+  case Gt: return a < b;
+    break;
+  case Le: return a < b;
+    break;
+  case Lt: return a <= b;
+    break;
+  default: *status = UnknownOperation; return 0;
+    break;
+  }
 }

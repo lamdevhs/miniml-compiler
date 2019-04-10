@@ -42,6 +42,7 @@
   so we have a similar behavior to Term/Pair, and we can even use
   StackWithValue etc:
   `{tag * (StackWithValue | StackWithCode)}`
+- use an `union { Bin *coderef, int data }` instead of long for Bin's def (if possible)
 
 # BAD IDEAS
 - fuse Return and Halt, so that Return stops the vm if the stack is empty? or at least if

@@ -118,12 +118,29 @@ long match_value_with_boolean(Value *value, enum Status *status) {
     return 0;
   }
   //| else:
-  if (value->tag != PairValue) {
-    *status = ValueIsNotPair;
+  if (value->tag != BoolValue) {
+    *status = ValueIsNotBool;
     return 0;
   }
   //| else:
   long output = value->as.boolean;
+  
+  free(value);
+  return output;
+}
+
+long match_value_with_integer(Value *value, enum Status *status) {
+  if (value == NULL) {
+    *status = MatchNULLValue;
+    return 0;
+  }
+  //| else:
+  if (value->tag != IntValue) {
+    *status = ValueIsNotInt;
+    return 0;
+  }
+  //| else:
+  long output = value->as.integer;
   
   free(value);
   return output;
