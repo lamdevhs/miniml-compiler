@@ -79,18 +79,421 @@ void test_value() {
 }
 
 
-// void test_exec() {
-//   //| -------- testing Halt
-//   {
-//     Bin *program = { 42L, Halt, Swap };
-//     MachineState *ms = blank_state(program + 1);
-//     enum Status status = run_machine(ms);
-//   }
-// }
+void exec_went_fine(char *msg, MachineState *ms, MachineState *expected) {
+  enum Status status = exec(ms);
+  int condition = status == AllOk && equal_states(ms, expected);
+  if (!!! condition) {
+    print_state(ms);
+    print_status(status); printf(NL);
+  }
+  assert(msg, condition);
+}
+
+void exec_failed(char *msg, MachineState *ms, enum Status expected) {
+  enum Status status = exec(ms);
+  int condition = status == expected;
+  if (!!! condition) {
+    print_status(status); printf(NL);
+  }
+  assert(msg, condition);
+}
+
+void test_exec() {
+  //| -------- testing Halt
+  {
+    Bin program[] = { 42L, Halt, Swap };
+    MachineState *ms = blank_state(program + 1);
+    enum Status status = exec(ms);
+    
+    MachineState *expected = new_state(value_Null(), program + 2, empty_stack());
+    assert("instruction Halt", status == Halted && equal_states(expected, ms));
+  }
+  //| -------- testing Unary
+  {
+    Bin program[] = { 42L, Unary, Fst, Swap };
+    MachineState *ms = new_state(
+      value_Pair(value_Bool(True), value_Bool(False)),
+      program + 1,
+      empty_stack()
+    );
+    enum Status status = exec(ms);
+    MachineState *expected = new_state(value_Bool(True), program + 3, empty_stack());
+    assert("instruction Unary Fst", status == AllOk && equal_states(expected, ms));
+  }
+  {
+    Bin program[] = { 42L, Unary, Snd, Swap };
+    MachineState *ms = new_state(
+      value_Pair(value_Bool(True), value_Bool(False)),
+      program + 1,
+      empty_stack()
+    );
+    enum Status status = exec(ms);
+    MachineState *expected = new_state(value_Bool(False), program + 3, empty_stack());
+    assert("instruction Unary Snd", status == AllOk && equal_states(expected, ms));
+  }
+  {
+    Bin program[] = { 43L, Unary, 42L, Swap };
+    MachineState *ms = new_state(
+      value_Pair(value_Bool(True), value_Bool(False)),
+      program + 1,
+      empty_stack()
+    );
+    enum Status status = exec(ms);
+    assert("instruction Unary 42", status == UnknownUnary);
+  }
+  {
+    Bin program[] = { 43L, Unary, Fst, Swap };
+    MachineState *ms = new_state(
+      value_Bool(True),
+      program + 1,
+      empty_stack()
+    );
+    enum Status status = exec(ms);
+    assert("instruction Unary Fst(Bool)", status == ValueIsNotPair);
+  }
+  {
+    Bin program[] = { 43L, Unary, Fst, Swap };
+    MachineState *ms = new_state(
+      NULL,
+      program + 1,
+      empty_stack()
+    );
+    enum Status status = exec(ms);
+    assert("instruction Unary Fst(NULL)", status == MatchNULLValue);
+  }
+  //| -------- testing Arith
+  {
+    Bin program[] = { 42L, Arith, Div, Swap };
+    MachineState *ms = new_state(
+      value_Pair(value_Int(42L), value_Int(3L)),
+      program + 1,
+      empty_stack()
+    );
+    enum Status status = exec(ms);
+    MachineState *expected = new_state(value_Int(14L), program + 3, empty_stack());
+    assert("instruction Arith Div(42, 3)", status == AllOk && equal_states(expected, ms));
+  }
+  {
+    Bin program[] = { 42L, Arith, Div, Swap };
+    MachineState *ms = new_state(
+      value_Pair(value_Int(42L), value_Int(0L)),
+      program + 1,
+      empty_stack()
+    );
+    enum Status status = exec(ms);
+    assert("instruction Arith Div(42, 0)", status == DivZero);
+  }
+  {
+    Bin program[] = { 43L, Arith, 42L, Swap };
+    MachineState *ms = new_state(
+      value_Pair(value_Int(3L), value_Int(4L)),
+      program + 1,
+      empty_stack()
+    );
+    enum Status status = exec(ms);
+    assert("instruction Arith 42", status == UnknownArith);
+  }
+  
+  //| -------- testing Push
+  //| (x, Push :: c, st) -> (x, c, Val(x) :: st)
+  {
+    Bin program[] = { 43L, Push, Swap };
+    MachineState *ms = new_state(
+      value_Pair(value_Int(3L), value_Bool(True)),
+      program + 1,
+      value_onto_stack(value_Int(200L), empty_stack())
+    );
+    enum Status status = exec(ms);
+    
+    MachineState *expected = new_state(
+      value_Pair(value_Int(3L), value_Bool(True)),
+      program + 2,
+      value_onto_stack(
+        value_Pair(value_Int(3L), value_Bool(True)),
+        value_onto_stack(
+          value_Int(200L),
+          empty_stack()
+        )
+      )
+    );
+    assert("instruction Push",
+      status == AllOk
+      && equal_states(expected, ms)
+      && (ms->term != ms->stack->as.with_value.head)
+    );
+  }
+  
+  //| -------- testing Cons
+  //| (x, Cons :: c, Val(y) :: st) -> (PairV(y, x), c, st)
+  {
+    Bin program[] = { 43L, Cons, Swap };
+    MachineState *ms = new_state(
+      value_Pair(value_Int(3L), value_Bool(True)),
+      program + 1,
+      value_onto_stack(value_Int(200L), empty_stack())
+    );
+    enum Status status = exec(ms);
+    
+    MachineState *expected = new_state(
+      value_Pair(
+        value_Int(200L),
+        value_Pair(value_Int(3L), value_Bool(True))
+      ),
+      program + 2,
+      empty_stack()
+    );
+    assert("instruction Cons",
+      status == AllOk
+      && equal_states(expected, ms)
+    );
+  }
+  {
+    Bin program[] = { 43L, Cons, Swap };
+    MachineState *ms = new_state(
+      value_Pair(value_Int(3L), value_Bool(True)),
+      program + 1,
+      empty_stack()
+    );
+    enum Status status = exec(ms);
+    assert("instruction Cons with empty stack",
+      status == StackHeadIsNotValue
+    );
+  }
+  
+  //| -------- testing QuoteBool, QuoteInt
+  {
+    Bin program[] = { 43L, QuoteBool, True, Swap };
+    MachineState *ms = new_state(
+      NULL,
+      program + 1,
+      empty_stack()
+    );
+    enum Status status = exec(ms);
+    
+    MachineState *expected = new_state(
+      value_Bool(True),
+      program + 3,
+      empty_stack()
+    );
+    assert("instruction QuoteBool",
+      status == AllOk
+      && equal_states(expected, ms)
+    );
+  }
+  {
+    Bin program[] = { 43L, QuoteInt, -123L, Swap };
+    MachineState *ms = new_state(
+      NULL,
+      program + 1,
+      empty_stack()
+    );
+    enum Status status = exec(ms);
+    
+    MachineState *expected = new_state(
+      value_Int(-123L),
+      program + 3,
+      empty_stack()
+    );
+    assert("instruction QuoteInt",
+      status == AllOk
+      && equal_states(expected, ms)
+    );
+  }
+  
+  //| -------- testing Swap
+  //| (x, Swap :: c, Val(y) :: st) -> (y, c, Val (x) :: st)
+  {
+    Bin program[] = { 43L, Swap };
+    MachineState *ms = new_state(
+      value_Int(-1L),
+      program + 1,
+      value_onto_stack(value_Bool(False), empty_stack())
+    );
+    enum Status status = exec(ms);
+    
+    MachineState *expected = new_state(
+      value_Bool(False),
+      program + 2,
+      value_onto_stack(value_Int(-1L), empty_stack())
+    );
+    assert("instruction Swap",
+      status == AllOk
+      && equal_states(expected, ms)
+    );
+  }
+  {
+    Bin program[] = { 43L, Swap };
+    MachineState *ms = new_state(
+      value_Int(-1L),
+      program + 1,
+      code_onto_stack((Bin *) 24L, value_onto_stack(value_Bool(False), empty_stack()))
+    );
+    enum Status status = exec(ms);
+    
+    assert("instruction Swap with code on stack",
+      status == StackHeadIsNotValue
+    );
+  }
+  
+  //| --------- testing Cur
+  //| (x, Cur (closure_code) :: c, st) -> (ClosureV(closure_code, x), c, st)
+  {
+    Bin program[] = { -42L, Cur, 123456L, Push };
+    MachineState *ms = new_state(
+      value_Int(-1L),
+      program + 1,
+      NULL
+    );
+    enum Status status = exec(ms);
+    
+    MachineState *expected = new_state(
+      value_Closure((Bin *)123456L, value_Int(-1L)),
+      program + 3,
+      NULL
+    );
+    assert("instruction Cur",
+      status == AllOk
+      && equal_states(ms, expected)
+    );
+  }
+  
+  //| --------- testing App
+  //| (PairV(ClosureV(new_code, y), z), App :: old_code, st)
+  //| -> (PairV(y, z), new_code, Cod(old_code) :: st)
+  {
+    Bin program[] = { 42L, App, -1L };
+    MachineState *ms = new_state(
+      value_Pair(
+        value_Closure((Bin *)456789L, value_Int(-100)),
+        value_Null()
+      ),
+      program + 1,
+      empty_stack()
+    );
+    enum Status status = exec(ms);
+    
+    MachineState *expected = new_state(
+      value_Pair(value_Int(-100), value_Null()),
+      (Bin *)456789L,
+      code_onto_stack(program + 2, empty_stack())
+    );
+    assert("instruction App",
+      status == AllOk
+      && equal_states(ms, expected)
+    );
+  }
+  {
+    Bin program[] = { 42L, App, -1L };
+    MachineState *ms = new_state(
+      value_Pair(
+        value_Int(-100),
+        value_Null()
+      ),
+      program + 1,
+      empty_stack()
+    );
+    enum Status status = exec(ms);
+    
+    assert("instruction App with no closure",
+      status == ValueIsNotClosure
+    );
+  }
+  
+  //| -------- testing Return
+  //| (x, Return :: c, Cod(new_code) :: st) -> (x, new_code, st)
+  {
+    Bin program[] = { 42L, Return, -1L };
+    exec_went_fine(
+      "instruction Return",
+      new_state(
+        NULL,
+        program + 1,
+        code_onto_stack((Bin *)192837L, value_onto_stack(value_Int(4L), empty_stack()))
+      ),
+      new_state(
+        NULL,
+        (Bin *) 192837L,
+        value_onto_stack(value_Int(4L), empty_stack())
+      )
+    );
+  }
+  {
+    Bin program[] = { 42L, Return, -1L };
+    exec_failed(
+      "instruction Return with no code on stack",
+      new_state(
+        NULL,
+        program + 1,
+        value_onto_stack(value_Int(4L), empty_stack())
+      ),
+      StackHeadIsNotCode
+    );
+  }
+  
+  //| -------- testing Branch
+  //| (BoolV(b), Branch (if_then, if_else) :: c, Val(x) :: st)
+  //| -> (x, (if b then if_then else if_else), Cod(c) :: st)
+  {
+    Bin program[] = { 42L, Branch, -123L, 321L, -1L };
+    exec_went_fine(
+      "instruction Branch(True)",
+      new_state(
+        value_Bool(True),
+        program + 1,
+        value_onto_stack(value_Int(222L), value_onto_stack(value_Bool(False), empty_stack()))
+      ),
+      new_state(
+        value_Int(222L),
+        (Bin *) -123L,
+        code_onto_stack(program + 4, value_onto_stack(value_Bool(False), empty_stack()))
+      )
+    );
+  }
+  {
+    Bin program[] = { 42L, Branch, -123L, 321L, -1L };
+    exec_went_fine(
+      "instruction Branch(False)",
+      new_state(
+        value_Bool(False),
+        program + 1,
+        value_onto_stack(value_Int(222L), value_onto_stack(value_Bool(False), empty_stack()))
+      ),
+      new_state(
+        value_Int(222L),
+        (Bin *) 321L,
+        code_onto_stack(program + 4, value_onto_stack(value_Bool(False), empty_stack()))
+      )
+    );
+  }
+  {
+    Bin program[] = { 42L, Branch, -123L, 321L, -1L };
+    exec_failed(
+      "instruction Branch with no value on stack",
+      new_state(
+        value_Bool(False),
+        program + 1,
+        code_onto_stack(program, value_onto_stack(value_Bool(False), empty_stack()))
+      ),
+      StackHeadIsNotValue
+    );
+  }
+  {
+    Bin program[] = { 42L, Branch, -123L, 321L, -1L };
+    exec_failed(
+      "instruction Branch with no boolean term",
+      new_state(
+        NULL,
+        program + 1,
+        value_onto_stack(value_Bool(False), empty_stack())
+      ),
+      MatchNULLValue
+    );
+  }
+}
 
 
 int main() {
   test_value();
-  //test_exec();
+  test_exec();
   return 0;
 }

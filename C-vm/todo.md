@@ -26,6 +26,10 @@
   variables of the exec(); more worryingly, the current value of main_term may
   very well have been freed (destructured or even just freed), so if we send it
   back as return value, it can be NULL.
+- most of the exec_zzzz that can fail at some point, fail after destructuring some value,
+  often leaving the machine in an unsafe, partial state... we might want to fix that.
+- using value_one_stack on a NULL stack does not cause an error, and simply uses NULL as its
+  bottommost link... maybe we should just use NULL to symbolize the empty stack...?
 
 # IDEAS
 - policy for memory leakage:
@@ -47,6 +51,8 @@
   and create macro:
   `#define constructor(x, t) (x->tag == t ## Tag)`
   usage: if (constructor(x, PairValue)) ...
+- we could have a status that is different for every single type of errors: 
+  one e.g. for "Fst(Bool)", Fst(Null), Fst(NULL), Plus(Bool, Int) etc... though meh
 
 # BAD IDEAS
 - fuse Return and Halt, so that Return stops the vm if the stack is empty? or at least if

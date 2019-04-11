@@ -25,3 +25,20 @@ Equality between Values, Stacks, MachineStates.
 Also renamed blank_machine to the more appropriate blank_state.
 
 # Add some tests for type Value
+
+# Add function new_state(), Fix exec_Unary
+
+To create a MachineState with specific field values.
+
+Changed exec_Unary a bit so it raises an error if the operation
+is not recognized (instead of silently assuming it's Snd).
+
+Also renamed UnknownOperation into UnknownArith.
+
+# Add verbosity argument for run_machine()
+
+# Add printers for MachineState, Stack, enum Status
+
+# Add tests for exec_... functions
+
+For all the instructions that I have implemented so far.
