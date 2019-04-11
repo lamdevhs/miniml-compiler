@@ -66,7 +66,7 @@ void test_mini_program() {
     ((Bin *)program[2])[0], Push);
   
   MachineState *ms = blank_state(program);
-  enum Status status = run_machine(ms);
+  enum Status status = run_machine(ms, info(verbosity -->) True);
   printf("final status: %d, Halt = %d; NotPair = %d, code = %ld" NL,
     status, Halted, ValueIsNotPair, (long)(ms->code - program));
 }

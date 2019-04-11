@@ -182,7 +182,7 @@ int equal_stacks(Stack *a, Stack *b);
 MachineState *new_state(Value *term, Bin *code, Stack *stack);
 MachineState *blank_state(Bin *code);
 int equal_states(MachineState *a, MachineState *b);
-enum Status run_machine(MachineState *ms);
+enum Status run_machine(MachineState *ms, int verbose);
 enum Status exec(MachineState *ms);
   ///
 enum Status exec_Halt(MachineState *ms);

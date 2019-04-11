@@ -23,11 +23,13 @@ int equal_states(MachineState *a, MachineState *b) {
 }
   
 
-enum Status run_machine(MachineState *ms) {
+enum Status run_machine(MachineState *ms, int verbose) {
   enum Status status = AllOk;
   while (status == AllOk) {
-    printf("Term = "); print_value(ms->term); printf(NL);
-    printf("Instruction = "); print_instruction(ms->code[0]); printf(NL);
+    if (verbose) {
+      printf("Term = "); print_value(ms->term); printf(NL);
+      printf("Instruction = "); print_instruction(ms->code[0]); printf(NL);
+    }
     status = exec(ms);
   }
   return status;
