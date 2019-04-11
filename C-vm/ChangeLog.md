@@ -23,3 +23,5 @@ With this fix, the mini program works as expected! :)
 
 Equality between Values, Stacks, MachineStates.
 Also renamed blank_machine to the more appropriate blank_state.
+
+# Add some tests for type Value
