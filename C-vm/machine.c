@@ -2,12 +2,17 @@
 ///
 #include "virtual-machine.h"
 
-MachineState *blank_state(Bin *code) {
+
+MachineState *new_state(Value *term, Bin *code, Stack *stack) {
   MachineState *ms = malloc(sizeof(MachineState));
-  ms->term = value_Null();
+  ms->term = term;
   ms->code = code;
-  ms->stack = empty_stack();
+  ms->stack = stack;
   return ms;
+}
+
+MachineState *blank_state(Bin *code) {
+  return new_state(value_Null(), code, empty_stack());
 }
 
 int equal_states(MachineState *a, MachineState *b) {
@@ -98,9 +103,12 @@ enum Status exec_Unary(MachineState *ms) {
     ms->term = x;
     deepfree_value(y);
   }
-  else {
+  else if (instruction == Snd) {
     ms->term = y;
     deepfree_value(x);
+  }
+  else {
+    return UnknownUnary;
   }
   ms->code += 2;
   //| ms->stack unchanged
@@ -263,7 +271,7 @@ long eval_primop(long operation, long a, long b, enum Status *status) {
     break;
   case Lt: return a <= b;
     break;
-  default: *status = UnknownOperation; return 0;
+  default: *status = UnknownArith; return 0;
     break;
   }
 }

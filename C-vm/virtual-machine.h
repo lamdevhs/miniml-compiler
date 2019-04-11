@@ -7,6 +7,7 @@
 #define NL "\n"
 #define False 0
 #define True 1
+#define info(x)
 
 enum instructions {
 //| there are just int constants,
@@ -51,12 +52,12 @@ enum Status {
   AllOk,
   Halted,
   DivZero,
-  UnknownOperation,
   UnknownInstruction,
+  UnknownUnary,
+  UnknownArith,
   
   //| pattern-matching errors:
     MatchNULLStack,
-    StackIsEmpty,
     StackHeadIsNotValue,
     StackHeadIsNotCode,
     
@@ -178,6 +179,7 @@ int equal_stacks(Stack *a, Stack *b);
 
 
 //| machine.c
+MachineState *new_state(Value *term, Bin *code, Stack *stack);
 MachineState *blank_state(Bin *code);
 int equal_states(MachineState *a, MachineState *b);
 enum Status run_machine(MachineState *ms);
