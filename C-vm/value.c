@@ -178,4 +178,29 @@ void print_value(Value *value) {
     }
   }
 }
-      
+
+int equal_values(Value *a, Value *b) {
+  if (a == NULL) {
+    return b == NULL;
+  }
+  // else:
+  enum ValueTag tag = a->tag;
+  if (tag != b->tag) {
+    return False;
+  }
+  else if (tag == IntValue) {
+    return a->as.integer == b->as.integer;
+  }
+  else if (tag == BoolValue) {
+    return a->as.boolean == b->as.boolean;
+  }
+  else if (tag == PairValue) {
+    return equal_values(a->as.pair.first, b->as.pair.first)
+      && equal_values(a->as.pair.second, b->as.pair.second);
+  }
+  else if (tag == ClosureValue) {
+    return a->as.closure.code == b->as.closure.code
+      && equal_values(a->as.closure.value, b->as.closure.value);
+  }
+  else return True; //| tag == NullValue, or is invalid...
+}

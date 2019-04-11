@@ -2,13 +2,21 @@
 ///
 #include "virtual-machine.h"
 
-MachineState *blank_machine(Bin *code) {
+MachineState *blank_state(Bin *code) {
   MachineState *ms = malloc(sizeof(MachineState));
   ms->term = value_Null();
   ms->code = code;
   ms->stack = empty_stack();
   return ms;
 }
+
+int equal_states(MachineState *a, MachineState *b) {
+  if (a == NULL) return b == NULL;
+  if (a->code != b->code) return False;
+  if (!!! equal_values(a->term, b->term)) return False;
+  return equal_stacks(a->stack, b->stack);
+}
+  
 
 enum Status run_machine(MachineState *ms) {
   enum Status status = AllOk;

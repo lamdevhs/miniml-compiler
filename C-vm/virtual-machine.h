@@ -5,6 +5,8 @@
 
 #define DBG printf
 #define NL "\n"
+#define False 0
+#define True 1
 
 enum instructions {
 //| there are just int constants,
@@ -162,7 +164,7 @@ long match_value_with_boolean(Value *value, enum Status *status);
 long match_value_with_integer(Value *value, enum Status *status);
   ///
 void print_value(Value *value);
-
+int equal_values(Value *a, Value *b);
 
 //| stack.c
 Stack *empty_stack();
@@ -171,10 +173,13 @@ Stack *code_onto_stack(Bin *code, Stack *old_stack);
   ///
 ValueOnStack match_stack_with_value(Stack *stack, enum Status *status);
 CodeOnStack match_stack_with_code(Stack *stack, enum Status *status);
+  ///
+int equal_stacks(Stack *a, Stack *b);
 
 
 //| machine.c
-MachineState *blank_machine(Bin *code);
+MachineState *blank_state(Bin *code);
+int equal_states(MachineState *a, MachineState *b);
 enum Status run_machine(MachineState *ms);
 enum Status exec(MachineState *ms);
   ///

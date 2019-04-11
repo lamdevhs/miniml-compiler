@@ -43,6 +43,10 @@
   StackWithValue etc:
   `{tag * (StackWithValue | StackWithCode)}`
 - use an `union { Bin *coderef, int data }` instead of long for Bin's def (if possible)
+- use PairValue/BoolValue/etc instead of value_Pair, etc, and use PairValueTag instead of PairValue,
+  and create macro:
+  `#define constructor(x, t) (x->tag == t ## Tag)`
+  usage: if (constructor(x, PairValue)) ...
 
 # BAD IDEAS
 - fuse Return and Halt, so that Return stops the vm if the stack is empty? or at least if

@@ -65,7 +65,7 @@ void test_mini_program() {
   printf("instruction: *program[2] = %ld, Push = %d\n",
     ((Bin *)program[2])[0], Push);
   
-  MachineState *ms = blank_machine(program);
+  MachineState *ms = blank_state(program);
   enum Status status = run_machine(ms);
   printf("final status: %d, Halt = %d; NotPair = %d, code = %ld" NL,
     status, Halted, ValueIsNotPair, (long)(ms->code - program));

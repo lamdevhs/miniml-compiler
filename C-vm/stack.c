@@ -66,3 +66,19 @@ CodeOnStack match_stack_with_code(Stack *stack, enum Status *status) {
   free(stack);
   return output;
 }
+
+int equal_stacks(Stack *a, Stack *b) {
+  if (a == NULL) return b == NULL;
+  // else:
+  enum StackTag tag = a->tag;
+  if (tag != b->tag) return False;
+  if (tag == HeadIsValue) {
+    return equal_values(a->as.with_value.head, b->as.with_value.head)
+      && equal_stacks(a->as.with_value.tail, b->as.with_value.tail);
+  }
+  if (tag == HeadIsCode) {
+    return a->as.with_code.head == b->as.with_code.head
+      && equal_stacks(a->as.with_value.tail, b->as.with_value.tail);
+  }
+  else return True; //| EmptyStack, or maybe an invalid tag...
+}
