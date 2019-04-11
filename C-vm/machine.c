@@ -296,3 +296,36 @@ void print_instruction(long instruction) {
     default: printf("<Unknown>"); break;
   }
 }
+
+void print_state(MachineState *ms) {
+  if (ms == NULL) {
+    printf("<NULL MachineState>" NL);
+  }
+  else {
+    printf("MachineState:" NL);
+    printf("  term = "); print_value(ms->term); printf(NL);
+    printf("  code = %ld" NL, (long)ms->code);
+    printf("  stack = "); print_stack(ms->stack); printf(NL);
+  }
+}
+
+void print_status(enum Status status) {
+  switch (status) {
+    case AllOk: printf("AllOk"); break;
+    case Halted: printf("Halted"); break;
+    case DivZero: printf("DivZero"); break;
+    case UnknownInstruction: printf("UnknownInstruction"); break;
+    case UnknownUnary: printf("UnknownUnary"); break;
+    case UnknownArith: printf("UnknownArith"); break;
+    case MatchNULLStack: printf("MatchNULLStack"); break;
+    case StackHeadIsNotValue: printf("StackHeadIsNotValue"); break;
+    case StackHeadIsNotCode: printf("StackHeadIsNotCode"); break;
+    case MatchNULLValue: printf("MatchNULLValue"); break;
+    case ValueIsNotPair: printf("ValueIsNotPair"); break;
+    case ValueIsNotClosure: printf("ValueIsNotClosure"); break;
+    case ValueIsNotBool: printf("ValueIsNotBool"); break;
+    case ValueIsNotInt: printf("ValueIsNotInt"); break;
+    default: printf("<Unknown>");
+  }
+}
+    

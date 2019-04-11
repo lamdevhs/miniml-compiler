@@ -82,3 +82,27 @@ int equal_stacks(Stack *a, Stack *b) {
   }
   else return True; //| EmptyStack, or maybe an invalid tag...
 }
+
+void print_stack(Stack *stack) {
+  if (stack == NULL) {
+    printf("<NULL Stack>");
+  }
+  else {
+    if (stack->tag == EmptyStack) {
+      printf("[]");
+    }
+    else if (stack->tag == HeadIsValue) {
+      print_value(stack->as.with_value.head);
+      printf(" :: ");
+      print_stack(stack->as.with_value.tail);
+    }
+    else if (stack->tag == HeadIsCode) {
+      printf("@%ld", (long) (stack->as.with_code.head));
+      printf(" :: ");
+      print_stack(stack->as.with_value.tail);
+    }
+    else {
+      printf("<ERROR Stack>");
+    }
+  }
+}

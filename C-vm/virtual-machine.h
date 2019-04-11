@@ -175,6 +175,7 @@ Stack *code_onto_stack(Bin *code, Stack *old_stack);
 ValueOnStack match_stack_with_value(Stack *stack, enum Status *status);
 CodeOnStack match_stack_with_code(Stack *stack, enum Status *status);
   ///
+void print_stack(Stack *stack);
 int equal_stacks(Stack *a, Stack *b);
 
 
@@ -204,5 +205,7 @@ enum Status exec_Branch(MachineState *ms);
   ///
 long eval_primop(long operation, long a, long b, enum Status *status);
 void print_instruction(long instruction);
+void print_state(MachineState *ms);
+void print_status(enum Status status);
 
 #endif
