@@ -3,87 +3,87 @@
 #include "virtual-machine.h"
 
 
-Value *value_Pair(Value *first, Value *second) {
-  Value *value = malloc(sizeof(Value));
-  value->tag = PairValue;
+ValueT *value_Pair(ValueT *first, ValueT *second) {
+  ValueT *value = malloc(sizeof(ValueT));
+  value->tag = ValueIsPair;
   value->as.pair.first = first;
   value->as.pair.second = second;
   return value;
 }
 
-Value *value_Closure(Bin *code, Value *closure_value) {
-  Value *value = malloc(sizeof(Value));
-  value->tag = ClosureValue;
+ValueT *value_Closure(CodeT *code, ValueT *closure_value) {
+  ValueT *value = malloc(sizeof(ValueT));
+  value->tag = ValueIsClosure;
   value->as.closure.code = code;
   value->as.closure.value = closure_value;
   return value;
 }
 
-Value *value_Bool(long x) {
-  Value *value = malloc(sizeof(Value));
-  value->tag = BoolValue;
+ValueT *value_Bool(long x) {
+  ValueT *value = malloc(sizeof(ValueT));
+  value->tag = ValueIsBool;
   value->as.boolean = x;
   return value;
 }
 
-Value *value_Int(long x) {
-  Value *value = malloc(sizeof(Value));
-  value->tag = IntValue;
+ValueT *value_Int(long x) {
+  ValueT *value = malloc(sizeof(ValueT));
+  value->tag = ValueIsInt;
   value->as.integer = x;
   return value;
 }
 
-Value *value_Null() {
-  Value *value = malloc(sizeof(Value));
-  value->tag = NullValue;
+ValueT *value_Null() {
+  ValueT *value = malloc(sizeof(ValueT));
+  value->tag = ValueIsNull;
   return value;
 }
 
-Value *deepcopy_value(Value *value) {
+ValueT *deepcopy_value(ValueT *value) {
   if (value == NULL) {
     return NULL;
   }
   // else:
-  Value *copy;
+  ValueT *copy;
   enum ValueTag tag = value->tag;
-  if (tag == PairValue) {
-    Value *x = deepcopy_value(value->as.pair.first);
-    Value *y = deepcopy_value(value->as.pair.second);
+  if (tag == ValueIsPair) {
+    ValueT *x = deepcopy_value(value->as.pair.first);
+    ValueT *y = deepcopy_value(value->as.pair.second);
     copy = value_Pair(x, y);
   }
-  else if (tag == ClosureValue) {
-    Value *t = deepcopy_value(value->as.closure.value);
+  else if (tag == ValueIsClosure) {
+    ValueT *t = deepcopy_value(value->as.closure.value);
     copy = value_Closure(value->as.closure.code, t);
   }
   else {
-    copy = malloc(sizeof(Value));
+    copy = malloc(sizeof(ValueT));
     *copy = *value; //| direct struct copy
   }
   return copy;
 }
 
-void deepfree_value(Value *value) {
+void deepfree_value(ValueT *value) {
   if (value != NULL) {
     enum ValueTag tag = value->tag;
-    if (tag == PairValue) {
+    if (tag == ValueIsPair) {
       deepfree_value(value->as.pair.first);
       deepfree_value(value->as.pair.second);
     }
-    else if (tag == ClosureValue) {
+    else if (tag == ValueIsClosure) {
       deepfree_value(value->as.closure.value);
     }
     free(value);
   }
 }
 
-Pair match_value_with_pair(Value *value, enum Status *status) {
-  Pair output = {NULL, NULL};
+PairT match_value_with_pair(ValueT *value, enum Status *status) {
+  PairT output = {NULL, NULL};
   if (value == NULL) {
     *status = MatchNULLValue;
     return output;
   }
   //| else:
-  if (value->tag != PairValue) {
+  if (value->tag != ValueIsPair) {
     *status = ValueIsNotPair;
     return output;
   }
@@ -94,14 +94,14 @@ Pair match_value_with_pair(Value *value, enum Status *status) {
   return output;
 }
 
-Closure match_value_with_closure(Value *value, enum Status *status) {
-  Closure output = {NULL, NULL};
+ClosureT match_value_with_closure(ValueT *value, enum Status *status) {
+  ClosureT output = {NULL, NULL};
   if (value == NULL) {
     *status = MatchNULLValue;
     return output;
   }
   //| else:
-  if (value->tag != ClosureValue) {
+  if (value->tag != ValueIsClosure) {
     *status = ValueIsNotClosure;
     return output;
   }
@@ -112,13 +112,13 @@ Closure match_value_with_closure(Value *value, enum Status *status) {
   return output;
 }
 
-long match_value_with_boolean(Value *value, enum Status *status) {
+long match_value_with_boolean(ValueT *value, enum Status *status) {
   if (value == NULL) {
     *status = MatchNULLValue;
     return 0;
   }
   //| else:
-  if (value->tag != BoolValue) {
+  if (value->tag != ValueIsBool) {
     *status = ValueIsNotBool;
     return 0;
   }
@@ -129,13 +129,13 @@ long match_value_with_boolean(Value *value, enum Status *status) {
   return output;
 }
 
-long match_value_with_integer(Value *value, enum Status *status) {
+long match_value_with_integer(ValueT *value, enum Status *status) {
   if (value == NULL) {
     *status = MatchNULLValue;
     return 0;
   }
   //| else:
-  if (value->tag != IntValue) {
+  if (value->tag != ValueIsInt) {
     *status = ValueIsNotInt;
     return 0;
   }
@@ -146,29 +146,29 @@ long match_value_with_integer(Value *value, enum Status *status) {
   return output;
 }
 
-void print_value(Value *value) {
+void print_value(ValueT *value) {
   if (value == NULL) {
     printf("<NULL Value>");
   }
   else {
     enum ValueTag tag = value->tag;
-    if (tag == NullValue) {
+    if (tag == ValueIsNull) {
       printf("NullValue");
     }
-    else if (tag == BoolValue) {
+    else if (tag == ValueIsBool) {
       printf("BoolValue(%c)", value->as.boolean ? 'T' : 'F');
     }
-    else if (tag == IntValue) {
+    else if (tag == ValueIsInt) {
       printf("IntValue(%ld)", value->as.integer);
     }
-    else if (tag == PairValue) {
+    else if (tag == ValueIsPair) {
       printf("PairValue(");
       print_value(value->as.pair.first);
       printf(", ");
       print_value(value->as.pair.second);
       printf(")");
     }
-    else if (tag == ClosureValue) {
+    else if (tag == ValueIsClosure) {
       printf("ClosureValue(@%ld, ", (long)value->as.closure.code);
       print_value(value->as.closure.value);
       printf(")");
@@ -179,7 +179,7 @@ void print_value(Value *value) {
   }
 }
 
-int equal_values(Value *a, Value *b) {
+int equal_values(ValueT *a, ValueT *b) {
   if (a == NULL) {
     return b == NULL;
   }
@@ -188,19 +188,19 @@ int equal_values(Value *a, Value *b) {
   if (tag != b->tag) {
     return False;
   }
-  else if (tag == IntValue) {
+  else if (tag == ValueIsInt) {
     return a->as.integer == b->as.integer;
   }
-  else if (tag == BoolValue) {
+  else if (tag == ValueIsBool) {
     return a->as.boolean == b->as.boolean;
   }
-  else if (tag == PairValue) {
+  else if (tag == ValueIsPair) {
     return equal_values(a->as.pair.first, b->as.pair.first)
       && equal_values(a->as.pair.second, b->as.pair.second);
   }
-  else if (tag == ClosureValue) {
+  else if (tag == ValueIsClosure) {
     return a->as.closure.code == b->as.closure.code
       && equal_values(a->as.closure.value, b->as.closure.value);
   }
-  else return True; //| tag == NullValue, or is invalid...
+  else return True; //| tag == ValueIsNull, or is invalid...
 }

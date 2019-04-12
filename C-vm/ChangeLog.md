@@ -42,3 +42,18 @@ Also renamed UnknownOperation into UnknownArith.
 # Add tests for exec_... functions
 
 For all the instructions that I have implemented so far.
+
+# Rename lots of things
+
+Mostly:
+- Datatypes now sport a capital T at the end, as in StackT, ValueT,
+  and so on. The enums were left untouched as they exist in a
+  separate namespace.
+- Stack's "head/tail" have become "top/bottom", closer to the stack
+  metaphor.
+- Bin was renamed to CodeT.
+- Tags now all contain an "Is" (reminiscent of boolean values),
+  e.g. ValueIsNull, StackIsEmpty, and so on.
+
+Most of the above is in anticipation of renaming the constructors
+value_Pair, empty_stack, etc., to PairValue, EmptyStack, etc.

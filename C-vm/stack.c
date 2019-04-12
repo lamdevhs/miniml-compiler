@@ -5,25 +5,25 @@
 
 //| creation of stacks
 
-Stack *empty_stack() {
-  Stack *new_stack = malloc(sizeof(Stack));
-  new_stack->tag = EmptyStack;
+StackT *empty_stack() {
+  StackT *new_stack = malloc(sizeof(StackT));
+  new_stack->tag = StackIsEmpty;
   return new_stack;
 }
 
-Stack *value_onto_stack(Value *value, Stack *old_stack) {
-  Stack *new_stack = malloc(sizeof(Stack));
-  new_stack->tag = HeadIsValue;
-  new_stack->as.with_value.head = value;
-  new_stack->as.with_value.tail = old_stack;
+StackT *value_onto_stack(ValueT *value, StackT *old_stack) {
+  StackT *new_stack = malloc(sizeof(StackT));
+  new_stack->tag = StackTopIsValue;
+  new_stack->as.with_value.top = value;
+  new_stack->as.with_value.bottom = old_stack;
   return new_stack;
 }
 
-Stack *code_onto_stack(Bin *code, Stack *old_stack) {
-  Stack *new_stack = malloc(sizeof(Stack));
-  new_stack->tag = HeadIsCode;
-  new_stack->as.with_code.head = code;
-  new_stack->as.with_code.tail = old_stack;
+StackT *code_onto_stack(CodeT *code, StackT *old_stack) {
+  StackT *new_stack = malloc(sizeof(StackT));
+  new_stack->tag = StackTopIsCode;
+  new_stack->as.with_code.top = code;
+  new_stack->as.with_code.bottom = old_stack;
   return new_stack;
 }
 
@@ -31,14 +31,14 @@ Stack *code_onto_stack(Bin *code, Stack *old_stack) {
 
 //| destructuration of stacks
 
-ValueOnStack match_stack_with_value(Stack *stack, enum Status *status) {
-  ValueOnStack output = {NULL, NULL};
+ValueOnStackT match_stack_with_value(StackT *stack, enum Status *status) {
+  ValueOnStackT output = {NULL, NULL};
   if (stack == NULL) {
     *status = MatchNULLStack;
     return output;
   }
   //| else:
-  if (stack->tag != HeadIsValue) {
+  if (stack->tag != StackTopIsValue) {
     *status = StackHeadIsNotValue;
     return output;
   }
@@ -49,14 +49,14 @@ ValueOnStack match_stack_with_value(Stack *stack, enum Status *status) {
   return output;
 }
 
-CodeOnStack match_stack_with_code(Stack *stack, enum Status *status) {
-  CodeOnStack output = {NULL, NULL};
+CodeOnStackT match_stack_with_code(StackT *stack, enum Status *status) {
+  CodeOnStackT output = {NULL, NULL};
   if (stack == NULL) {
     *status = MatchNULLStack;
     return output;
   }
   //| else:
-  if (stack->tag != HeadIsCode) {
+  if (stack->tag != StackTopIsCode) {
     *status = StackHeadIsNotCode;
     return output;
   }
@@ -67,39 +67,39 @@ CodeOnStack match_stack_with_code(Stack *stack, enum Status *status) {
   return output;
 }
 
-int equal_stacks(Stack *a, Stack *b) {
+int equal_stacks(StackT *a, StackT *b) {
   if (a == NULL) return b == NULL;
   // else:
   enum StackTag tag = a->tag;
   if (tag != b->tag) return False;
-  if (tag == HeadIsValue) {
-    return equal_values(a->as.with_value.head, b->as.with_value.head)
-      && equal_stacks(a->as.with_value.tail, b->as.with_value.tail);
+  if (tag == StackTopIsValue) {
+    return equal_values(a->as.with_value.top, b->as.with_value.top)
+      && equal_stacks(a->as.with_value.bottom, b->as.with_value.bottom);
   }
-  if (tag == HeadIsCode) {
-    return a->as.with_code.head == b->as.with_code.head
-      && equal_stacks(a->as.with_value.tail, b->as.with_value.tail);
+  if (tag == StackTopIsCode) {
+    return a->as.with_code.top == b->as.with_code.top
+      && equal_stacks(a->as.with_value.bottom, b->as.with_value.bottom);
   }
-  else return True; //| EmptyStack, or maybe an invalid tag...
+  else return True; //| StackIsEmpty, or maybe an invalid tag...
 }
 
-void print_stack(Stack *stack) {
+void print_stack(StackT *stack) {
   if (stack == NULL) {
     printf("<NULL Stack>");
   }
   else {
-    if (stack->tag == EmptyStack) {
+    if (stack->tag == StackIsEmpty) {
       printf("[]");
     }
-    else if (stack->tag == HeadIsValue) {
-      print_value(stack->as.with_value.head);
+    else if (stack->tag == StackTopIsValue) {
+      print_value(stack->as.with_value.top);
       printf(" :: ");
-      print_stack(stack->as.with_value.tail);
+      print_stack(stack->as.with_value.bottom);
     }
-    else if (stack->tag == HeadIsCode) {
-      printf("@%ld", (long) (stack->as.with_code.head));
+    else if (stack->tag == StackTopIsCode) {
+      printf("@%ld", (long) (stack->as.with_code.top));
       printf(" :: ");
-      print_stack(stack->as.with_value.tail);
+      print_stack(stack->as.with_value.bottom);
     }
     else {
       printf("<ERROR Stack>");

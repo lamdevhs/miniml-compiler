@@ -21,6 +21,8 @@
 
 - rename Binary --> `(Bin *)`: hiding the pointer is probably a bad idea
 
+- rename App --> Apply, Cur --> Curry?
+
 # PITFALLS
 - /!\ when hitting an error, it may happen that some malloced stuff are in local
   variables of the exec(); more worryingly, the current value of main_term may

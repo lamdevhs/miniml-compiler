@@ -45,8 +45,8 @@ enum primitive_operations {
 
 
 
-typedef long Bin;
-//| Bin* == pointer to an array containing binary code
+typedef long CodeT;
+//| CodeT* == pointer to an array containing binary code
 
 enum Status {
   AllOk,
@@ -70,142 +70,142 @@ enum Status {
 
 
 
-//| datatype Value
-//|   = BoolValue(long) | IntValue(long)
-//|   | Pair(Value*, Value*) | Closure(Bin*, Value*) 
+//| datatype ValueT
+//|   = BoolValue(long int) | IntValue(long int)
+//|   | Pair(ValueT*, ValueT*) | Closure(CodeT*, ValueT*) 
 
 enum ValueTag {
-  PairValue,
-  BoolValue,
-  IntValue,
-  ClosureValue,
-  NullValue
+  ValueIsPair,
+  ValueIsBool,
+  ValueIsInt,
+  ValueIsClosure,
+  ValueIsNull
 };
 
-struct Value; //| recursive definitions
+struct ValueT; //| recursive definitions
 
-typedef struct Pair {
-  struct Value *first;
-  struct Value *second;
-} Pair;
+typedef struct PairT {
+  struct ValueT *first;
+  struct ValueT *second;
+} PairT;
 
-typedef struct Closure {
-  Bin *code;
-  struct Value *value;
-} Closure;
+typedef struct ClosureT {
+  CodeT *code;
+  struct ValueT *value;
+} ClosureT;
 
-typedef struct Value {
+typedef struct ValueT {
   enum ValueTag tag;
   union {
     long integer;
     long boolean;
-    struct Pair pair;
-    struct Closure closure;
+    struct PairT pair;
+    struct ClosureT closure;
   } as;
-} Value;
-//| if Value.tag == NullValue, then Value.as is left undefined/unused
+} ValueT;
+//| if ValueT.tag == NullValue, then ValueT.as is left undefined/unused
 
 
 
 
-//| datatype Stack
-//|   = EmptyStack | ValueOnStack(Value*, Stack*) | CodeOnStack(Bin*, Stack*)
+//| datatype StackT
+//|   = EmptyStack | ValueOnStack(ValueT*, StackT*) | CodeOnStack(CodeT*, StackT*)
 
 enum StackTag {
-  HeadIsValue,
-  HeadIsCode,
-  EmptyStack
+  StackTopIsValue,
+  StackTopIsCode,
+  StackIsEmpty
 };
 
-struct Stack; //| recursive definitions
+struct StackT; //| recursive definitions
 
-typedef struct ValueOnStack {
-  Value *head;
-  struct Stack *tail;
-} ValueOnStack;
+typedef struct ValueOnStackT {
+  ValueT *top;
+  struct StackT *bottom;
+} ValueOnStackT;
 
-typedef struct CodeOnStack {
-  Bin *head;
-  struct Stack *tail;
-} CodeOnStack;
+typedef struct CodeOnStackT {
+  CodeT *top;
+  struct StackT *bottom;
+} CodeOnStackT;
 
-typedef struct Stack {
+typedef struct StackT {
   enum StackTag tag;
   union {
-    ValueOnStack with_value;
-    CodeOnStack with_code;
+    ValueOnStackT with_value;
+    CodeOnStackT with_code;
   } as;
-} Stack;
-//| if Stack.tag == EmptyStack, then Stack.as is left undefined/unused
+} StackT;
+//| if StackT.tag == StackIsEmpty, then StackT.as is left undefined/unused
 
 
 
-//| datatype MachineState = (Value*, Bin*, Stack*)
+//| datatype MachineStateT = MachineState(ValueT*, CodeT*, StackT*)
 
-typedef struct MachineState {
-  Value *term;
-  Bin *code;
-  Stack *stack;
-} MachineState;
+typedef struct MachineStateT {
+  ValueT *term;
+  CodeT *code;
+  StackT *stack;
+} MachineStateT;
 
 
 //| value.c
-Value *value_Pair(Value *first, Value *second);
-Value *value_Closure(Bin *code, Value *closure_value);
-Value *value_Bool(long b);
-Value *value_Int(long x);
-Value *value_Null();
+ValueT *value_Pair(ValueT *first, ValueT *second);
+ValueT *value_Closure(CodeT *code, ValueT *closure_value);
+ValueT *value_Bool(long b);
+ValueT *value_Int(long x);
+ValueT *value_Null();
   ///
-Value *deepcopy_value(Value *value);
-void deepfree_value(Value *value);
+ValueT *deepcopy_value(ValueT *value);
+void deepfree_value(ValueT *value);
   ///
-Pair match_value_with_pair(Value *value, enum Status *status);
-Closure match_value_with_closure(Value *value, enum Status *status);
-long match_value_with_boolean(Value *value, enum Status *status);
-long match_value_with_integer(Value *value, enum Status *status);
+PairT match_value_with_pair(ValueT *value, enum Status *status);
+ClosureT match_value_with_closure(ValueT *value, enum Status *status);
+long match_value_with_boolean(ValueT *value, enum Status *status);
+long match_value_with_integer(ValueT *value, enum Status *status);
   ///
-void print_value(Value *value);
-int equal_values(Value *a, Value *b);
+void print_value(ValueT *value);
+int equal_values(ValueT *a, ValueT *b);
 
 //| stack.c
-Stack *empty_stack();
-Stack *value_onto_stack(Value *value, Stack *old_stack);
-Stack *code_onto_stack(Bin *code, Stack *old_stack);
+StackT *empty_stack();
+StackT *value_onto_stack(ValueT *value, StackT *old_stack);
+StackT *code_onto_stack(CodeT *code, StackT *old_stack);
   ///
-ValueOnStack match_stack_with_value(Stack *stack, enum Status *status);
-CodeOnStack match_stack_with_code(Stack *stack, enum Status *status);
+ValueOnStackT match_stack_with_value(StackT *stack, enum Status *status);
+CodeOnStackT match_stack_with_code(StackT *stack, enum Status *status);
   ///
-void print_stack(Stack *stack);
-int equal_stacks(Stack *a, Stack *b);
+void print_stack(StackT *stack);
+int equal_stacks(StackT *a, StackT *b);
 
 
 //| machine.c
-MachineState *new_state(Value *term, Bin *code, Stack *stack);
-MachineState *blank_state(Bin *code);
-int equal_states(MachineState *a, MachineState *b);
-enum Status run_machine(MachineState *ms, int verbose);
-enum Status exec(MachineState *ms);
+MachineStateT *MachineState(ValueT *term, CodeT *code, StackT *stack);
+MachineStateT *blank_state(CodeT *code);
+int equal_states(MachineStateT *a, MachineStateT *b);
+enum Status run_machine(MachineStateT *ms, int verbose);
+enum Status exec(MachineStateT *ms);
   ///
-enum Status exec_Halt(MachineState *ms);
+enum Status exec_Halt(MachineStateT *ms);
   ///
-enum Status exec_Unary(MachineState *ms);
-enum Status exec_Arith(MachineState *ms);
+enum Status exec_Unary(MachineStateT *ms);
+enum Status exec_Arith(MachineStateT *ms);
   ///
-enum Status exec_Push(MachineState *ms);
-enum Status exec_Cons(MachineState *ms);
+enum Status exec_Push(MachineStateT *ms);
+enum Status exec_Cons(MachineStateT *ms);
   ///
-enum Status exec_QuoteBool(MachineState *ms);
-enum Status exec_QuoteInt(MachineState *ms);
+enum Status exec_QuoteBool(MachineStateT *ms);
+enum Status exec_QuoteInt(MachineStateT *ms);
   ///
-enum Status exec_Swap(MachineState *ms);
-enum Status exec_Cur(MachineState *ms);
-enum Status exec_App(MachineState *ms);
-enum Status exec_Return(MachineState *ms);
-enum Status exec_Branch(MachineState *ms);
+enum Status exec_Swap(MachineStateT *ms);
+enum Status exec_Cur(MachineStateT *ms);
+enum Status exec_App(MachineStateT *ms);
+enum Status exec_Return(MachineStateT *ms);
+enum Status exec_Branch(MachineStateT *ms);
   ///
 long eval_primop(long operation, long a, long b, enum Status *status);
 void print_instruction(long instruction);
-void print_state(MachineState *ms);
+void print_state(MachineStateT *ms);
 void print_status(enum Status status);
 
 #endif

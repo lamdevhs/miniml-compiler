@@ -57,15 +57,15 @@ void test_mini_program() {
   // [Push; Cur [Push; iSnd; Swap; Quote (IntV 1); Cons;
   //             PrimInstr (BinOp (BArith BAadd)); Return];
   //  Swap; Quote (IntV 2); Cons; App]
-  Bin program[] = {
+  CodeT program[] = {
      Push, Cur, HOLE, Swap, QuoteInt, 2L, Cons, App, Halt,
      Push, Unary, Snd, Swap, QuoteInt, 1L, Cons, Arith, Plus, Return
   };
   program[2] = (long)(program + 9);
   printf("instruction: *program[2] = %ld, Push = %d\n",
-    ((Bin *)program[2])[0], Push);
+    ((CodeT *)program[2])[0], Push);
   
-  MachineState *ms = blank_state(program);
+  MachineStateT *ms = blank_state(program);
   enum Status status = run_machine(ms, info(verbosity -->) True);
   printf("final status: %d, Halt = %d; NotPair = %d, code = %ld" NL,
     status, Halted, ValueIsNotPair, (long)(ms->code - program));
@@ -76,13 +76,13 @@ int main () {
   printf(" ( //\n"); 
   printf("nothing to see\n");
   test_eval_primop();
-  Value t1, t2;
-  t1.tag = IntValue;
+  ValueT t1, t2;
+  t1.tag = ValueIsInt;
   t1.as.integer = 3;
-  t2.tag = BoolValue;
+  t2.tag = ValueIsBool;
   t2.as.boolean = 1;
   t1 = t2;
-  printf("=> %d -- %d -- %ld\n", t1.tag, BoolValue, t1.as.boolean);
+  printf("=> %d -- %d -- %ld\n", t1.tag, ValueIsBool, t1.as.boolean);
   
   test_mini_program();
 }
