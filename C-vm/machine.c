@@ -64,26 +64,44 @@ enum Status exec(MachineStateT *ms) {
 
 //| individual instructions:
 
-enum Status exec_Halt(MachineStateT *ms) {  
+enum Status exec_Halt(MachineStateT *ms)
+{  
   //| ms->term unchanged
-  ms->code += 1; //| kind of an arbitrary choice
+  ms->code += 1; //| arbitrary choice here to make
   //| ms->stack unchanged
   return Halted; //| <-- <-- <-- !
 }
 
-enum Status exec_Arith(MachineStateT *ms) {
+enum Status exec_Arith(MachineStateT *ms)
+{
   //| (PairV(IntV x, IntV y), PrimInstr (BinOp (BArith op)) :: c, st)
   //| -> (IntV (eval_arith op x y), c, st)
+  ValueT *term = ms->term;
+  
   enum Status status = AllOk;
-  PairT pair = match_value_with_pair(ms->term, &status);
-  if (status != AllOk) return status;
+  PairT pair = match_value_with_pair(term, &status);
+  if (status != AllOk) {
+    return status;
+  }
   long x = match_value_with_integer(pair.first, &status);
-  if (status != AllOk) return status;
+  if (status != AllOk) {
+    //| reset the machine state
+    ms->term = PairValue(pair.first, pair.second);
+    return status;
+  }
   long y = match_value_with_integer(pair.second, &status);
-  if (status != AllOk) return status;
+  if (status != AllOk) {
+    //| reset the machine state
+    ms->term = PairValue(IntValue(x), pair.second);
+    return status;
+  }
   long operation = ms->code[1];
   long result = eval_primop(operation, x, y, &status);
-  if (status != AllOk) return status;
+  if (status != AllOk) {
+    //| reset the machine state
+    ms->term = PairValue(IntValue(x), IntValue(y));
+    return status;
+  }
   
   ms->term = IntValue(result);
   ms->code += 2;
@@ -91,25 +109,30 @@ enum Status exec_Arith(MachineStateT *ms) {
   return AllOk;
 }
 
-enum Status exec_Unary(MachineStateT *ms) {
+enum Status exec_Unary(MachineStateT *ms)
+{
   //| (PairV(x, y), PrimInstr (UnOp Fst) :: c, st) -> (x, c, st)
   //| (PairV(x, y), PrimInstr (UnOp Snd) :: c, st) -> (y, c, st)
+  ValueT *term = ms->term;
+  
   enum Status status = AllOk;
-  PairT pair = match_value_with_pair(ms->term, &status);
+  PairT pair = match_value_with_pair(term, &status);
   if (status != AllOk) return status;
   ValueT *x = pair.first;
   ValueT *y = pair.second;
-  long instruction = ms->code[1];
+  long operation = ms->code[1];
   
-  if (instruction == Fst) {
+  if (operation == Fst) {
     ms->term = x;
     deepfree_value(y);
   }
-  else if (instruction == Snd) {
+  else if (operation == Snd) {
     ms->term = y;
     deepfree_value(x);
   }
-  else {
+  else info(invalid operation) {
+    //| reset the machine state
+    ms->term = PairValue(x, y);
     return UnknownUnary;
   }
   ms->code += 2;
@@ -117,7 +140,8 @@ enum Status exec_Unary(MachineStateT *ms) {
   return AllOk;
 }
 
-enum Status exec_Push(MachineStateT *ms) {
+enum Status exec_Push(MachineStateT *ms)
+{
   //| (x, Push :: c, st) -> (x, c, Val(x) :: st)
   ValueT *x = ms->term;
   StackT *stack = ms->stack;
@@ -129,10 +153,13 @@ enum Status exec_Push(MachineStateT *ms) {
   return AllOk;
 }
 
-enum Status exec_Cons(MachineStateT *ms) {
+enum Status exec_Cons(MachineStateT *ms)
+{
   //| (x, Cons :: c, Val(y) :: st) -> (PairV(y, x), c, st)
+  StackT *stack = ms->stack;
+  
   enum Status status = AllOk;
-  ValueOnStackT pattern = match_stacktop_with_value(ms->stack, &status);
+  ValueOnStackT pattern = match_stacktop_with_value(stack, &status);
   if (status != AllOk) return status;
   ValueT *x = ms->term;
   
@@ -142,7 +169,8 @@ enum Status exec_Cons(MachineStateT *ms) {
   return AllOk;
 }
 
-enum Status exec_QuoteBool(MachineStateT *ms) {
+enum Status exec_QuoteBool(MachineStateT *ms)
+{
   //| (_, QuoteBool(v) :: c, st) -> (BoolV(v), c, st)
   deepfree_value(ms->term);
   long v = ms->code[1];
@@ -153,7 +181,8 @@ enum Status exec_QuoteBool(MachineStateT *ms) {
   return AllOk;
 }
 
-enum Status exec_QuoteInt(MachineStateT *ms) {
+enum Status exec_QuoteInt(MachineStateT *ms)
+{
   //| (_, QuoteInt(v) :: c, st) -> (IntV(v), c, st)
   deepfree_value(ms->term);
   long v = ms->code[1];
@@ -164,10 +193,13 @@ enum Status exec_QuoteInt(MachineStateT *ms) {
   return AllOk;
 }
 
-enum Status exec_Swap(MachineStateT *ms) {
+enum Status exec_Swap(MachineStateT *ms)
+{
   //| (x, Swap :: c, Val(y) :: st) -> (y, c, Val (x) :: st)
+  StackT *stack = ms->stack;
+  
   enum Status status = AllOk;
-  ValueOnStackT pattern = match_stacktop_with_value(ms->stack, &status);
+  ValueOnStackT pattern = match_stacktop_with_value(stack, &status);
   if (status != AllOk) return status;
   ValueT *x = ms->term;
   
@@ -177,7 +209,8 @@ enum Status exec_Swap(MachineStateT *ms) {
   return AllOk;
 }
 
-enum Status exec_Cur(MachineStateT *ms) {
+enum Status exec_Cur(MachineStateT *ms)
+{
   //| (x, Cur (closure_code) :: c, st) -> (ClosureV(closure_code, x), c, st)
   CodeT *closure_code = (CodeT *)ms->code[1];
   ValueT *x = ms->term;
@@ -191,28 +224,36 @@ enum Status exec_Cur(MachineStateT *ms) {
 enum Status exec_App(MachineStateT *ms) {
   //| (PairV(ClosureV(new_code, y), z), App :: old_code, st)
   //| -> (PairV(y, z), new_code, Cod(old_code) :: st)
+  ValueT *term = ms->term;
+  
   enum Status status = AllOk;
-  PairT pair = match_value_with_pair(ms->term, &status);
+  PairT pair = match_value_with_pair(term, &status);
   if (status != AllOk) return status;
   ClosureT closure = match_value_with_closure(pair.first, &status);
-  if (status != AllOk) return status;
+  if (status != AllOk) {
+    //| reset the machine state
+    ms->term = PairValue(pair.first, pair.second);
+    return status;
+  }
   
   ValueT *z = pair.second;
   ValueT *y = closure.value;
   CodeT *new_code = closure.code;
-  StackT *st = ms->stack;
+  StackT *stack = ms->stack;
   CodeT *old_code = ms->code + 1;
   
   ms->term = PairValue(y, z);
   ms->code = new_code;
-  ms->stack = CodeOnStack(old_code, st);
+  ms->stack = CodeOnStack(old_code, stack);
   return AllOk;
 }
 
 enum Status exec_Return(MachineStateT *ms) {
   //| (x, Return :: c, Cod(new_code) :: st) -> (x, new_code, st)
+  StackT *stack = ms->stack;
+  
   enum Status status = AllOk;
-  CodeOnStackT pattern = match_stacktop_with_code(ms->stack, &status);
+  CodeOnStackT pattern = match_stacktop_with_code(stack, &status);
   if (status != AllOk) return status;
   
   // ms->term unchanged
@@ -224,15 +265,22 @@ enum Status exec_Return(MachineStateT *ms) {
 enum Status exec_Branch(MachineStateT *ms) {
   //| (BoolV(b), Branch (if_then, if_else) :: c, Val(x) :: st)
   //| -> (x, (if b then if_then else if_else), Cod(c) :: st)
+  ValueT *term = ms->term;
+  StackT *stack = ms->stack;
+  
   enum Status status = AllOk;
-  ValueOnStackT pattern = match_stacktop_with_value(ms->stack, &status);
+  long b = match_value_with_boolean(term, &status);
   if (status != AllOk) return status;
-  long b = match_value_with_boolean(ms->term, &status);
-  if (status != AllOk) return status;
+  ValueOnStackT pattern = match_stacktop_with_value(stack, &status);
+  if (status != AllOk) {
+    //| reset the machine state
+    ms->term = BoolValue(b);
+    return status;
+  }
   
   CodeT *code = ms->code;
-  CodeT *if_then = (CodeT *)code[1];
-  CodeT *if_else = (CodeT *)code[2];
+  CodeT *if_then = (CodeT *)(code[1]);
+  CodeT *if_else = (CodeT *)(code[2]);
   CodeT *c = code + 3;
   
   ms->term = pattern.top;

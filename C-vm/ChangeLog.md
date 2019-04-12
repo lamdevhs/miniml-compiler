@@ -63,3 +63,16 @@ value_Pair, empty_stack, etc., to PairValue, EmptyStack, etc.
 Replaced value_Pair with PairValue, code_onto_stack with CodeOnStack,
 and so on. Also replaced match_stack_with_zzz with
 match_stacktop_with_zzz.
+
+# Add cours.pdf
+
+# Fix exec_zzz to avoid incoherent states
+
+Before this commit, if an instruction terminated with a non-AllOk
+status, there was a real possibility that part of the machine state
+(ms->term and/or ms->stack) had been free()'d. Also, some
+malloc()'ed objects could have been lost in a leak.
+
+So, I modified the implementations of the various instructions to
+make sure to reset the machine state to its previous values in case
+of error -- also plugging the memory leaks at the same time.

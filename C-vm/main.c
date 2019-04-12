@@ -71,10 +71,15 @@ void test_mini_program() {
     status, Halted, ValueIsNotPair, (long)(ms->code - program));
 }
 
+void test_unions()
+{
+  union { long a; ValueT* b; } foo = { .b = PairValue(IntValue(-3), BoolValue(True)) };
+  printf("test unions: "); print_value(foo.b); printf(NL);
+}
+
 int main () {
   printf(" ( \\P\n"); 
   printf(" ( //\n"); 
-  printf("nothing to see\n");
   test_eval_primop();
   ValueT t1, t2;
   t1.tag = ValueIsInt;
@@ -82,8 +87,10 @@ int main () {
   t2.tag = ValueIsBool;
   t2.as.boolean = 1;
   t1 = t2;
-  printf("=> %d -- %d -- %ld\n", t1.tag, ValueIsBool, t1.as.boolean);
+  printf("=> %d -- %d -- %ld" NL, t1.tag, ValueIsBool, t1.as.boolean);
   
   test_mini_program();
+  
+  test_unions();
 }
 
