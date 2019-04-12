@@ -3,7 +3,7 @@
 #include "virtual-machine.h"
 
 
-ValueT *value_Pair(ValueT *first, ValueT *second) {
+ValueT *PairValue(ValueT *first, ValueT *second) {
   ValueT *value = malloc(sizeof(ValueT));
   value->tag = ValueIsPair;
   value->as.pair.first = first;
@@ -11,7 +11,7 @@ ValueT *value_Pair(ValueT *first, ValueT *second) {
   return value;
 }
 
-ValueT *value_Closure(CodeT *code, ValueT *closure_value) {
+ValueT *ClosureValue(CodeT *code, ValueT *closure_value) {
   ValueT *value = malloc(sizeof(ValueT));
   value->tag = ValueIsClosure;
   value->as.closure.code = code;
@@ -19,21 +19,21 @@ ValueT *value_Closure(CodeT *code, ValueT *closure_value) {
   return value;
 }
 
-ValueT *value_Bool(long x) {
+ValueT *BoolValue(long x) {
   ValueT *value = malloc(sizeof(ValueT));
   value->tag = ValueIsBool;
   value->as.boolean = x;
   return value;
 }
 
-ValueT *value_Int(long x) {
+ValueT *IntValue(long x) {
   ValueT *value = malloc(sizeof(ValueT));
   value->tag = ValueIsInt;
   value->as.integer = x;
   return value;
 }
 
-ValueT *value_Null() {
+ValueT *NullValue() {
   ValueT *value = malloc(sizeof(ValueT));
   value->tag = ValueIsNull;
   return value;
@@ -49,11 +49,11 @@ ValueT *deepcopy_value(ValueT *value) {
   if (tag == ValueIsPair) {
     ValueT *x = deepcopy_value(value->as.pair.first);
     ValueT *y = deepcopy_value(value->as.pair.second);
-    copy = value_Pair(x, y);
+    copy = PairValue(x, y);
   }
   else if (tag == ValueIsClosure) {
     ValueT *t = deepcopy_value(value->as.closure.value);
-    copy = value_Closure(value->as.closure.code, t);
+    copy = ClosureValue(value->as.closure.code, t);
   }
   else {
     copy = malloc(sizeof(ValueT));

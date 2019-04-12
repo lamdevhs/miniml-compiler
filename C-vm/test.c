@@ -18,59 +18,59 @@ void assert(char *str, int boolean) {
 void test_value() {
   enum Status status = AllOk;
   
-  //| -------- testing value_Bool
+  //| -------- testing BoolValue
   {
     long b0 = False;
-    ValueT *bv = value_Bool(b0);
+    ValueT *bv = BoolValue(b0);
     long b1 = match_value_with_boolean(bv, &status);
     assert("Bool(False)", b1 == b0 && status == AllOk);
   }
   {
     long b0 = True;
-    ValueT *bv = value_Bool(b0);
+    ValueT *bv = BoolValue(b0);
     long b1 = match_value_with_boolean(bv, &status);
     assert("Bool(True)", b1 == b0 && status == AllOk);
   }
 
-  //| -------- testing value_Pair
+  //| -------- testing PairValue
   {
-    ValueT *pair = value_Pair(value_Bool(0), value_Bool(1));
+    ValueT *pair = PairValue(BoolValue(0), BoolValue(1));
     PairT p = match_value_with_pair(pair, &status);
     assert("PairValue(b, b)", p.first->as.boolean == 0 && p.second->as.boolean == 1);
   }
   {
-    ValueT *pair = value_Pair(value_Pair(value_Bool(1), value_Bool(0)), value_Bool(0));
+    ValueT *pair = PairValue(PairValue(BoolValue(1), BoolValue(0)), BoolValue(0));
     PairT p = match_value_with_pair(pair, &status);
     assert("PairValue(PairValue(b, b), b)",
       p.first->tag == ValueIsPair && p.second->as.boolean == 0 && status == AllOk);
   }
 
-  //| -------- testing value_Null
+  //| -------- testing NullValue
   {
-    ValueT *nullv = value_Null();
+    ValueT *nullv = NullValue();
     assert("Null()", nullv->tag == ValueIsNull);
   }
 
-  //| -------- testing value_Closure
+  //| -------- testing ClosureValue
   {
-    ValueT *p = value_Pair(value_Bool(True), value_Bool(False));
-    ValueT *closure = value_Closure((CodeT *)42L, p);
+    ValueT *p = PairValue(BoolValue(True), BoolValue(False));
+    ValueT *closure = ClosureValue((CodeT *)42L, p);
     ClosureT c = match_value_with_closure(closure, &status);
-    assert("Closure(42, PairValue(True, False))",
+    assert("ClosureValue(42, PairValue(True, False))",
       c.value == p && c.code == (CodeT *)42L && status == AllOk);
   }
 
-  //| -------- testing value_Integer
+  //| -------- testing IntValue
   {
-    ValueT *integer = value_Int(43L);
+    ValueT *integer = IntValue(43L);
     long i = match_value_with_integer(integer, &status);
     assert("Int(43)", i == 43L && status == AllOk);
   }
 
   // ValueT *all_values[] = {
-  //   NULL, value_Null(), value_Bool(True), value_Int(55L),
-  //   value_Pair(value_Null(), value_Null()),
-  //   value_Closure((CodeT *)123L, value_Null())
+  //   NULL, NullValue(), BoolValue(True), IntValue(55L),
+  //   PairValue(NullValue(), NullValue()),
+  //   ClosureValue((CodeT *)123L, NullValue())
   // };
   // //| -------- testing match_value_with_boolean
   // {
@@ -105,38 +105,38 @@ void test_exec() {
     MachineStateT *ms = blank_state(program + 1);
     enum Status status = exec(ms);
     
-    MachineStateT *expected = MachineState(value_Null(), program + 2, empty_stack());
+    MachineStateT *expected = MachineState(NullValue(), program + 2, EmptyStack());
     assert("instruction Halt", status == Halted && equal_states(expected, ms));
   }
   //| -------- testing Unary
   {
     CodeT program[] = { 42L, Unary, Fst, Swap };
     MachineStateT *ms = MachineState(
-      value_Pair(value_Bool(True), value_Bool(False)),
+      PairValue(BoolValue(True), BoolValue(False)),
       program + 1,
-      empty_stack()
+      EmptyStack()
     );
     enum Status status = exec(ms);
-    MachineStateT *expected = MachineState(value_Bool(True), program + 3, empty_stack());
+    MachineStateT *expected = MachineState(BoolValue(True), program + 3, EmptyStack());
     assert("instruction Unary Fst", status == AllOk && equal_states(expected, ms));
   }
   {
     CodeT program[] = { 42L, Unary, Snd, Swap };
     MachineStateT *ms = MachineState(
-      value_Pair(value_Bool(True), value_Bool(False)),
+      PairValue(BoolValue(True), BoolValue(False)),
       program + 1,
-      empty_stack()
+      EmptyStack()
     );
     enum Status status = exec(ms);
-    MachineStateT *expected = MachineState(value_Bool(False), program + 3, empty_stack());
+    MachineStateT *expected = MachineState(BoolValue(False), program + 3, EmptyStack());
     assert("instruction Unary Snd", status == AllOk && equal_states(expected, ms));
   }
   {
     CodeT program[] = { 43L, Unary, 42L, Swap };
     MachineStateT *ms = MachineState(
-      value_Pair(value_Bool(True), value_Bool(False)),
+      PairValue(BoolValue(True), BoolValue(False)),
       program + 1,
-      empty_stack()
+      EmptyStack()
     );
     enum Status status = exec(ms);
     assert("instruction Unary 42", status == UnknownUnary);
@@ -144,9 +144,9 @@ void test_exec() {
   {
     CodeT program[] = { 43L, Unary, Fst, Swap };
     MachineStateT *ms = MachineState(
-      value_Bool(True),
+      BoolValue(True),
       program + 1,
-      empty_stack()
+      EmptyStack()
     );
     enum Status status = exec(ms);
     assert("instruction Unary Fst(Bool)", status == ValueIsNotPair);
@@ -156,7 +156,7 @@ void test_exec() {
     MachineStateT *ms = MachineState(
       NULL,
       program + 1,
-      empty_stack()
+      EmptyStack()
     );
     enum Status status = exec(ms);
     assert("instruction Unary Fst(NULL)", status == MatchNULLValue);
@@ -165,20 +165,20 @@ void test_exec() {
   {
     CodeT program[] = { 42L, Arith, Div, Swap };
     MachineStateT *ms = MachineState(
-      value_Pair(value_Int(42L), value_Int(3L)),
+      PairValue(IntValue(42L), IntValue(3L)),
       program + 1,
-      empty_stack()
+      EmptyStack()
     );
     enum Status status = exec(ms);
-    MachineStateT *expected = MachineState(value_Int(14L), program + 3, empty_stack());
+    MachineStateT *expected = MachineState(IntValue(14L), program + 3, EmptyStack());
     assert("instruction Arith Div(42, 3)", status == AllOk && equal_states(expected, ms));
   }
   {
     CodeT program[] = { 42L, Arith, Div, Swap };
     MachineStateT *ms = MachineState(
-      value_Pair(value_Int(42L), value_Int(0L)),
+      PairValue(IntValue(42L), IntValue(0L)),
       program + 1,
-      empty_stack()
+      EmptyStack()
     );
     enum Status status = exec(ms);
     assert("instruction Arith Div(42, 0)", status == DivZero);
@@ -186,9 +186,9 @@ void test_exec() {
   {
     CodeT program[] = { 43L, Arith, 42L, Swap };
     MachineStateT *ms = MachineState(
-      value_Pair(value_Int(3L), value_Int(4L)),
+      PairValue(IntValue(3L), IntValue(4L)),
       program + 1,
-      empty_stack()
+      EmptyStack()
     );
     enum Status status = exec(ms);
     assert("instruction Arith 42", status == UnknownArith);
@@ -199,20 +199,20 @@ void test_exec() {
   {
     CodeT program[] = { 43L, Push, Swap };
     MachineStateT *ms = MachineState(
-      value_Pair(value_Int(3L), value_Bool(True)),
+      PairValue(IntValue(3L), BoolValue(True)),
       program + 1,
-      value_onto_stack(value_Int(200L), empty_stack())
+      ValueOnStack(IntValue(200L), EmptyStack())
     );
     enum Status status = exec(ms);
     
     MachineStateT *expected = MachineState(
-      value_Pair(value_Int(3L), value_Bool(True)),
+      PairValue(IntValue(3L), BoolValue(True)),
       program + 2,
-      value_onto_stack(
-        value_Pair(value_Int(3L), value_Bool(True)),
-        value_onto_stack(
-          value_Int(200L),
-          empty_stack()
+      ValueOnStack(
+        PairValue(IntValue(3L), BoolValue(True)),
+        ValueOnStack(
+          IntValue(200L),
+          EmptyStack()
         )
       )
     );
@@ -228,19 +228,19 @@ void test_exec() {
   {
     CodeT program[] = { 43L, Cons, Swap };
     MachineStateT *ms = MachineState(
-      value_Pair(value_Int(3L), value_Bool(True)),
+      PairValue(IntValue(3L), BoolValue(True)),
       program + 1,
-      value_onto_stack(value_Int(200L), empty_stack())
+      ValueOnStack(IntValue(200L), EmptyStack())
     );
     enum Status status = exec(ms);
     
     MachineStateT *expected = MachineState(
-      value_Pair(
-        value_Int(200L),
-        value_Pair(value_Int(3L), value_Bool(True))
+      PairValue(
+        IntValue(200L),
+        PairValue(IntValue(3L), BoolValue(True))
       ),
       program + 2,
-      empty_stack()
+      EmptyStack()
     );
     assert("instruction Cons",
       status == AllOk
@@ -250,9 +250,9 @@ void test_exec() {
   {
     CodeT program[] = { 43L, Cons, Swap };
     MachineStateT *ms = MachineState(
-      value_Pair(value_Int(3L), value_Bool(True)),
+      PairValue(IntValue(3L), BoolValue(True)),
       program + 1,
-      empty_stack()
+      EmptyStack()
     );
     enum Status status = exec(ms);
     assert("instruction Cons with empty stack",
@@ -266,14 +266,14 @@ void test_exec() {
     MachineStateT *ms = MachineState(
       NULL,
       program + 1,
-      empty_stack()
+      EmptyStack()
     );
     enum Status status = exec(ms);
     
     MachineStateT *expected = MachineState(
-      value_Bool(True),
+      BoolValue(True),
       program + 3,
-      empty_stack()
+      EmptyStack()
     );
     assert("instruction QuoteBool",
       status == AllOk
@@ -285,14 +285,14 @@ void test_exec() {
     MachineStateT *ms = MachineState(
       NULL,
       program + 1,
-      empty_stack()
+      EmptyStack()
     );
     enum Status status = exec(ms);
     
     MachineStateT *expected = MachineState(
-      value_Int(-123L),
+      IntValue(-123L),
       program + 3,
-      empty_stack()
+      EmptyStack()
     );
     assert("instruction QuoteInt",
       status == AllOk
@@ -305,16 +305,16 @@ void test_exec() {
   {
     CodeT program[] = { 43L, Swap };
     MachineStateT *ms = MachineState(
-      value_Int(-1L),
+      IntValue(-1L),
       program + 1,
-      value_onto_stack(value_Bool(False), empty_stack())
+      ValueOnStack(BoolValue(False), EmptyStack())
     );
     enum Status status = exec(ms);
     
     MachineStateT *expected = MachineState(
-      value_Bool(False),
+      BoolValue(False),
       program + 2,
-      value_onto_stack(value_Int(-1L), empty_stack())
+      ValueOnStack(IntValue(-1L), EmptyStack())
     );
     assert("instruction Swap",
       status == AllOk
@@ -324,9 +324,9 @@ void test_exec() {
   {
     CodeT program[] = { 43L, Swap };
     MachineStateT *ms = MachineState(
-      value_Int(-1L),
+      IntValue(-1L),
       program + 1,
-      code_onto_stack((CodeT *) 24L, value_onto_stack(value_Bool(False), empty_stack()))
+      CodeOnStack((CodeT *) 24L, ValueOnStack(BoolValue(False), EmptyStack()))
     );
     enum Status status = exec(ms);
     
@@ -340,14 +340,14 @@ void test_exec() {
   {
     CodeT program[] = { -42L, Cur, 123456L, Push };
     MachineStateT *ms = MachineState(
-      value_Int(-1L),
+      IntValue(-1L),
       program + 1,
       NULL
     );
     enum Status status = exec(ms);
     
     MachineStateT *expected = MachineState(
-      value_Closure((CodeT *)123456L, value_Int(-1L)),
+      ClosureValue((CodeT *)123456L, IntValue(-1L)),
       program + 3,
       NULL
     );
@@ -363,19 +363,19 @@ void test_exec() {
   {
     CodeT program[] = { 42L, App, -1L };
     MachineStateT *ms = MachineState(
-      value_Pair(
-        value_Closure((CodeT *)456789L, value_Int(-100)),
-        value_Null()
+      PairValue(
+        ClosureValue((CodeT *)456789L, IntValue(-100)),
+        NullValue()
       ),
       program + 1,
-      empty_stack()
+      EmptyStack()
     );
     enum Status status = exec(ms);
     
     MachineStateT *expected = MachineState(
-      value_Pair(value_Int(-100), value_Null()),
+      PairValue(IntValue(-100), NullValue()),
       (CodeT *)456789L,
-      code_onto_stack(program + 2, empty_stack())
+      CodeOnStack(program + 2, EmptyStack())
     );
     assert("instruction App",
       status == AllOk
@@ -385,12 +385,12 @@ void test_exec() {
   {
     CodeT program[] = { 42L, App, -1L };
     MachineStateT *ms = MachineState(
-      value_Pair(
-        value_Int(-100),
-        value_Null()
+      PairValue(
+        IntValue(-100),
+        NullValue()
       ),
       program + 1,
-      empty_stack()
+      EmptyStack()
     );
     enum Status status = exec(ms);
     
@@ -408,12 +408,12 @@ void test_exec() {
       MachineState(
         NULL,
         program + 1,
-        code_onto_stack((CodeT *)192837L, value_onto_stack(value_Int(4L), empty_stack()))
+        CodeOnStack((CodeT *)192837L, ValueOnStack(IntValue(4L), EmptyStack()))
       ),
       MachineState(
         NULL,
         (CodeT *) 192837L,
-        value_onto_stack(value_Int(4L), empty_stack())
+        ValueOnStack(IntValue(4L), EmptyStack())
       )
     );
   }
@@ -424,7 +424,7 @@ void test_exec() {
       MachineState(
         NULL,
         program + 1,
-        value_onto_stack(value_Int(4L), empty_stack())
+        ValueOnStack(IntValue(4L), EmptyStack())
       ),
       StackHeadIsNotCode
     );
@@ -438,14 +438,14 @@ void test_exec() {
     exec_went_fine(
       "instruction Branch(True)",
       MachineState(
-        value_Bool(True),
+        BoolValue(True),
         program + 1,
-        value_onto_stack(value_Int(222L), value_onto_stack(value_Bool(False), empty_stack()))
+        ValueOnStack(IntValue(222L), ValueOnStack(BoolValue(False), EmptyStack()))
       ),
       MachineState(
-        value_Int(222L),
+        IntValue(222L),
         (CodeT *) -123L,
-        code_onto_stack(program + 4, value_onto_stack(value_Bool(False), empty_stack()))
+        CodeOnStack(program + 4, ValueOnStack(BoolValue(False), EmptyStack()))
       )
     );
   }
@@ -454,14 +454,14 @@ void test_exec() {
     exec_went_fine(
       "instruction Branch(False)",
       MachineState(
-        value_Bool(False),
+        BoolValue(False),
         program + 1,
-        value_onto_stack(value_Int(222L), value_onto_stack(value_Bool(False), empty_stack()))
+        ValueOnStack(IntValue(222L), ValueOnStack(BoolValue(False), EmptyStack()))
       ),
       MachineState(
-        value_Int(222L),
+        IntValue(222L),
         (CodeT *) 321L,
-        code_onto_stack(program + 4, value_onto_stack(value_Bool(False), empty_stack()))
+        CodeOnStack(program + 4, ValueOnStack(BoolValue(False), EmptyStack()))
       )
     );
   }
@@ -470,9 +470,9 @@ void test_exec() {
     exec_failed(
       "instruction Branch with no value on stack",
       MachineState(
-        value_Bool(False),
+        BoolValue(False),
         program + 1,
-        code_onto_stack(program, value_onto_stack(value_Bool(False), empty_stack()))
+        CodeOnStack(program, ValueOnStack(BoolValue(False), EmptyStack()))
       ),
       StackHeadIsNotValue
     );
@@ -484,7 +484,7 @@ void test_exec() {
       MachineState(
         NULL,
         program + 1,
-        value_onto_stack(value_Bool(False), empty_stack())
+        ValueOnStack(BoolValue(False), EmptyStack())
       ),
       MatchNULLValue
     );

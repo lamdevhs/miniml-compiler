@@ -57,3 +57,9 @@ Mostly:
 
 Most of the above is in anticipation of renaming the constructors
 value_Pair, empty_stack, etc., to PairValue, EmptyStack, etc.
+
+# Rename constructors
+
+Replaced value_Pair with PairValue, code_onto_stack with CodeOnStack,
+and so on. Also replaced match_stack_with_zzz with
+match_stacktop_with_zzz.

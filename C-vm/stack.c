@@ -5,13 +5,13 @@
 
 //| creation of stacks
 
-StackT *empty_stack() {
+StackT *EmptyStack() {
   StackT *new_stack = malloc(sizeof(StackT));
   new_stack->tag = StackIsEmpty;
   return new_stack;
 }
 
-StackT *value_onto_stack(ValueT *value, StackT *old_stack) {
+StackT *ValueOnStack(ValueT *value, StackT *old_stack) {
   StackT *new_stack = malloc(sizeof(StackT));
   new_stack->tag = StackTopIsValue;
   new_stack->as.with_value.top = value;
@@ -19,7 +19,7 @@ StackT *value_onto_stack(ValueT *value, StackT *old_stack) {
   return new_stack;
 }
 
-StackT *code_onto_stack(CodeT *code, StackT *old_stack) {
+StackT *CodeOnStack(CodeT *code, StackT *old_stack) {
   StackT *new_stack = malloc(sizeof(StackT));
   new_stack->tag = StackTopIsCode;
   new_stack->as.with_code.top = code;
@@ -31,7 +31,7 @@ StackT *code_onto_stack(CodeT *code, StackT *old_stack) {
 
 //| destructuration of stacks
 
-ValueOnStackT match_stack_with_value(StackT *stack, enum Status *status) {
+ValueOnStackT match_stacktop_with_value(StackT *stack, enum Status *status) {
   ValueOnStackT output = {NULL, NULL};
   if (stack == NULL) {
     *status = MatchNULLStack;
@@ -49,7 +49,7 @@ ValueOnStackT match_stack_with_value(StackT *stack, enum Status *status) {
   return output;
 }
 
-CodeOnStackT match_stack_with_code(StackT *stack, enum Status *status) {
+CodeOnStackT match_stacktop_with_code(StackT *stack, enum Status *status) {
   CodeOnStackT output = {NULL, NULL};
   if (stack == NULL) {
     *status = MatchNULLStack;

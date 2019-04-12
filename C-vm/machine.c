@@ -12,7 +12,7 @@ MachineStateT *MachineState(ValueT *term, CodeT *code, StackT *stack) {
 }
 
 MachineStateT *blank_state(CodeT *code) {
-  return MachineState(value_Null(), code, empty_stack());
+  return MachineState(NullValue(), code, EmptyStack());
 }
 
 int equal_states(MachineStateT *a, MachineStateT *b) {
@@ -85,7 +85,7 @@ enum Status exec_Arith(MachineStateT *ms) {
   long result = eval_primop(operation, x, y, &status);
   if (status != AllOk) return status;
   
-  ms->term = value_Int(result);
+  ms->term = IntValue(result);
   ms->code += 2;
   //| ms->stack unchanged
   return AllOk;
@@ -125,18 +125,18 @@ enum Status exec_Push(MachineStateT *ms) {
   
   //| ms->term unchanged
   ms->code += 1;
-  ms->stack = value_onto_stack(cloned_x, stack);
+  ms->stack = ValueOnStack(cloned_x, stack);
   return AllOk;
 }
 
 enum Status exec_Cons(MachineStateT *ms) {
   //| (x, Cons :: c, Val(y) :: st) -> (PairV(y, x), c, st)
   enum Status status = AllOk;
-  ValueOnStackT pattern = match_stack_with_value(ms->stack, &status);
+  ValueOnStackT pattern = match_stacktop_with_value(ms->stack, &status);
   if (status != AllOk) return status;
   ValueT *x = ms->term;
   
-  ms->term = value_Pair(pattern.top, x);
+  ms->term = PairValue(pattern.top, x);
   ms->code += 1;
   ms->stack = pattern.bottom;
   return AllOk;
@@ -147,7 +147,7 @@ enum Status exec_QuoteBool(MachineStateT *ms) {
   deepfree_value(ms->term);
   long v = ms->code[1];
   
-  ms->term = value_Bool(v);
+  ms->term = BoolValue(v);
   ms->code += 2;
   // ms->stack unchanged
   return AllOk;
@@ -158,7 +158,7 @@ enum Status exec_QuoteInt(MachineStateT *ms) {
   deepfree_value(ms->term);
   long v = ms->code[1];
   
-  ms->term = value_Int(v);
+  ms->term = IntValue(v);
   ms->code += 2;
   // ms->stack unchanged
   return AllOk;
@@ -167,13 +167,13 @@ enum Status exec_QuoteInt(MachineStateT *ms) {
 enum Status exec_Swap(MachineStateT *ms) {
   //| (x, Swap :: c, Val(y) :: st) -> (y, c, Val (x) :: st)
   enum Status status = AllOk;
-  ValueOnStackT pattern = match_stack_with_value(ms->stack, &status);
+  ValueOnStackT pattern = match_stacktop_with_value(ms->stack, &status);
   if (status != AllOk) return status;
   ValueT *x = ms->term;
   
   ms->term = pattern.top;
   ms->code += 1;
-  ms->stack = value_onto_stack(x, pattern.bottom);
+  ms->stack = ValueOnStack(x, pattern.bottom);
   return AllOk;
 }
 
@@ -182,7 +182,7 @@ enum Status exec_Cur(MachineStateT *ms) {
   CodeT *closure_code = (CodeT *)ms->code[1];
   ValueT *x = ms->term;
   
-  ms->term = value_Closure(closure_code, x);
+  ms->term = ClosureValue(closure_code, x);
   ms->code += 2;
   //| ms-stack unchanged
   return AllOk;
@@ -203,16 +203,16 @@ enum Status exec_App(MachineStateT *ms) {
   StackT *st = ms->stack;
   CodeT *old_code = ms->code + 1;
   
-  ms->term = value_Pair(y, z);
+  ms->term = PairValue(y, z);
   ms->code = new_code;
-  ms->stack = code_onto_stack(old_code, st);
+  ms->stack = CodeOnStack(old_code, st);
   return AllOk;
 }
 
 enum Status exec_Return(MachineStateT *ms) {
   //| (x, Return :: c, Cod(new_code) :: st) -> (x, new_code, st)
   enum Status status = AllOk;
-  CodeOnStackT pattern = match_stack_with_code(ms->stack, &status);
+  CodeOnStackT pattern = match_stacktop_with_code(ms->stack, &status);
   if (status != AllOk) return status;
   
   // ms->term unchanged
@@ -225,7 +225,7 @@ enum Status exec_Branch(MachineStateT *ms) {
   //| (BoolV(b), Branch (if_then, if_else) :: c, Val(x) :: st)
   //| -> (x, (if b then if_then else if_else), Cod(c) :: st)
   enum Status status = AllOk;
-  ValueOnStackT pattern = match_stack_with_value(ms->stack, &status);
+  ValueOnStackT pattern = match_stacktop_with_value(ms->stack, &status);
   if (status != AllOk) return status;
   long b = match_value_with_boolean(ms->term, &status);
   if (status != AllOk) return status;
@@ -237,7 +237,7 @@ enum Status exec_Branch(MachineStateT *ms) {
   
   ms->term = pattern.top;
   ms->code = (b ? if_then : if_else);
-  ms->stack = code_onto_stack(c, pattern.bottom);
+  ms->stack = CodeOnStack(c, pattern.bottom);
   return AllOk;
 }
 

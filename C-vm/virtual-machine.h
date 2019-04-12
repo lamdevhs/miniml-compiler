@@ -150,11 +150,11 @@ typedef struct MachineStateT {
 
 
 //| value.c
-ValueT *value_Pair(ValueT *first, ValueT *second);
-ValueT *value_Closure(CodeT *code, ValueT *closure_value);
-ValueT *value_Bool(long b);
-ValueT *value_Int(long x);
-ValueT *value_Null();
+ValueT *PairValue(ValueT *first, ValueT *second);
+ValueT *ClosureValue(CodeT *code, ValueT *closure_value);
+ValueT *BoolValue(long b);
+ValueT *IntValue(long x);
+ValueT *NullValue();
   ///
 ValueT *deepcopy_value(ValueT *value);
 void deepfree_value(ValueT *value);
@@ -168,12 +168,12 @@ void print_value(ValueT *value);
 int equal_values(ValueT *a, ValueT *b);
 
 //| stack.c
-StackT *empty_stack();
-StackT *value_onto_stack(ValueT *value, StackT *old_stack);
-StackT *code_onto_stack(CodeT *code, StackT *old_stack);
+StackT *EmptyStack();
+StackT *ValueOnStack(ValueT *value, StackT *old_stack);
+StackT *CodeOnStack(CodeT *code, StackT *old_stack);
   ///
-ValueOnStackT match_stack_with_value(StackT *stack, enum Status *status);
-CodeOnStackT match_stack_with_code(StackT *stack, enum Status *status);
+ValueOnStackT match_stacktop_with_value(StackT *stack, enum Status *status);
+CodeOnStackT match_stacktop_with_code(StackT *stack, enum Status *status);
   ///
 void print_stack(StackT *stack);
 int equal_stacks(StackT *a, StackT *b);
