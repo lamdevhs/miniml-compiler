@@ -76,3 +76,21 @@ malloc()'ed objects could have been lost in a leak.
 So, I modified the implementations of the various instructions to
 make sure to reset the machine state to its previous values in case
 of error -- also plugging the memory leaks at the same time.
+
+# Replace CodeT's definition with a union
+
+A value of type CodeT can now be:
+- an instruction `(int)`, e.g. `Swap`
+- an operation `(int)`, e.g. `Fst`, or `Mul`
+- a code reference `(CodeT *)`, e.g. the arguments that follow a
+  `Branch` instruction
+- data `(long int)`, for literal integers and booleans, to be used
+  with the `QuoteInt/Bool` instructions.
+
+Since I didn't add a tag field alongside (mostly to keep the model
+low-level), this union does not guarantee any type safety at all.
+In other terms, nothing's preventing you from reading a CodeT in an
+incorrect manner.
+
+What it does however, is render "safe" the casting between
+long/ints/pointers values to/from a CodeT[] array.

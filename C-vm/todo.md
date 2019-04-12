@@ -55,6 +55,7 @@
   usage: if (constructor(x, PairValue)) ...
 - we could have a status that is different for every single type of errors: 
   one e.g. for "Fst(Bool)", Fst(Null), Fst(NULL), Plus(Bool, Int) etc... though meh
+- replace most status errors with "ValueMatchingFailure" and "StackMatchingFailure"
 
 # BAD IDEAS
 - fuse Return and Halt, so that Return stops the vm if the stack is empty? or at least if

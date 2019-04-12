@@ -57,18 +57,32 @@ void test_mini_program() {
   // [Push; Cur [Push; iSnd; Swap; Quote (IntV 1); Cons;
   //             PrimInstr (BinOp (BArith BAadd)); Return];
   //  Swap; Quote (IntV 2); Cons; App]
-  CodeT program[] = {
-     Push, Cur, HOLE, Swap, QuoteInt, 2L, Cons, App, Halt,
-     Push, Unary, Snd, Swap, QuoteInt, 1L, Cons, Arith, Plus, Return
+  CodeT lambda0[] = {
+    { .instruction = Push },
+    { .instruction = Unary }, { .operation = Snd },
+    { .instruction = Swap },
+    { .instruction = QuoteInt }, { .data = 1L },
+    { .instruction = Cons },
+    { .instruction = Arith }, { .operation = Plus },
+    { .instruction = Return }
   };
-  program[2] = (long)(program + 9);
-  printf("instruction: *program[2] = %ld, Push = %d\n",
-    ((CodeT *)program[2])[0], Push);
+  CodeT program[] = {
+    { .instruction = Push },
+    { .instruction = Cur }, { .reference = lambda0 },
+    { .instruction = Swap },
+    { .instruction = QuoteInt }, { .data = 2L },
+    { .instruction = Cons },
+    { .instruction = App },
+    { .instruction = Halt },
+  };
+  printf("!! instruction: *(program[2]) = %d, Push = %d\n",
+    program[2].reference[0].instruction, Push
+  );
   
   MachineStateT *ms = blank_state(program);
   enum Status status = run_machine(ms, info(verbosity -->) True);
   printf("final status: %d, Halt = %d; NotPair = %d, code = %ld" NL,
-    status, Halted, ValueIsNotPair, (long)(ms->code - program));
+    status, Halted, ValueIsNotPair, ms->code - program);
 }
 
 void test_unions()
@@ -92,5 +106,7 @@ int main () {
   test_mini_program();
   
   test_unions();
+  
+  printf("size of CodeT: %ld, of ptr: %ld" NL, sizeof(CodeT), sizeof(void *));
 }
 

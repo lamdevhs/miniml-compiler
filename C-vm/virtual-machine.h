@@ -44,9 +44,21 @@ enum primitive_operations {
 };
 
 
+//| datatype CodeT
+//|    = Instruction(int)
+//|    | Operation(int)
+//|    | Reference(CodeT *)
+//|    | Data(long)
+union CodeT; typedef union CodeT {
+  int instruction;
+  int operation;
+  union CodeT *reference;
+  long data;
+} CodeT;
+//| A value of type (CodeT *) will represent a pointer to elements
+//| of an array containing a program's code: instructions, operations,
+//| quoted data, and references to other pieces of code.
 
-typedef long CodeT;
-//| CodeT* == pointer to an array containing binary code
 
 enum Status {
   AllOk,
@@ -203,9 +215,10 @@ enum Status exec_App(MachineStateT *ms);
 enum Status exec_Return(MachineStateT *ms);
 enum Status exec_Branch(MachineStateT *ms);
   ///
-long eval_primop(long operation, long a, long b, enum Status *status);
-void print_instruction(long instruction);
+long eval_primop(int operation, long a, long b, enum Status *status);
+void print_instruction(int instruction);
 void print_state(MachineStateT *ms);
 void print_status(enum Status status);
+CodeT *CodeRef(long x);
 
 #endif

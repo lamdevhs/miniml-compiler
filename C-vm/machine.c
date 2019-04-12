@@ -28,7 +28,7 @@ enum Status run_machine(MachineStateT *ms, int verbose) {
   while (status == AllOk) {
     if (verbose) {
       printf("Term = "); print_value(ms->term); printf(NL);
-      printf("Instruction = "); print_instruction(ms->code[0]); printf(NL);
+      printf("Instruction = "); print_instruction(ms->code[0].instruction); printf(NL);
     }
     status = exec(ms);
   }
@@ -36,7 +36,7 @@ enum Status run_machine(MachineStateT *ms, int verbose) {
 }
 
 enum Status exec(MachineStateT *ms) {
-  long instruction = ms->code[0];
+  int instruction = ms->code[0].instruction;
   enum Status status = AllOk;
   switch (instruction) {
     case Halt: status = exec_Halt(ms); break;
@@ -95,7 +95,7 @@ enum Status exec_Arith(MachineStateT *ms)
     ms->term = PairValue(IntValue(x), pair.second);
     return status;
   }
-  long operation = ms->code[1];
+  int operation = ms->code[1].operation;
   long result = eval_primop(operation, x, y, &status);
   if (status != AllOk) {
     //| reset the machine state
@@ -120,7 +120,7 @@ enum Status exec_Unary(MachineStateT *ms)
   if (status != AllOk) return status;
   ValueT *x = pair.first;
   ValueT *y = pair.second;
-  long operation = ms->code[1];
+  long operation = ms->code[1].operation;
   
   if (operation == Fst) {
     ms->term = x;
@@ -173,7 +173,7 @@ enum Status exec_QuoteBool(MachineStateT *ms)
 {
   //| (_, QuoteBool(v) :: c, st) -> (BoolV(v), c, st)
   deepfree_value(ms->term);
-  long v = ms->code[1];
+  long v = ms->code[1].data;
   
   ms->term = BoolValue(v);
   ms->code += 2;
@@ -185,7 +185,7 @@ enum Status exec_QuoteInt(MachineStateT *ms)
 {
   //| (_, QuoteInt(v) :: c, st) -> (IntV(v), c, st)
   deepfree_value(ms->term);
-  long v = ms->code[1];
+  long v = ms->code[1].data;
   
   ms->term = IntValue(v);
   ms->code += 2;
@@ -212,7 +212,7 @@ enum Status exec_Swap(MachineStateT *ms)
 enum Status exec_Cur(MachineStateT *ms)
 {
   //| (x, Cur (closure_code) :: c, st) -> (ClosureV(closure_code, x), c, st)
-  CodeT *closure_code = (CodeT *)ms->code[1];
+  CodeT *closure_code = ms->code[1].reference;
   ValueT *x = ms->term;
   
   ms->term = ClosureValue(closure_code, x);
@@ -279,8 +279,8 @@ enum Status exec_Branch(MachineStateT *ms) {
   }
   
   CodeT *code = ms->code;
-  CodeT *if_then = (CodeT *)(code[1]);
-  CodeT *if_else = (CodeT *)(code[2]);
+  CodeT *if_then = code[1].reference;
+  CodeT *if_else = code[2].reference;
   CodeT *c = code + 3;
   
   ms->term = pattern.top;
@@ -293,7 +293,7 @@ enum Status exec_Branch(MachineStateT *ms) {
 
 //| utilitary:
 
-long eval_primop(long operation, long a, long b, enum Status *status) {
+long eval_primop(int operation, long a, long b, enum Status *status) {
   switch (operation) {
   case Plus: return a + b;
     break;
@@ -326,7 +326,7 @@ long eval_primop(long operation, long a, long b, enum Status *status) {
   }
 }
 
-void print_instruction(long instruction) {
+void print_instruction(int instruction) {
   switch(instruction) {
     case Halt: printf("Halt"); break;
     case Unary: printf("Unary"); break;
@@ -376,4 +376,8 @@ void print_status(enum Status status) {
     default: printf("<Unknown>");
   }
 }
-    
+
+CodeT *CodeRef(long x)
+{
+  return (CodeT *)x;
+}
