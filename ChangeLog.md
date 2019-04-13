@@ -94,3 +94,18 @@ incorrect manner.
 
 What it does however, is render "safe" the casting between
 long/ints/pointers values to/from a CodeT[] array.
+
+# Write flatten_code
+
+Putting aside the implementation details, this new function takes a
+list of `instr` and returns a list of `flat_instr`.
+The difference between them is that the code structure is not recursive
+anymore: code does not contain instructions that could contain code.
+Instead, we end up with a list of separated pieces of code, and named
+references from one piece of code to another. It fits the C model (with
+pointers to code fragments, etc) that `flat_code` will get compiled to
+eventually.
+This function handles mutually recursive code as defined via the
+Fix/AddDefs/Call/RmDefs extensions. Ironically, the "compile" function
+that generates `instr` from `mlexp` does not handle it yet; neither
+does the parser. But, soon.

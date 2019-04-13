@@ -18,7 +18,7 @@ type instr =
 | AddDefs of (var * code) list
 | RmDefs of int
 and value =
-  NullV 
+  NullV
 | VarV of Miniml.var
 | IntV of int
 | BoolV of bool
@@ -27,6 +27,7 @@ and value =
 and code = instr list
 
 type stackelem = Val of value | Cod of code
+type stack = stackelem list
 
 let iSnd = PrimInstr (UnOp Snd);;
 let iFst = PrimInstr (UnOp Fst);;
@@ -40,7 +41,7 @@ let eval_compar : bcompar -> 'a -> 'a -> bool = function
 ;;
 
 let eval_one
-: (value * instr list * stackelem list) -> (value * instr list * stackelem list) =
+: (value * code * stack) -> (value * code * stack) =
   function
   | (_, QuoteB(x) :: c, st) -> (BoolV(x), c, st)
   | (_, QuoteI(x) :: c, st) -> (IntV(x), c, st)
@@ -85,13 +86,13 @@ let eval_prog instrs = till_no_change eval_one (initial_cfg instrs)
 
 type compilation_env = string list ;;
 
-let rec access : string -> compilation_env -> instr list =
+let rec access : string -> compilation_env -> code =
   fun x env -> match env with
   | a :: tail -> if a = x then [iSnd] else iFst :: access x tail
   | [] -> failwith ("this compiler is somehow buggy - var = " ^ x)
 ;;
 
-let rec compile : compilation_env -> mlexp -> instr list =
+let rec compile : compilation_env -> mlexp -> code =
   fun env x -> match x with
   | Var v -> access v env
   | Bool x -> [QuoteB x]
@@ -106,3 +107,153 @@ let rec compile : compilation_env -> mlexp -> instr list =
     Push :: compile env cond @ [branches]
   | otherwise -> failwith "this compiler is somehow buggy 1"
 ;;
+
+type coderef = string
+and flat_instr
+  = FlatHalt
+  | FlatPrimInstr of primop
+  | FlatCons
+  | FlatPush
+  | FlatSwap
+  | FlatReturn
+  | FlatQuoteB of bool
+  | FlatQuoteI of int
+  | FlatCur of coderef
+  | FlatApp
+  | FlatBranch of coderef * coderef
+  (* new for recursive calls *)
+  | FlatCall of coderef
+and flat_code = flat_instr list;;
+
+type referenced_flat_code = (string * flat_code) list;;
+type defs = (var * code) list;;
+type defs_dict = (var * string) list;;
+type flatdefs = (var * string) list;;
+
+let code_namer str n = (str ^ string_of_int n, n + 1);;
+
+let rec zip : 'a list -> 'b list ->  ('a * 'b) list =
+  fun xlist ylist -> match (xlist, ylist) with
+  | ([], _) -> []
+  | (_, []) -> []
+  | (x :: xs, y :: ys) -> (x, y) :: zip xs ys
+;;
+
+let rec unzip : ('a * 'b) list -> ('a list * 'b list) =
+  function
+  | [] -> ([], [])
+  | (x, y) :: tail ->
+    let (xs, ys) = unzip tail in
+    (x :: xs, y :: ys)
+;;
+
+let rename_defs : int -> var list -> (int * string list) =
+  fun seedN oldNameList ->
+  let folder (n, newNames) oldName =
+    let (newName, newN) = code_namer "letrec" n in
+    (newN, (newName ^ "_" ^ oldName) :: newNames) in
+  let seed = (seedN, []) in
+  let (outN, outList) = List.fold_left folder seed oldNameList in
+  (outN, List.rev outList)
+;;
+
+let rec find_def : var -> defs_dict list -> string =
+  fun v -> function
+  | [] -> failwith "find_def says: compiler bug!"
+  | d :: ds -> try List.assoc v d with
+    | Not_found -> find_def v ds
+;;
+
+(* Putting aside the implementation details, this new function takes a
+list of `instr` and returns a list of `flat_instr`.
+The difference between them is that the code structure is not recursive
+anymore: code does not contain instructions that could contain code.
+Instead, we end up with a list of separated pieces of code, and named
+references from one piece of code to another. It fits the C model (with
+pointers to code fragments, etc) that `flat_code` will get compiled to
+eventually. *)
+let rec flatten_code
+: int -> defs_dict list -> code -> (int * referenced_flat_code * flat_code) =
+  fun seedN seedDefsDict code ->
+  let folder (n, defsDict, refCode, mainCode) = (function
+    | PrimInstr(primop) -> (n, defsDict, refCode, mainCode @ [FlatPrimInstr(primop)])
+    | Cons -> (n, defsDict, refCode, mainCode @ [FlatCons])
+    | Push -> (n, defsDict, refCode, mainCode @ [FlatPush])
+    | Swap -> (n, defsDict, refCode, mainCode @ [FlatSwap])
+    | Return -> (n, defsDict, refCode, mainCode @ [FlatReturn])
+    | QuoteB(b) -> (n, defsDict, refCode, mainCode @ [FlatQuoteB(b)])
+    | QuoteI(i) -> (n, defsDict, refCode, mainCode @ [FlatQuoteI(i)])
+    | Cur(curCode) ->
+      let (curN, curRefCode, curFlatCode) = flatten_code n defsDict curCode in
+      let (curName, nextN) = code_namer "lambda" curN in
+      let nextRefCode = refCode @ curRefCode @ [(curName, curFlatCode)] in
+      let nextMainCode = mainCode @ [FlatCur(curName)] in
+      (nextN, defsDict, nextRefCode, nextMainCode)
+    | App -> (n, defsDict, refCode, mainCode @ [FlatApp])
+    | Branch(ifCode, elseCode) ->
+      let (ifCodeN, ifRefCode, ifFlatCode) =
+        flatten_code n defsDict ifCode in
+      let (ifCodeName, n2) = code_namer "if_branch" ifCodeN in
+      let (elseCodeN, elseRefCode, elseFlatCode) =
+        flatten_code n2 defsDict elseCode in
+      let (elseCodeName, nextN) = code_namer "else_branch" elseCodeN in
+      let nextRefCode = refCode
+        @ ifRefCode @ [(ifCodeName, ifFlatCode)]
+        @ elseRefCode @ [(elseCodeName, elseFlatCode)] in
+      let nextMainCode = mainCode @ [FlatBranch(ifCodeName, elseCodeName)] in
+      (nextN, defsDict, nextRefCode, nextMainCode)
+    | AddDefs(newDefs) ->
+      let (defsOldNames, defsCode) = unzip newDefs in
+      let (newN, defsNewNames) = rename_defs n defsOldNames in
+      let defsTranslator = zip defsOldNames defsNewNames in
+      let nextDefsDict = defsTranslator :: defsDict in
+      let (nextN, defsRefCode, defsFlatCode) =
+            flatten_defs newN nextDefsDict defsCode in
+      let nextRefCode = refCode @ defsRefCode @ (zip defsNewNames defsFlatCode) in
+      (nextN, nextDefsDict, nextRefCode, mainCode)
+    | Call(var) ->
+      let nameToCall = find_def var defsDict in
+      (n, defsDict, refCode, mainCode @ [FlatCall(nameToCall)])
+    | RmDefs _ -> (match defsDict with
+      | [] -> failwith "flatten_code says: compiler bug! near RmDefs"
+      | (d :: ds) -> (n, ds, refCode, mainCode))
+  ) in
+  let seed = (seedN, seedDefsDict, [], []) in
+  let (outN, _, outRefCode, outMainCode) = List.fold_left folder seed code in
+  (outN, outRefCode, outMainCode)
+(* end of flatten_code *)
+and flatten_defs
+: int -> defs_dict list -> code list -> (int * referenced_flat_code * flat_code list) =
+  fun seedN defsDict codeList ->
+  let folder (n, refs, flatCodeList) code =
+    let (newN, newRefs, flatCode) = flatten_code n defsDict code in
+    (newN, refs @ newRefs, (flatCode @ [FlatReturn]) :: flatCodeList) in
+  let seed = (seedN, [], []) in
+  let (outN, outRefs, outFlatCodeList) = List.fold_left folder seed codeList in
+  (outN, outRefs, List.rev outFlatCodeList)
+;;
+
+let flatten_program : code -> (referenced_flat_code * flat_code) = fun code ->
+  let (_, refs, program) = flatten_code 0 [] code in
+  (refs, program @ [FlatHalt])
+;;
+
+
+let sample_program =
+  let if1 =
+    [QuoteI(3); Return] in
+  let else1 =
+    let defs = [
+      ("f", [Call "g"]);
+      ("g", [QuoteI 123]);
+      ("h", [Call "i"]);
+      ("i", [Call "h"])
+    ] in
+    [AddDefs(defs); Call("f"); RmDefs(42); Return] in
+  let cur1 =
+    [Push; iSnd; Swap; Branch(if1, else1); Cons;
+    PrimInstr (BinOp (BArith BAadd)); Return]
+  in
+  [Push; Cur(cur1); Swap; QuoteI(2); Cons; App]
+;;
+let qwer = flatten_program sample_program;;

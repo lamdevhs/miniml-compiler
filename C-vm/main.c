@@ -91,6 +91,18 @@ void test_unions()
   printf("test unions: "); print_value(foo.b); printf(NL);
 }
 
+CodeT g1[3];
+CodeT g2[3];
+
+CodeT g1[] = { {.data = 1}, {.reference = g2}, {.data = 3}};
+CodeT g2[] = { {.data = 4}, {.reference = g1}, {.data = 6}};
+
+void test_local_vars()
+{
+  printf("g1 = %p, g1[1] = %p, g2 = %p, g2[1] = %p, " NL,
+    g1, g1[1].reference, g2, g2[1].reference);
+}
+
 int main () {
   printf(" ( \\P\n"); 
   printf(" ( //\n"); 
@@ -106,7 +118,8 @@ int main () {
   test_mini_program();
   
   test_unions();
-  
+  test_local_vars();
   printf("size of CodeT: %ld, of ptr: %ld" NL, sizeof(CodeT), sizeof(void *));
+  
 }
 
