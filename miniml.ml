@@ -66,11 +66,18 @@ let rec pp_exp : mlexp -> string = function
   | Bool b -> string_of_bool b
   | Int i -> string_of_int i
   | PrimOp po -> pp_primop po
-  | Cond (i, t, e) -> "if " ^ pp_exp i ^ " then " ^ pp_exp t ^ " else " ^ pp_exp e
+  | Cond (i, t, e) -> "(if " ^ pp_exp i ^ " then " ^ pp_exp t ^ " else " ^ pp_exp e ^ ")"
   | Pair (x, y) -> "(" ^ pp_exp x ^ "," ^ pp_exp y ^ ")"
-  | App (PrimOp op, Pair (x, y)) -> "(" ^ pp_exp x ^ " " ^ pp_primop op ^ " " ^ pp_exp y ^ ")"  | App (f, x) -> "(" ^ pp_exp f ^ " " ^ pp_exp x ^ ")"
+  | App (PrimOp op, Pair (x, y)) -> "(" ^ pp_exp x ^ " " ^ pp_primop op ^ " " ^ pp_exp y ^ ")"
+  | App (f, x) -> "(" ^ pp_exp f ^ " " ^ pp_exp x ^ ")"
   | Fn (v, b) -> "(fun " ^ v ^ " -> " ^ pp_exp b ^ ")"
-  | Fix _ -> "fix"
+  | Fix (d :: defs, exp) -> "let rec " ^ pp_def d ^ pp_defs defs ^ " in " ^ pp_exp exp
+  | Fix _ -> "(empty let rec ???)"
+and pp_def : (var * mlexp) -> string = fun (name, value) ->
+  name ^ " = " ^ pp_exp value
+and pp_defs : (var * mlexp) list -> string = function
+  | [] -> ""
+  | d :: ds -> " and " ^ pp_def d ^ pp_defs ds
 ;;
 
 let pp : prog -> string = function
@@ -78,3 +85,21 @@ let pp : prog -> string = function
 ;;
 
 (* todo list: fix the if-then-else in pair bug in the parser *)
+
+let test_pp =
+  let defs =
+    ("f", Cond (
+        Bool(true),
+        Fn ("x", Pair (Var "x", Int 3)),
+        Fn ("z", App(Var "g", Var "z"))
+      )
+    ) :: ("g", Fn("x", App(Var "f", Var "x"))) :: [("h", Bool(false))] in
+  Pair (Int 3, Fix(defs, App(Var "f", Var "h")))
+;;
+(* let v = (3,
+  let
+  rec f = (if true then (fun x -> (x,3)) else (fun z -> (g z)))
+  and g = (fun x -> (f x))
+  and h = false in (f h)
+);; *)
+let rec f = (fun z -> (3, g z)) and g = fun k -> k;;

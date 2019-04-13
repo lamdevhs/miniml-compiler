@@ -105,6 +105,7 @@ let rec compile : compilation_env -> mlexp -> code =
     let compiled_br x = compile env x @ [Return] in
     let branches = Branch(compiled_br if_then, compiled_br if_else) in
     Push :: compile env cond @ [branches]
+  (* | Fix(defs, exp) -> *)
   | otherwise -> failwith "this compiler is somehow buggy 1"
 ;;
 
