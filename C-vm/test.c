@@ -644,6 +644,31 @@ void test_exec() {
       );
     }
   }
+  
+  //| -------- testing Call
+  //| (x, Call(ref) :: c, st) -> (x, ref, Cod(c) :: st)
+  {
+    CodeT program[] = {
+      {.instruction = Call},{.reference = CodeRef(123456L)},
+      {.instruction = Halt},
+    };
+    
+    {
+      exec_went_fine(
+        "instruction Call",
+        MachineState(
+          NULL,
+          program,
+          ValueOnStack(BoolValue(True), EmptyStack())
+        ),
+        MachineState(
+          NULL,
+          CodeRef(123456L),
+          CodeOnStack(program + 2, ValueOnStack(BoolValue(True), EmptyStack()))
+        )
+      );
+    }
+  }
 }
 
 

@@ -4,40 +4,6 @@
 #include "virtual-machine.h"
 
 
-// long eval_primop(int op, long a, long b, enum Status *status) {
-//   switch (op) {
-//   case Plus: return a + b;
-//     break;
-//   case Sub: return a - b;
-//     break;
-//   case Mul: return a * b;
-//     break;
-//   case Div:
-//     if (b == 0) { *status = DivZero; return 0; }
-//     else { return a / b; }
-//     break;
-//   case Mod:
-//     if (b == 0) { *status = DivZero; return 0; }
-//     else { return a % b; }
-//     break;
-//   case Eq: return a == b;
-//     break;
-//   case Neq: return a != b;
-//     break;
-//   case Ge: return a >= b;
-//     break;
-//   case Gt: return a < b;
-//     break;
-//   case Le: return a < b;
-//     break;
-//   case Lt: return a <= b;
-//     break;
-//   default: *status = UnknownOperation; return 0;
-//     break;
-//   }
-// }
-
-
 void test_eval_primop() {
   int res; enum Status status = AllOk;
   

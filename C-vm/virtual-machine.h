@@ -214,6 +214,7 @@ enum Status exec_Cur(MachineStateT *ms);
 enum Status exec_App(MachineStateT *ms);
 enum Status exec_Return(MachineStateT *ms);
 enum Status exec_Branch(MachineStateT *ms);
+enum Status exec_Call(MachineStateT *ms);
   ///
 long eval_binary_operation(int operation, long a, long b, enum Status *status);
 void print_instruction(int instruction);

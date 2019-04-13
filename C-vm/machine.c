@@ -52,7 +52,7 @@ enum Status exec(MachineStateT *ms) {
     case QuoteBool: status = exec_QuoteBool(ms); break;
     case Cur: status = exec_Cur(ms); break;
     case Branch: status = exec_Branch(ms); break;
-    // Call
+    case Call: status = exec_Call(ms); break;
     default: status = UnknownInstruction; break;
   }
   return status;
@@ -334,6 +334,18 @@ enum Status exec_Branch(MachineStateT *ms) {
   return AllOk;
 }
 
+enum Status exec_Call(MachineStateT *ms)
+{
+  //| (x, Call(ref) :: c, st) -> (x, ref, Cod(c) :: st)
+  CodeT *ref = ms->code[1].reference;
+  CodeT *c = ms->code + 2;
+  StackT *st = ms->stack;
+  
+  //| ms->term unchanged
+  ms->code = ref;
+  ms->stack = CodeOnStack(c, st);
+  return AllOk;
+}
 
 
 //| utilitary:
