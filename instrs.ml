@@ -108,21 +108,22 @@ let rec compile : compilation_env -> mlexp -> code =
   | otherwise -> failwith "this compiler is somehow buggy 1"
 ;;
 
-type coderef = string
-and flat_instr
+type flat_instr
   = FlatHalt
-  | FlatPrimInstr of primop
+  | FlatUnary of unop
+  | FlatArith of barith
+  | FlatCompare of bcompar
   | FlatCons
   | FlatPush
   | FlatSwap
   | FlatReturn
   | FlatQuoteB of bool
   | FlatQuoteI of int
-  | FlatCur of coderef
+  | FlatCur of string
   | FlatApp
-  | FlatBranch of coderef * coderef
+  | FlatBranch of string * string
   (* new for recursive calls *)
-  | FlatCall of coderef
+  | FlatCall of string
 and flat_code = flat_instr list;;
 
 type referenced_flat_code = (string * flat_code) list;;
@@ -176,7 +177,12 @@ let rec flatten_code
 : int -> defs_dict list -> code -> (int * referenced_flat_code * flat_code) =
   fun seedN seedDefsDict code ->
   let folder (n, defsDict, refCode, mainCode) = (function
-    | PrimInstr(primop) -> (n, defsDict, refCode, mainCode @ [FlatPrimInstr(primop)])
+    | PrimInstr(UnOp op) ->
+      (n, defsDict, refCode, mainCode @ [FlatUnary (op)])
+    | PrimInstr(BinOp (BArith op)) ->
+      (n, defsDict, refCode, mainCode @ [FlatArith(op)])
+    | PrimInstr(BinOp (BCompar op)) ->
+      (n, defsDict, refCode, mainCode @ [FlatCompare(op)])
     | Cons -> (n, defsDict, refCode, mainCode @ [FlatCons])
     | Push -> (n, defsDict, refCode, mainCode @ [FlatPush])
     | Swap -> (n, defsDict, refCode, mainCode @ [FlatSwap])
@@ -257,3 +263,95 @@ let sample_program =
   [Push; Cur(cur1); Swap; QuoteI(2); Cons; App]
 ;;
 let qwer = flatten_program sample_program;;
+
+type c_code_fragment = CCodeFragment of (string * int * flat_code);;
+
+
+
+let sum : int list -> int = fun xs ->
+  List.fold_left (+) 0 xs
+;;
+
+let flat_program_to_C
+: (referenced_flat_code * flat_code) -> c_code_fragment list =
+  fun (refsCode, mainCode) ->
+  let allCode = refsCode @ [("main_code", mainCode)] in
+  let flat_instr_length = (function
+    | FlatUnary _ -> 2
+    | FlatArith _ -> 2
+    | FlatCompare _ -> 2
+    | FlatQuoteB _ -> 2
+    | FlatQuoteI _ -> 2
+    | FlatCur _ -> 2
+    | FlatBranch (_, _) -> 3
+    | FlatCall _ -> 2
+    | otherwise -> 1
+  ) in
+  let f (name, flatCode) =
+    let len = sum (List.map flat_instr_length flatCode) in
+    CCodeFragment (name, len, flatCode) in
+  List.map f allCode
+;;
+
+let qwer2 = flat_program_to_C (flatten_program sample_program);;
+
+let lines_of_C_code : c_code_fragment list -> string list = fun fragments ->
+  let union_field field content = "{." ^field^ " = " ^content^ "}," in
+  let write_instruction content = union_field "instruction" content in
+  let write_operation content = union_field "operation" content in
+  let write_reference content = union_field "reference" content in
+  let write_data content = union_field "data" content in
+  let string_of_flat_instr = (function
+    | FlatHalt -> write_instruction "Halt"
+    | FlatUnary op ->
+        let opstr = if (op = Fst) then "Fst" else "Snd" in
+        write_instruction "Unary" ^ write_operation opstr
+    | FlatArith op ->
+        let opstr = (match op with
+          BAadd->"Plus" |BAsub->"Sub" |BAmul->"Mul" |BAdiv->"Div" |BAmod->"Mod") in
+        write_instruction "Arith" ^ write_operation opstr
+    | FlatCompare op ->
+        let opstr = (match op with
+          BCeq->"Eq" |BCge->"Ge" |BCgt->"Gt"
+          |BCle->"Le" |BClt->"Lt" |BCne->"Neq") in
+        write_instruction "Compare" ^ write_operation opstr
+    | FlatCons -> write_instruction "Cons"
+    | FlatPush -> write_instruction "Push"
+    | FlatSwap -> write_instruction "Swap"
+    | FlatReturn -> write_instruction "Return"
+    | FlatQuoteB b -> write_instruction "QuoteBool" ^
+        write_data (if b then "True" else "False")
+    | FlatQuoteI i -> write_instruction "QuoteInt" ^
+        write_data (string_of_int i ^ "L")
+    | FlatCur ref -> write_instruction "Cur" ^ write_reference ref
+    | FlatApp -> write_instruction "App"
+    | FlatBranch (ifref, elseref) ->
+        write_instruction "Branch" ^
+        write_reference ifref ^ write_reference elseref
+    | FlatCall ref -> write_instruction "Call" ^ write_reference ref
+  ) in
+  let with_indent n lines =
+    let indent = String.make n ' ' in
+    List.map (fun line -> indent ^ line) lines in
+  let lines_of_fragment (CCodeFragment(name, size, instrs)) =
+    let first_line = "CodeT " ^ name ^ "[] =" in
+    let frag_content = with_indent 4 (List.map string_of_flat_instr instrs) in
+    first_line :: ["{"] @ frag_content @ ["};"] in
+  let declaration_of_fragment (CCodeFragment(name, size, instrs)) =
+    "CodeT " ^ name ^ "[" ^ string_of_int size ^ "];" in
+  let declarations = List.map declaration_of_fragment fragments in
+  let definitions = List.map lines_of_fragment fragments in
+  declarations @ [""] @ List.concat definitions
+;;
+
+let fold_left_one : ('a -> 'a -> 'a) -> 'a -> 'a list -> 'a =
+  fun f default_value -> function
+  | [] -> default_value
+  | x :: xs -> List.fold_left f x xs
+;;
+
+let lines_to_string : string list -> string = fun xs ->
+  fold_left_one (fun acc line -> acc ^ "\n" ^ line) "" xs
+;;
+
+let qwer3 = lines_to_string (lines_of_C_code qwer2);;

@@ -123,3 +123,62 @@ int main () {
   
 }
 
+CodeT if_branch0[3];
+CodeT letrec1_f[3];
+CodeT letrec2_g[3];
+CodeT letrec3_h[3];
+CodeT letrec4_i[3];
+CodeT else_branch5[3];
+CodeT lambda6[11];
+CodeT main_code[9];
+
+CodeT if_branch0[] =
+{
+    {.instruction = QuoteInt},{.data = 3L},
+    {.instruction = Return},
+};
+CodeT letrec1_f[] =
+{
+    {.instruction = Call},{.reference = letrec2_g},
+    {.instruction = Return},
+};
+CodeT letrec2_g[] =
+{
+    {.instruction = QuoteInt},{.data = 123L},
+    {.instruction = Return},
+};
+CodeT letrec3_h[] =
+{
+    {.instruction = Call},{.reference = letrec4_i},
+    {.instruction = Return},
+};
+CodeT letrec4_i[] =
+{
+    {.instruction = Call},{.reference = letrec3_h},
+    {.instruction = Return},
+};
+CodeT else_branch5[] =
+{
+    {.instruction = Call},{.reference = letrec1_f},
+    {.instruction = Return},
+};
+CodeT lambda6[] =
+{
+    {.instruction = Push},
+    {.instruction = Unary},{.operation = Snd},
+    {.instruction = Swap},
+    {.instruction = Branch},{.reference = if_branch0},{.reference = else_branch5},
+    {.instruction = Cons},
+    {.instruction = Arith},{.operation = Plus},
+    {.instruction = Return},
+};
+CodeT main_code[] =
+{
+    {.instruction = Push},
+    {.instruction = Cur},{.reference = lambda6},
+    {.instruction = Swap},
+    {.instruction = QuoteInt},{.data = 2L},
+    {.instruction = Cons},
+    {.instruction = App},
+    {.instruction = Halt},
+};

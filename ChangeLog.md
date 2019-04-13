@@ -109,3 +109,5 @@ This function handles mutually recursive code as defined via the
 Fix/AddDefs/Call/RmDefs extensions. Ironically, the "compile" function
 that generates `instr` from `mlexp` does not handle it yet; neither
 does the parser. But, soon.
+
+# Write code generator from flat_code to C

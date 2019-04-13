@@ -27,11 +27,11 @@ enum instructions {
   Branch,
   AddDefs,
   RmDefs,
-  Call
+  Call,
 };
 
 enum unary_operations {
-  Fst, Snd
+  Fst, Snd,
 };
 
 enum primitive_operations {
@@ -40,7 +40,7 @@ enum primitive_operations {
   Plus, Sub, Mul, Div, Mod,
   Eq, Neq,
   Ge, Gt,
-  Le, Lt
+  Le, Lt,
 };
 
 
