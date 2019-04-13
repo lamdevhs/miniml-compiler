@@ -217,8 +217,117 @@ void test_exec() {
       EmptyStack()
     );
     enum Status status = exec(ms);
-    assert("instruction Arith 42", status == UnknownArith);
+    assert("instruction Arith 42", status == UnknownBinary);
   }
+  
+  
+  //| -------- testing Compare
+  {
+    CodeT program1[] = {
+      {.data = 43L},
+      {.instruction = Compare},{.operation = Gt},
+      {.instruction = Swap},
+    };
+    CodeT program2[] = {
+      {.data = 43L},
+      {.instruction = Compare},{.operation = Le},
+      {.instruction = Swap},
+    };
+    CodeT program3[] = {
+      {.data = 43L},
+      {.instruction = Compare},{.operation = 42},
+      {.instruction = Swap},
+    };
+    
+    {
+      exec_went_fine(
+        "instruction Compare: 3 > -2",
+        MachineState(
+          PairValue(IntValue(3), IntValue(-2)),
+          program1 + 1,
+          EmptyStack()
+        ),
+        MachineState(
+          BoolValue(True),
+          program1 + 3,
+          EmptyStack()
+        )
+      );
+      
+      exec_went_fine(
+        "instruction Compare: 3 <= 2",
+        MachineState(
+          PairValue(IntValue(3), IntValue(-2)),
+          program2 + 1,
+          EmptyStack()
+        ),
+        MachineState(
+          BoolValue(False),
+          program2 + 3,
+          EmptyStack()
+        )
+      );
+      
+      exec_went_fine(
+        "instruction Compare: False > True",
+        MachineState(
+          PairValue(BoolValue(False), BoolValue(True)),
+          program2 + 1,
+          EmptyStack()
+        ),
+        MachineState(
+          BoolValue(True),
+          program2 + 3,
+          EmptyStack()
+        )
+      );
+      
+      exec_went_fine(
+        "instruction Compare: False <= True",
+        MachineState(
+          PairValue(BoolValue(False), BoolValue(True)),
+          program2 + 1,
+          EmptyStack()
+        ),
+        MachineState(
+          BoolValue(True),
+          program2 + 3,
+          EmptyStack()
+        )
+      );
+      
+      exec_failed(
+        "instruction Compare: False <= 2",
+        MachineState(
+          PairValue(BoolValue(False), IntValue(2)),
+          program2 + 1,
+          EmptyStack()
+        ),
+        MatchFailure
+      );
+      
+      exec_failed(
+        "instruction Compare: -2 <= True",
+        MachineState(
+          PairValue(IntValue(-2), BoolValue(True)),
+          program2 + 1,
+          EmptyStack()
+        ),
+        MatchFailure
+      );
+      
+      exec_failed(
+        "instruction Compare: False 42 True",
+        MachineState(
+          PairValue(BoolValue(False), BoolValue(True)),
+          program3 + 1,
+          EmptyStack()
+        ),
+        UnknownBinary
+      );
+    }
+  }
+  
   
   //| -------- testing Push
   //| (x, Push :: c, st) -> (x, c, Val(x) :: st)

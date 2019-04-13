@@ -41,13 +41,13 @@
 void test_eval_primop() {
   int res; enum Status status = AllOk;
   
-  res = eval_primop(Mul, 3, 7, &status);
+  res = eval_binary_operation(Mul, 3, 7, &status);
   printf("xyz\n" "%d -- status = %d\n", res, status);
   
-  res = eval_primop(Mod, 5, 0, &status);
+  res = eval_binary_operation(Mod, 5, 0, &status);
   printf("xyz\n" "%d -- status = %d\n", res, status);
   
-  res = eval_primop(4242, 3, 0, &status);
+  res = eval_binary_operation(4242, 3, 0, &status);
   printf("xyz\n" "%d -- status = %d\n", res, status);
 }
 

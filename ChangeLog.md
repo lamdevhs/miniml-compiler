@@ -111,3 +111,8 @@ that generates `instr` from `mlexp` does not handle it yet; neither
 does the parser. But, soon.
 
 # Write code generator from flat_code to C
+
+# C-vm: Add implementation for instruction Compare
+
+I also wrote tests for it, which allowed me to fix big stupid bugs in
+eval_binary_operation (previously called eval_primop).

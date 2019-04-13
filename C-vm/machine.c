@@ -42,7 +42,7 @@ enum Status exec(MachineStateT *ms) {
     case Halt: status = exec_Halt(ms); break;
     case Unary: status = exec_Unary(ms); break;
     case Arith: status = exec_Arith(ms); break;
-    // case Compare: status = exec_Compare(ms); break;
+    case Compare: status = exec_Compare(ms); break;
     case Cons: status = exec_Cons(ms); break;
     case Push: status = exec_Push(ms); break;
     case Swap: status = exec_Swap(ms); break;
@@ -52,8 +52,6 @@ enum Status exec(MachineStateT *ms) {
     case QuoteBool: status = exec_QuoteBool(ms); break;
     case Cur: status = exec_Cur(ms); break;
     case Branch: status = exec_Branch(ms); break;
-    // AddDefs
-    // RmDefs
     // Call
     default: status = UnknownInstruction; break;
   }
@@ -70,43 +68,6 @@ enum Status exec_Halt(MachineStateT *ms)
   ms->code += 1; //| arbitrary choice here to make
   //| ms->stack unchanged
   return Halted; //| <-- <-- <-- !
-}
-
-enum Status exec_Arith(MachineStateT *ms)
-{
-  //| (PairV(IntV x, IntV y), PrimInstr (BinOp (BArith op)) :: c, st)
-  //| -> (IntV (eval_arith op x y), c, st)
-  ValueT *term = ms->term;
-  
-  enum Status status = AllOk;
-  PairT pair = match_value_with_pair(term, &status);
-  if (status != AllOk) {
-    return status;
-  }
-  long x = match_value_with_integer(pair.first, &status);
-  if (status != AllOk) {
-    //| reset the machine state
-    ms->term = PairValue(pair.first, pair.second);
-    return status;
-  }
-  long y = match_value_with_integer(pair.second, &status);
-  if (status != AllOk) {
-    //| reset the machine state
-    ms->term = PairValue(IntValue(x), pair.second);
-    return status;
-  }
-  int operation = ms->code[1].operation;
-  long result = eval_primop(operation, x, y, &status);
-  if (status != AllOk) {
-    //| reset the machine state
-    ms->term = PairValue(IntValue(x), IntValue(y));
-    return status;
-  }
-  
-  ms->term = IntValue(result);
-  ms->code += 2;
-  //| ms->stack unchanged
-  return AllOk;
 }
 
 enum Status exec_Unary(MachineStateT *ms)
@@ -137,6 +98,90 @@ enum Status exec_Unary(MachineStateT *ms)
   }
   ms->code += 2;
   //| ms->stack unchanged
+  return AllOk;
+}
+
+enum Status exec_Arith(MachineStateT *ms)
+{
+  //| (PairV(IntV x, IntV y), PrimInstr (BinOp (BArith op)) :: c, st)
+  //| -> (IntV (eval_arith op x y), c, st)
+  ValueT *term = ms->term;
+  
+  enum Status status = AllOk;
+  PairT pair = match_value_with_pair(term, &status);
+  if (status != AllOk) {
+    return status;
+  }
+  long x = match_value_with_integer(pair.first, &status);
+  if (status != AllOk) {
+    //| reset the machine state
+    ms->term = PairValue(pair.first, pair.second);
+    return status;
+  }
+  long y = match_value_with_integer(pair.second, &status);
+  if (status != AllOk) {
+    //| reset the machine state
+    ms->term = PairValue(IntValue(x), pair.second);
+    return status;
+  }
+  int operation = ms->code[1].operation;
+  long result = eval_binary_operation(operation, x, y, &status);
+  if (status != AllOk) {
+    //| reset the machine state
+    ms->term = PairValue(IntValue(x), IntValue(y));
+    return status;
+  }
+  
+  ms->term = IntValue(result);
+  ms->code += 2;
+  //| ms->stack unchanged
+  return AllOk;
+}
+
+enum Status exec_Compare(MachineStateT *ms)
+{
+  //| (PairV(IntV x, IntV y), PrimInstr (BinOp (BCompar op)) :: c, st) ->
+  //|  (BoolV (eval_compare op x y), c, st)
+  //| (PairV(BoolV x, BoolV y), PrimInstr (BinOp (BCompar op)) :: c, st) ->
+  //|  (BoolV (eval_compare op x y), c, st)
+  ValueT *term = ms->term;
+  enum Status status = AllOk;
+  
+  PairT pair = match_value_with_pair(term, &status);
+  if (status != AllOk) return status;
+  enum ValueTag tag = pair.first->tag;
+  
+  long x, y;
+  //| either both operands are IntValues...
+  if (tag == ValueIsInt && tag == pair.second->tag) {
+    x = pair.first->as.integer;
+    y = pair.second->as.integer;
+  }
+  //| ...or they're both BoolValues...
+  else if (tag == ValueIsBool && tag == pair.second->tag) {
+    x = pair.first->as.boolean;
+    y = pair.second->as.boolean;
+  }
+  else { //| ... or, error
+    //| reset the machine state
+    ms->term = PairValue(pair.first, pair.second);
+    return MatchFailure;
+  }
+  int operation = ms->code[1].operation;
+  long result = eval_binary_operation(operation, x, y, &status);
+  if (status != AllOk) {
+    //| reset the machine state
+    ms->term = PairValue(pair.first, pair.second);
+    return UnknownBinary;
+  }
+  
+  //| memory management:
+  deepfree_value(pair.first);
+  deepfree_value(pair.second);
+  
+  ms->term = BoolValue(result);
+  ms->code += 2;
+  // ms->stack unchanged
   return AllOk;
 }
 
@@ -293,7 +338,8 @@ enum Status exec_Branch(MachineStateT *ms) {
 
 //| utilitary:
 
-long eval_primop(int operation, long a, long b, enum Status *status) {
+long eval_binary_operation(int operation, long a, long b, enum Status *status)
+{
   switch (operation) {
   case Plus: return a + b;
     break;
@@ -315,18 +361,19 @@ long eval_primop(int operation, long a, long b, enum Status *status) {
     break;
   case Ge: return a >= b;
     break;
-  case Gt: return a < b;
+  case Gt: return a > b;
     break;
-  case Le: return a < b;
+  case Le: return a <= b;
     break;
-  case Lt: return a <= b;
+  case Lt: return a < b;
     break;
-  default: *status = UnknownArith; return 0;
+  default: *status = UnknownBinary; return 0;
     break;
   }
 }
 
-void print_instruction(int instruction) {
+void print_instruction(int instruction)
+{
   switch(instruction) {
     case Halt: printf("Halt"); break;
     case Unary: printf("Unary"); break;
@@ -364,7 +411,8 @@ void print_status(enum Status status) {
     case DivZero: printf("DivZero"); break;
     case UnknownInstruction: printf("UnknownInstruction"); break;
     case UnknownUnary: printf("UnknownUnary"); break;
-    case UnknownArith: printf("UnknownArith"); break;
+    case UnknownBinary: printf("UnknownBinary"); break;
+    case MatchFailure: printf("MatchFailure"); break;
     case MatchNULLStack: printf("MatchNULLStack"); break;
     case StackHeadIsNotValue: printf("StackHeadIsNotValue"); break;
     case StackHeadIsNotCode: printf("StackHeadIsNotCode"); break;

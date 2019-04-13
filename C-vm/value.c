@@ -22,7 +22,7 @@ ValueT *ClosureValue(CodeT *code, ValueT *closure_value) {
 ValueT *BoolValue(long x) {
   ValueT *value = malloc(sizeof(ValueT));
   value->tag = ValueIsBool;
-  value->as.boolean = x;
+  value->as.boolean = !! x;
   return value;
 }
 
@@ -192,7 +192,7 @@ int equal_values(ValueT *a, ValueT *b) {
     return a->as.integer == b->as.integer;
   }
   else if (tag == ValueIsBool) {
-    return a->as.boolean == b->as.boolean;
+    return !! (a->as.boolean) == !! (b->as.boolean);
   }
   else if (tag == ValueIsPair) {
     return equal_values(a->as.pair.first, b->as.pair.first)

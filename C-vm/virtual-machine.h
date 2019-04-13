@@ -25,8 +25,6 @@ enum instructions {
   QuoteBool,
   Cur,
   Branch,
-  AddDefs,
-  RmDefs,
   Call,
 };
 
@@ -66,9 +64,10 @@ enum Status {
   DivZero,
   UnknownInstruction,
   UnknownUnary,
-  UnknownArith,
+  UnknownBinary,
   
   //| pattern-matching errors:
+    MatchFailure,
     MatchNULLStack,
     StackHeadIsNotValue,
     StackHeadIsNotCode,
@@ -77,7 +76,7 @@ enum Status {
     ValueIsNotPair,
     ValueIsNotClosure,
     ValueIsNotBool,
-    ValueIsNotInt
+    ValueIsNotInt,
 };
 
 
@@ -202,6 +201,7 @@ enum Status exec_Halt(MachineStateT *ms);
   ///
 enum Status exec_Unary(MachineStateT *ms);
 enum Status exec_Arith(MachineStateT *ms);
+enum Status exec_Compare(MachineStateT *ms);
   ///
 enum Status exec_Push(MachineStateT *ms);
 enum Status exec_Cons(MachineStateT *ms);
@@ -215,7 +215,7 @@ enum Status exec_App(MachineStateT *ms);
 enum Status exec_Return(MachineStateT *ms);
 enum Status exec_Branch(MachineStateT *ms);
   ///
-long eval_primop(int operation, long a, long b, enum Status *status);
+long eval_binary_operation(int operation, long a, long b, enum Status *status);
 void print_instruction(int instruction);
 void print_state(MachineStateT *ms);
 void print_status(enum Status status);
