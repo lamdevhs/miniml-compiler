@@ -97,7 +97,7 @@ void print_stack(StackT *stack) {
       print_stack(stack->as.with_value.bottom);
     }
     else if (stack->tag == StackTopIsCode) {
-      printf("@%ld", (long) (stack->as.with_code.top));
+      printf("%p", stack->as.with_code.top);
       printf(" :: ");
       print_stack(stack->as.with_value.bottom);
     }

@@ -2,6 +2,24 @@
 
 open Miniml;;
 
+
+(* staple tools *)
+  let rec zip : 'a list -> 'b list ->  ('a * 'b) list =
+    fun xlist ylist -> match (xlist, ylist) with
+    | ([], _) -> []
+    | (_, []) -> []
+    | (x :: xs, y :: ys) -> (x, y) :: zip xs ys
+  ;;
+
+  let rec unzip : ('a * 'b) list -> ('a list * 'b list) =
+    function
+    | [] -> ([], [])
+    | (x, y) :: tail ->
+      let (xs, ys) = unzip tail in
+      (x :: xs, y :: ys)
+  ;;
+
+
 type instr =
   PrimInstr of primop
 | Cons
@@ -84,12 +102,21 @@ let eval_prog instrs = till_no_change eval_one (initial_cfg instrs)
 
 (* compilation *)
 
-type compilation_env = string list ;;
+type compilation_env = envelem list 
+and envelem = EVar of var | EDef of var list;;
 
-let rec access : string -> compilation_env -> code =
-  fun x env -> match env with
-  | a :: tail -> if a = x then [iSnd] else iFst :: access x tail
-  | [] -> failwith ("this compiler is somehow buggy - var = " ^ x)
+let rec several : int -> 'a -> 'a list = fun n x ->
+  if (n <= 0) then [] else x :: several (n - 1) x
+;;
+
+let access : string -> compilation_env -> code = fun x env ->
+  let has y zs = List.exists (fun z -> z = y) zs in
+  let rec go n = (function
+    | EDef ds :: tail -> if (has x) ds then [Call x] else go n tail
+    | EVar a :: tail -> if a = x then several n iFst @ [iSnd] else go (n + 1) tail
+    | [] -> failwith ("this compiler is somehow buggy - var = " ^ x)
+  ) in
+  go 0 env
 ;;
 
 let rec compile : compilation_env -> mlexp -> code =
@@ -100,12 +127,18 @@ let rec compile : compilation_env -> mlexp -> code =
   | Pair(a, b) -> Push :: compile env a @ [Swap] @ compile env b @ [Cons]
   | App(PrimOp op, e) -> compile env e @ [PrimInstr op]
   | App(f, x) -> Push :: compile env f @ [Swap] @ compile env x @ [Cons; App]
-  | Fn(arg, body) -> Cur (compile (arg :: env) body @ [Return]) :: []
+  | Fn(arg, body) -> Cur (compile (EVar arg :: env) body @ [Return]) :: []
   | Cond(cond, if_then, if_else) ->
     let compiled_br x = compile env x @ [Return] in
     let branches = Branch(compiled_br if_then, compiled_br if_else) in
     Push :: compile env cond @ [branches]
-  (* | Fix(defs, exp) -> *)
+  | Fix(defs, exp) ->
+    let (defs_names, defs_mlexps) = unzip defs in
+    let new_env = EDef defs_names :: env in
+    let defs_code = List.map (compile new_env) defs_mlexps in
+    let dc = zip defs_names defs_code in
+    let ec = compile new_env exp in
+    [AddDefs dc] @ ec @ [RmDefs (List.length dc)]
   | otherwise -> failwith "this compiler is somehow buggy 1"
 ;;
 
@@ -134,20 +167,6 @@ type flatdefs = (var * string) list;;
 
 let code_namer str n = (str ^ string_of_int n, n + 1);;
 
-let rec zip : 'a list -> 'b list ->  ('a * 'b) list =
-  fun xlist ylist -> match (xlist, ylist) with
-  | ([], _) -> []
-  | (_, []) -> []
-  | (x :: xs, y :: ys) -> (x, y) :: zip xs ys
-;;
-
-let rec unzip : ('a * 'b) list -> ('a list * 'b list) =
-  function
-  | [] -> ([], [])
-  | (x, y) :: tail ->
-    let (xs, ys) = unzip tail in
-    (x :: xs, y :: ys)
-;;
 
 let rename_defs : int -> var list -> (int * string list) =
   fun seedN oldNameList ->
@@ -356,3 +375,27 @@ let lines_to_string : string list -> string = fun xs ->
 ;;
 
 let qwer3 = lines_to_string (lines_of_C_code qwer2);;
+
+let rec factorial =
+  fun n -> if n = 0 then 1 else n * factorial (n - 1)
+in factorial 10
+;;
+
+let factorial_mlexp =
+  let eq a b = Miniml.App (PrimOp (BinOp (BCompar BCeq)), Pair(a, b)) in
+  let mul a b = Miniml.App (PrimOp (BinOp (BArith BAmul)), Pair(a, b)) in
+  let sub a b = Miniml.App (PrimOp (BinOp (BArith BAsub)), Pair(a, b)) in
+  let app var x = Miniml.App(Var var, x) in
+  let body =
+    let cnd = eq (Var "n") (Int 0) in
+    let ifbranch = Int 1 in
+    let elsebranch = mul (Var "n") (app "factorial" (sub (Var "n") (Int 1))) in
+    Cond(cnd, ifbranch, elsebranch) in
+  let def = Fn("n", body) in
+  Fix ([("factorial", def)], app "factorial" (Int 10))
+;;
+
+let factorial_code = compile [] factorial_mlexp;; 
+let factorial_flat_code = flatten_program factorial_code;;
+let factorial_C = flat_program_to_C factorial_flat_code;;
+let factorial_str = lines_to_string (lines_of_C_code factorial_C);;

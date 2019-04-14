@@ -122,3 +122,10 @@ eval_binary_operation (previously called eval_primop).
 Also wrote corresponding unit tests.
 
 # Add Fix to mlexp pretty printer in miniml.ml
+
+# Now let-rec bindings can be compiled from mlexp
+
+Compiled to generated C code. I tested it on factorial, it
+worked like a charm!
+Note though that let-rec bindings still can't be *parsed*... but soon
+they will be.

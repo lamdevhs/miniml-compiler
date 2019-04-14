@@ -27,7 +27,7 @@ enum Status run_machine(MachineStateT *ms, int verbose) {
   enum Status status = AllOk;
   while (status == AllOk) {
     if (verbose) {
-      printf("Term = "); print_value(ms->term); printf(NL);
+      print_state(ms);
       printf("Instruction = "); print_instruction(ms->code[0].instruction); printf(NL);
     }
     status = exec(ms);
@@ -411,7 +411,7 @@ void print_state(MachineStateT *ms) {
   else {
     printf("MachineState:" NL);
     printf("  term = "); print_value(ms->term); printf(NL);
-    printf("  code = %ld" NL, (long)ms->code);
+    printf("  code = %p" NL, ms->code);
     printf("  stack = "); print_stack(ms->stack); printf(NL);
   }
 }
