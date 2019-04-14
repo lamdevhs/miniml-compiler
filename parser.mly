@@ -42,7 +42,7 @@ start: prog { $1 }
 ;
 
 prog:
-  typedef mlexp end_marker_opt EOF
+  typedef main_exp end_marker_opt EOF
   {Prog ($1, $2) }
 ;
 
@@ -61,118 +61,97 @@ typedef:
   {  Some ($2) }
 ;
 
-pair_exp:
-  bool_and_exp { $1 }
-| LPAREN pair_exp COMMA pair_exp RPAREN { Pair ($2, $4) }
+main_exp
+  : let_in_exp { $1 }
+  | FUN IDENTIFIER func_body { Fn($2, $3) }
+  | IF main_exp THEN main_exp ELSE main_exp { Cond($2, $4, $6) }
+  | LET REC let_rec_definitions IN main_exp { Fix ($3, $5) }
+  | pair_exp { $1 }
 ;
 
-bool_and_exp:
-  bool_or_exp { $1 }
-| bool_and_exp BLAND bool_or_exp { Cond($1, $3, Bool(false)) }
+let_rec_definitions
+  : let_rec_binding { [$1] }
+  | let_rec_binding AND let_rec_definitions { $1 :: $3 }
 ;
 
-bool_or_exp:
-  comp_exp { $1 }
-| bool_or_exp BLOR comp_exp { Cond($1, Bool(true), $3) }
+let_rec_binding
+  : IDENTIFIER EQ main_exp { ($1, $3) }
 ;
 
-
-comp_exp:
-  add_exp { $1 }
-| add_exp EQ add_exp { binary_exp $1 EQ $3 }
-| add_exp GE add_exp { binary_exp $1 GE $3 }
-| add_exp GT add_exp { binary_exp $1 GT $3 }
-| add_exp LE add_exp { binary_exp $1 LE $3 }
-| add_exp LT add_exp { binary_exp $1 LT $3 }
-| add_exp NE add_exp { binary_exp $1 NE $3 }
+/* (let x = e in a) gets translated into ((fun x -> a) e) */
+let_in_exp
+  : LET IDENTIFIER EQ main_exp IN main_exp { App(Fn($2, $6), $4) }
 ;
 
-add_exp:
-  mul_exp { $1 }
-| add_exp ADD mul_exp
-     { binary_exp $1 ADD $3 }
-| add_exp SUB mul_exp
-     { binary_exp $1 SUB $3 }
-;
-
-mul_exp:
-  primary_exp_list_as_mlexp { $1 }
-| mul_exp MUL primary_exp_list_as_mlexp
-     { binary_exp $1 MUL $3 }
-| mul_exp DIV primary_exp_list_as_mlexp
-     { binary_exp $1 DIV $3 }
-| mul_exp MOD primary_exp_list_as_mlexp
-     { binary_exp $1 MOD $3 }
-;
-
-
-unary_op:
-  FST
-  { Fst}
-| SND
-  { Snd}
-;
-
-primary_exp:
-  IDENTIFIER
-    { Var($1) }
- | BCONSTANT
-     { Bool($1) }
- | INTCONSTANT
-     { Int($1) }
-   /* OMITTED: string-literal */
- | unary_op
-     { PrimOp (UnOp($1)) }
- | LPAREN mlexp RPAREN
-     { $2 }
-;
-
-primary_exp_list:
-  primary_exp
-  { [$1] }
-| primary_exp primary_exp_list
-    { $1 :: $2 }
-;
-
-primary_exp_list_as_mlexp:
-  primary_exp_list
-      { match $1 with
-      | [e] -> e
-      | e::r -> List.fold_left (fun x y -> App(x, y)) e r
-      |  _ -> failwith "parser: empty list impossible"
-      }
-;
-
-mlexp:
-  pair_exp
-    { $1 }
-| IF mlexp THEN mlexp ELSE mlexp
-    { Cond($2, $4, $6) }
-| fun_exp { $1 }
-| LET REC let_binding_list IN mlexp
-      /*    { Fix (List.map fst $3, List.map snd $3, $5) } */
-    { Fix ($3, $5) }
-;
-
-fun_exp:
-  FUN IDENTIFIER after_fun
-  { Fn ($2, $3) }
+/* allows the syntax fun x y z -> e */
+func_body
+  : IDENTIFIER func_body { Fn ($1, $2) }
+  | ARROW main_exp { $2 }
 ;;
 
-after_fun:
-  ARROW mlexp
-  { $2 }
-| IDENTIFIER after_fun { Fn ($1, $2) }
-;;
-
-let_binding:
-  IDENTIFIER EQ mlexp
-  { ($1, $3) }
+/* left associative (kinda random choice). allows the absence of parentheses. */
+pair_exp
+  : pair_exp COMMA or_exp { Pair ($1, $3) }
+  | or_exp { $1 }
 ;
 
-let_binding_list:
-  let_binding
-  { [$1] }
-| let_binding AND let_binding_list
-    { $1 :: $3 }
+/* (||), (&&): right associative for the short-circuiting to work
+  from left to right:
+    a || b || c -> a || (b || c)
+  same for (&&).
+*/
+or_exp
+  : and_exp BLOR or_exp { Cond($1, Bool(true), $3) }
+  | and_exp { $1 }
+;
+and_exp
+  : compare_exp BLAND and_exp { Cond($1, $3, Bool(false)) }
+  | compare_exp { $1 }
+;
+
+/* a == b == c is deemed invalid */
+compare_exp
+  : plus_exp EQ plus_exp { binary_exp $1 EQ $3 }
+  | plus_exp GE plus_exp { binary_exp $1 GE $3 }
+  | plus_exp GT plus_exp { binary_exp $1 GT $3 }
+  | plus_exp LE plus_exp { binary_exp $1 LE $3 }
+  | plus_exp LT plus_exp { binary_exp $1 LT $3 }
+  | plus_exp NE plus_exp { binary_exp $1 NE $3 }
+  | plus_exp { $1 }
+;
+
+/* left associative, says ocaml's doc */
+plus_exp
+  : plus_exp ADD mult_exp { binary_exp $1 ADD $3 }
+  | plus_exp SUB mult_exp { binary_exp $1 SUB $3 }
+  | mult_exp { $1 }
+;
+
+/* left associative, says ocaml's doc */
+mult_exp
+  : mult_exp MUL app_exp { binary_exp $1 MUL $3 }
+  | mult_exp DIV app_exp { binary_exp $1 DIV $3 }
+  | mult_exp MOD app_exp { binary_exp $1 MOD $3 }
+  | app_exp { $1 }
+;
+
+/* application is left associative: f a b -> (f a) b */
+app_exp
+  : app_exp lowest_exp { App($1, $2) }
+  | lowest_exp { $1 }
+;
+
+/* terminal values and parentheses */
+lowest_exp
+  : LPAREN main_exp RPAREN { $2 }
+  | IDENTIFIER { Var($1) }
+  | BCONSTANT { Bool($1) }
+  | INTCONSTANT { Int($1) }
+  | unary { PrimOp (UnOp($1)) }
+  /* OMITTED: string-literal */
+;
+
+unary
+  : FST { Fst }
+  | SND { Snd }
 ;

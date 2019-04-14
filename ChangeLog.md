@@ -129,3 +129,5 @@ Compiled to generated C code. I tested it on factorial, it
 worked like a charm!
 Note though that let-rec bindings still can't be *parsed*... but soon
 they will be.
+
+# Rewrite parser, Add let-in and let-rec to it
