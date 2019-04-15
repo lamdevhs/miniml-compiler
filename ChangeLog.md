@@ -164,3 +164,11 @@ is built by the Makefile located in the root folder of the project.
 
 Also changed a tiny bit the mlexp pretty printer in miniml.ml so that
 function applications be more visible in the output.
+
+# Add folder for already generated .c/.h files
+
+So far it contains the code generated for the two ackermann's, for
+even_odd and for factorial.
+Mind you in the near future I'll probably be changing the format of
+the generated code and the corresponding runtime system so they'll 
+have to be updated.
