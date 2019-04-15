@@ -39,5 +39,16 @@ let generate infile outfile =
   let str = Instrs.print_gen_class_to_java (Instrs.compile_prog (parse infile)) in
   output_string outf str ; flush outf;
   *)
+  let generated = "generated" in
+  let abstract_tree = Miniml.mlexp_of_prog (parse infile) in
+  print_endline (Miniml.pp_exp abstract_tree);
+  let code = Instrs.compile [] abstract_tree in
+  let flat_code = Instrs.flatten_program code in
+  let (header, c_file) = Instrs.flat_program_to_C flat_code in
+  let outf_header = open_out (generated ^ ".h") in
+  let outf_c_file = open_out (generated ^ ".c") in
+  output_string outf_header header ; flush outf_header ;
+  output_string outf_c_file c_file ; flush outf_c_file ;
   print_string "finished\n"
+;;
 

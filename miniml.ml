@@ -69,7 +69,7 @@ let rec pp_exp : mlexp -> string = function
   | Cond (i, t, e) -> "(if " ^ pp_exp i ^ " then " ^ pp_exp t ^ " else " ^ pp_exp e ^ ")"
   | Pair (x, y) -> "(" ^ pp_exp x ^ "," ^ pp_exp y ^ ")"
   | App (PrimOp op, Pair (x, y)) -> "(" ^ pp_exp x ^ " " ^ pp_primop op ^ " " ^ pp_exp y ^ ")"
-  | App (f, x) -> "(" ^ pp_exp f ^ " " ^ pp_exp x ^ ")"
+  | App (f, x) -> "[" ^ pp_exp f ^ " " ^ pp_exp x ^ "]"
   | Fn (v, b) -> "(fun " ^ v ^ " -> " ^ pp_exp b ^ ")"
   | Fix (d :: defs, exp) -> "let rec " ^ pp_def d ^ pp_defs defs ^ " in " ^ pp_exp exp
   | Fix _ -> "(empty let rec ???)"

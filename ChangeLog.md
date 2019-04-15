@@ -154,3 +154,13 @@ the trace of what the function does and finds.
 Previously was left-associative. This change allows for creating
 values akin to lists with a nice syntax: (1, 2, 3, 4) meaning
 (1, (2, (3, 4))).
+
+# Write `generate` in interf.ml
+
+That's the function meant to read a source file, parse its content,
+compile it and output source files for the CAM (here, a C and C
+header files). That function is called via the executable `comp` that
+is built by the Makefile located in the root folder of the project.
+
+Also changed a tiny bit the mlexp pretty printer in miniml.ml so that
+function applications be more visible in the output.
