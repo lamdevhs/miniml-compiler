@@ -142,3 +142,15 @@ don't depend on its name.
 
 And add generated.{h,c} to .gitignore, though soon it probably
 won't matter anymore.
+
+# Add debug printing tools for `access`
+
+But the function is not at fault for the problem I encountered the
+other day, so I commented out the actual statements meant to print
+the trace of what the function does and finds.
+
+# Change parsing of comma to right-associative
+
+Previously was left-associative. This change allows for creating
+values akin to lists with a nice syntax: (1, 2, 3, 4) meaning
+(1, (2, (3, 4))).

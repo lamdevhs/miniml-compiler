@@ -37,13 +37,19 @@ let binary_exp e1 oper e2 = App(PrimOp (primop_of_token oper), Pair(e1, e2))
 %type <Miniml.prog> start
 
 %%
+/*
+todoes:
+  - recognize negative numbers
+  - allow underscores and dashes and maybe
+    even dots in variable names
+*/
 
 start: prog { $1 }
 ;
 
 prog:
   typedef main_exp end_marker_opt EOF
-  {Prog ($1, $2) }
+  { Prog ($1, $2) }
 ;
 
 end_marker_opt:
@@ -89,9 +95,11 @@ func_body
   | ARROW main_exp { $2 }
 ;;
 
-/* left associative (kinda random choice). allows the absence of parentheses. */
+/* right associative (kinda like lists).
+  allows the absence of parentheses:
+  (1, 2, 3) == (1, (2, 3)) */
 pair_exp
-  : pair_exp COMMA or_exp { Pair ($1, $3) }
+  : or_exp COMMA pair_exp { Pair ($1, $3) }
   | or_exp { $1 }
 ;
 
