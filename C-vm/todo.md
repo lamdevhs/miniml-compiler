@@ -23,6 +23,13 @@
 
 - rename App --> Apply, Cur --> Curry?
 
+- handle memory via refcounts:
+  use wrappers around malloc and free to measure the gain
+- change the C pretty printer of Values to be simpler (no constructors)
+- define the runtime() in the generated code, so that the compilation
+  process does not depend on how the files are named (does not depend
+  on a header either).
+
 # PITFALLS
 - /!\ when hitting an error, it may happen that some malloced stuff are in local
   variables of the exec(); more worryingly, the current value of main_term may

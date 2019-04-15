@@ -400,6 +400,7 @@ void print_instruction(int instruction)
     case QuoteBool: printf("QuoteBool"); break;
     case Cur: printf("Cur"); break;
     case Branch: printf("Branch"); break;
+    case Call: printf("Call"); break;
     default: printf("<Unknown>"); break;
   }
 }

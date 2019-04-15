@@ -8,3 +8,5 @@
 /*.cmo
 *~
 *.out
+generated.c
+generated.h

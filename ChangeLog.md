@@ -137,3 +137,8 @@ and have the main function in the generated code file, so that we
 don't depend on its name.
 
 # Add test-programs/
+
+# Add Call to print_instruction(), Cleanup
+
+And add generated.{h,c} to .gitignore, though soon it probably
+won't matter anymore.
