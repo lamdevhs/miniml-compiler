@@ -369,8 +369,8 @@ let lines_of_C_code : c_code_fragment list -> (string list * string list) =
         write_data (if b then "True" else "False")
     | FlatQuoteI i -> write_instruction "QuoteInt" ^
         write_data (string_of_int i ^ "L")
-    | FlatCur ref -> write_instruction "Cur" ^ write_reference ref
-    | FlatApp -> write_instruction "App"
+    | FlatCur ref -> write_instruction "Curry" ^ write_reference ref
+    | FlatApp -> write_instruction "Apply"
     | FlatBranch (ifref, elseref) ->
         write_instruction "Branch" ^
         write_reference ifref ^ write_reference elseref

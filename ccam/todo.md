@@ -1,10 +1,12 @@
 # TODO
 
-- rename App --> Apply, Cur --> Curry?
-
 - handle memory via refcounts:
   use wrappers around malloc and free to measure the gain
+  
+- rename test.c into unit-tests.c (including in makefile)
+  
 - change the C pretty printer of Values to be simpler (no constructors)
+
 - define the runtime() in the generated code, so that the compilation
   process does not depend on how the files are named (does not depend
   on a header either).
@@ -67,3 +69,6 @@ There's also a bit of redundancy.
     `{tag * (StackWithValue | StackWithCode)}`
   - use an `union { Bin *coderef, int data }` instead of long for Bin's def (if possible)
   - use PairValue/BoolValue/etc instead of value_Pair, etc, and use PairValueTag instead of PairValue,
+  
+These are in chronological order, hopefully:
+- rename App --> Apply, Cur --> Curry

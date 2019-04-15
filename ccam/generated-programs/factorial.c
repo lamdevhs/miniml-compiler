@@ -21,7 +21,7 @@ CodeT else_branch2[] =
     {.instruction = Cons},
     {.instruction = Arith},{.operation = Sub},
     {.instruction = Cons},
-    {.instruction = App},
+    {.instruction = Apply},
     {.instruction = Cons},
     {.instruction = Arith},{.operation = Mul},
     {.instruction = Return},
@@ -40,7 +40,7 @@ CodeT lambda3[] =
 };
 CodeT letrec0_factorial[] =
 {
-    {.instruction = Cur},{.reference = lambda3},
+    {.instruction = Curry},{.reference = lambda3},
     {.instruction = Return},
 };
 CodeT main_code[] =
@@ -50,6 +50,6 @@ CodeT main_code[] =
     {.instruction = Swap},
     {.instruction = QuoteInt},{.data = 15L},
     {.instruction = Cons},
-    {.instruction = App},
+    {.instruction = Apply},
     {.instruction = Halt},
 };

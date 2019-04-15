@@ -46,11 +46,11 @@ enum Status exec(MachineStateT *ms) {
     case Cons: status = exec_Cons(ms); break;
     case Push: status = exec_Push(ms); break;
     case Swap: status = exec_Swap(ms); break;
-    case App: status = exec_App(ms); break;
+    case Apply: status = exec_Apply(ms); break;
     case Return: status = exec_Return(ms); break;
     case QuoteInt: status = exec_QuoteInt(ms); break;
     case QuoteBool: status = exec_QuoteBool(ms); break;
-    case Cur: status = exec_Cur(ms); break;
+    case Curry: status = exec_Curry(ms); break;
     case Branch: status = exec_Branch(ms); break;
     case Call: status = exec_Call(ms); break;
     default: status = UnknownInstruction; break;
@@ -254,9 +254,9 @@ enum Status exec_Swap(MachineStateT *ms)
   return AllOk;
 }
 
-enum Status exec_Cur(MachineStateT *ms)
+enum Status exec_Curry(MachineStateT *ms)
 {
-  //| (x, Cur (closure_code) :: c, st) -> (ClosureV(closure_code, x), c, st)
+  //| (x, Curry (closure_code) :: c, st) -> (ClosureV(closure_code, x), c, st)
   CodeT *closure_code = ms->code[1].reference;
   ValueT *x = ms->term;
   
@@ -266,8 +266,8 @@ enum Status exec_Cur(MachineStateT *ms)
   return AllOk;
 }
 
-enum Status exec_App(MachineStateT *ms) {
-  //| (PairV(ClosureV(new_code, y), z), App :: old_code, st)
+enum Status exec_Apply(MachineStateT *ms) {
+  //| (PairV(ClosureV(new_code, y), z), Apply :: old_code, st)
   //| -> (PairV(y, z), new_code, Cod(old_code) :: st)
   ValueT *term = ms->term;
   
@@ -394,11 +394,11 @@ void print_instruction(int instruction)
     case Cons: printf("Cons"); break;
     case Push: printf("Push"); break;
     case Swap: printf("Swap"); break;
-    case App: printf("App"); break;
+    case Apply: printf("Apply"); break;
     case Return: printf("Return"); break;
     case QuoteInt: printf("QuoteInt"); break;
     case QuoteBool: printf("QuoteBool"); break;
-    case Cur: printf("Cur"); break;
+    case Curry: printf("Curry"); break;
     case Branch: printf("Branch"); break;
     case Call: printf("Call"); break;
     default: printf("<Unknown>"); break;

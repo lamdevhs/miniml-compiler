@@ -181,3 +181,8 @@ machine) that I wrote in C.
 # At last update ccam/todo.md
 
 Was long overdue.
+
+# ccam: Rename Cur and App into Curry and Apply
+
+Those are two instructions of the CAM.
+Also added factorial to /test-programs/.

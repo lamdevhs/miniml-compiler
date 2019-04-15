@@ -19,11 +19,11 @@ enum instructions {
   Cons,
   Push,
   Swap,
-  App,
+  Apply,
   Return,
   QuoteInt,
   QuoteBool,
-  Cur,
+  Curry,
   Branch,
   Call,
 };
@@ -210,8 +210,8 @@ enum Status exec_QuoteBool(MachineStateT *ms);
 enum Status exec_QuoteInt(MachineStateT *ms);
   ///
 enum Status exec_Swap(MachineStateT *ms);
-enum Status exec_Cur(MachineStateT *ms);
-enum Status exec_App(MachineStateT *ms);
+enum Status exec_Curry(MachineStateT *ms);
+enum Status exec_Apply(MachineStateT *ms);
 enum Status exec_Return(MachineStateT *ms);
 enum Status exec_Branch(MachineStateT *ms);
 enum Status exec_Call(MachineStateT *ms);

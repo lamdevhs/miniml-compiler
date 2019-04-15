@@ -479,12 +479,12 @@ void test_exec() {
     );
   }
   
-  //| --------- testing Cur
-  //| (x, Cur (closure_code) :: c, st) -> (ClosureV(closure_code, x), c, st)
+  //| --------- testing Curry
+  //| (x, Curry (closure_code) :: c, st) -> (ClosureV(closure_code, x), c, st)
   {
     CodeT program[] = {
       { .data = -42L },
-      { .instruction = Cur }, { .reference = CodeRef(123456L) },
+      { .instruction = Curry }, { .reference = CodeRef(123456L) },
       { .instruction = Push }
     };
     MachineStateT *ms = MachineState(
@@ -499,17 +499,17 @@ void test_exec() {
       program + 3,
       NULL
     );
-    assert("instruction Cur",
+    assert("instruction Curry",
       status == AllOk
       && equal_states(ms, expected)
     );
   }
   
-  //| --------- testing App
-  //| (PairV(ClosureV(new_code, y), z), App :: old_code, st)
+  //| --------- testing Apply
+  //| (PairV(ClosureV(new_code, y), z), Apply :: old_code, st)
   //| -> (PairV(y, z), new_code, Cod(old_code) :: st)
   {
-    CodeT program[] = { { .data = 42L }, { .instruction = App }, { .data = -1L } };
+    CodeT program[] = { { .data = 42L }, { .instruction = Apply }, { .data = -1L } };
     {
       MachineStateT *ms = MachineState(
         PairValue(
@@ -526,7 +526,7 @@ void test_exec() {
         (CodeT *)456789L,
         CodeOnStack(program + 2, EmptyStack())
       );
-      assert("instruction App",
+      assert("instruction Apply",
         status == AllOk
         && equal_states(ms, expected)
       );
@@ -542,7 +542,7 @@ void test_exec() {
       );
       enum Status status = exec(ms);
       
-      assert("instruction App with no closure",
+      assert("instruction Apply with no closure",
         status == ValueIsNotClosure
       );
     }

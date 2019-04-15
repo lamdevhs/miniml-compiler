@@ -20,9 +20,9 @@ void test_eval_primop() {
 #define HOLE 0
 #define NL "\n"
 void test_mini_program() {
-  // [Push; Cur [Push; iSnd; Swap; Quote (IntV 1); Cons;
+  // [Push; Curry [Push; iSnd; Swap; Quote (IntV 1); Cons;
   //             PrimInstr (BinOp (BArith BAadd)); Return];
-  //  Swap; Quote (IntV 2); Cons; App]
+  //  Swap; Quote (IntV 2); Cons; Apply]
   CodeT lambda0[] = {
     { .instruction = Push },
     { .instruction = Unary }, { .operation = Snd },
@@ -34,11 +34,11 @@ void test_mini_program() {
   };
   CodeT program[] = {
     { .instruction = Push },
-    { .instruction = Cur }, { .reference = lambda0 },
+    { .instruction = Curry }, { .reference = lambda0 },
     { .instruction = Swap },
     { .instruction = QuoteInt }, { .data = 2L },
     { .instruction = Cons },
-    { .instruction = App },
+    { .instruction = Apply },
     { .instruction = Halt },
   };
   printf("!! instruction: *(program[2]) = %d, Push = %d\n",
@@ -141,10 +141,10 @@ CodeT lambda6[] =
 CodeT main_code[] =
 {
     {.instruction = Push},
-    {.instruction = Cur},{.reference = lambda6},
+    {.instruction = Curry},{.reference = lambda6},
     {.instruction = Swap},
     {.instruction = QuoteInt},{.data = 2L},
     {.instruction = Cons},
-    {.instruction = App},
+    {.instruction = Apply},
     {.instruction = Halt},
 };
