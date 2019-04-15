@@ -172,3 +172,8 @@ even_odd and for factorial.
 Mind you in the near future I'll probably be changing the format of
 the generated code and the corresponding runtime system so they'll 
 have to be updated.
+
+# Rename folder /C-vm to /ccam
+
+That's the one containing the source for the CAM (the runtime virtual
+machine) that I wrote in C.
