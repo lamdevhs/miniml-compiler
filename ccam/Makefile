@@ -9,13 +9,13 @@ test: unit-tests.c stack.c machine.c value.c virtual-machine.h
 testv: unit-tests.c stack.c machine.c value.c virtual-machine.h
 	gcc -Wall -DVERBOSE -o unit-tests.out $^ && read && ./unit-tests.out
 
-gen: generated.c runtime.c stack.c machine.c value.c virtual-machine.h
-	gcc -Wall -o generated.out $^ && read && ./generated.out
+gen: $(name).c runtime.c stack.c machine.c value.c virtual-machine.h
+	gcc -Wall -o $(name).out $^ && read && ./$(name).out
 
-gendbg: generated.c runtime.c stack.c machine.c value.c virtual-machine.h
-	gcc -Wall -DDEBUGMODE -o generated.out $^ && read && ./generated.out
+gendbg: $(name).c runtime.c stack.c machine.c value.c virtual-machine.h
+	gcc -Wall -DDEBUGMODE -o $(name).out $^ && read && ./$(name).out
 
 .PHONY: clean
 
 clean: 
-	rm -f unit-tests.out core.out generated.out
+	rm -f unit-tests.out core.out

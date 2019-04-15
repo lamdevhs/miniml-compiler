@@ -6,9 +6,6 @@
 - add a function taking a CodeT* and pretty-printing the next instruction,
   use it to change print_state to sth more friendly
   
-- rename test.c into unit-tests.c (including in makefile)
-
-- meliorate runtime system
 
 - define the runtime() in the generated code, so that the compilation
   process does not depend on how the files are named (does not depend
@@ -76,3 +73,5 @@ There's also a bit of redundancy.
 These are in chronological order, hopefully:
 - rename App --> Apply, Cur --> Curry
 - change the C pretty printer of Values to be less verbose (no constructors)
+- rename test.c into unit-tests.c (including in makefile)
+- meliorate the format of the generated code

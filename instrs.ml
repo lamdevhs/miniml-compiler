@@ -401,17 +401,13 @@ let lines_to_string : string list -> string = fun xs ->
 ;;
 
 let flat_program_to_C
-: (referenced_flat_code * flat_code) -> (string * string) = fun flat_program ->
+: (referenced_flat_code * flat_code) -> string = fun flat_program ->
   let (declarations, definitions) =
     lines_of_C_code (flat_program_to_c_code_fragments flat_program) in
   let include_vm = "#include \"virtual-machine.h\"" in
-  let include_header = "#include \"generated.h\"" in
-  let cpp_dirs x =
-    "#ifndef GENERATED_H\n#define GENERATED_H\n" ::
-    include_vm :: "" :: x @ [""; "#endif"] in
-  let header = cpp_dirs declarations in
-  let c_file = include_vm :: include_header :: "" :: definitions in
-  (lines_to_string header, lines_to_string c_file)
+  let code_accessor = "CodeT *get_main_code()" :: "{" :: "    return main_code;" :: "}" :: [] in
+  let c_file = include_vm :: "" :: declarations @ ("" :: definitions @ ("" :: code_accessor)) in
+  (lines_to_string c_file ^ "\n")
 ;;
 
 let qwer3 = 

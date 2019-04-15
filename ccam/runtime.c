@@ -1,8 +1,7 @@
 #include "virtual-machine.h"
-#include "generated.h"
 
 int main () {
-  MachineStateT *ms = blank_state (main_code);
+  MachineStateT *ms = blank_state (get_main_code());
   
 #ifdef DEBUGMODE
   int verbosity = True;
