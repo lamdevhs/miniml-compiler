@@ -131,3 +131,9 @@ Note though that let-rec bindings still can't be *parsed*... but soon
 they will be.
 
 # Rewrite parser, Add let-in and let-rec to it
+
+idea: have a runtime function that does not depend on "main_code",
+and have the main function in the generated code file, so that we
+don't depend on its name.
+
+# Add test-programs/
