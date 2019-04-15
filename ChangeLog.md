@@ -193,3 +193,5 @@ Essentially, removing the constructors to make it less verbose:
 ((1,False),Closure(0x000000000000,Null)) instead of
 PairValue((IntValue(1),BoolValue(False)),
   ClosureValue(0x000000000000,NullValue))
+
+# Rename ccam/test.c into ccam/unit-tests.c

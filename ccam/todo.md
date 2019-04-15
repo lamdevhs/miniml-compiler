@@ -7,7 +7,8 @@
   use it to change print_state to sth more friendly
   
 - rename test.c into unit-tests.c (including in makefile)
-  
+
+- meliorate runtime system
 
 - define the runtime() in the generated code, so that the compilation
   process does not depend on how the files are named (does not depend
