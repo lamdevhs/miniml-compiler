@@ -109,6 +109,27 @@ let rec several : int -> 'a -> 'a list = fun n x ->
   if (n <= 0) then [] else x :: several (n - 1) x
 ;;
 
+let concat_with : string -> string list -> string = fun sep ->
+  let folder acc str = acc ^ sep ^ str in
+  function
+  | [] ->  ""
+  | x :: xs ->  List.fold_left folder x xs
+;;
+
+let rec str_of_env : compilation_env -> string = function
+  | [] -> "[]"
+  | EVar x :: xs -> "EVar(" ^ x ^ ")::" ^ str_of_env xs
+  | EDef ds :: xs -> "EDef[" ^ concat_with "," ds ^ "]::" ^ str_of_env xs
+
+let rec str_of_access : code -> string = function
+  | [] -> ""
+  | [Call x] -> "Call(" ^ x ^ ")"
+  | PrimInstr (UnOp Fst) :: xs -> "Tail," ^ str_of_access xs
+  | PrimInstr (UnOp Snd) :: xs -> "Head," ^ str_of_access xs
+  | _ -> failwith "str_of_access: won't ever happen"
+;;
+  
+
 let access : string -> compilation_env -> code = fun x env ->
   let has y zs = List.exists (fun z -> z = y) zs in
   let rec go n = (function
@@ -116,7 +137,11 @@ let access : string -> compilation_env -> code = fun x env ->
     | EVar a :: tail -> if a = x then several n iFst @ [iSnd] else go (n + 1) tail
     | [] -> failwith ("this compiler is somehow buggy - var = " ^ x)
   ) in
-  go 0 env
+  (* let msg = "looking for " ^ x ^ " in env = " ^ str_of_env env in
+  print_endline msg; *)
+  let res = go 0 env in
+  (* print_endline ("got:" ^ str_of_access res) ; *)
+  res
 ;;
 
 let rec compile : compilation_env -> mlexp -> code =
@@ -292,7 +317,7 @@ let sum : int list -> int = fun xs ->
   List.fold_left (+) 0 xs
 ;;
 
-let flat_program_to_C
+let flat_program_to_c_code_fragments
 : (referenced_flat_code * flat_code) -> c_code_fragment list =
   fun (refsCode, mainCode) ->
   let allCode = refsCode @ [("main_code", mainCode)] in
@@ -313,9 +338,10 @@ let flat_program_to_C
   List.map f allCode
 ;;
 
-let qwer2 = flat_program_to_C (flatten_program sample_program);;
+let qwer2 = flat_program_to_c_code_fragments (flatten_program sample_program);;
 
-let lines_of_C_code : c_code_fragment list -> string list = fun fragments ->
+let lines_of_C_code : c_code_fragment list -> (string list * string list) =
+  fun fragments ->
   let union_field field content = "{." ^field^ " = " ^content^ "}," in
   let write_instruction content = union_field "instruction" content in
   let write_operation content = union_field "operation" content in
@@ -361,7 +387,7 @@ let lines_of_C_code : c_code_fragment list -> string list = fun fragments ->
     "CodeT " ^ name ^ "[" ^ string_of_int size ^ "];" in
   let declarations = List.map declaration_of_fragment fragments in
   let definitions = List.map lines_of_fragment fragments in
-  declarations @ [""] @ List.concat definitions
+  (declarations, List.concat definitions)
 ;;
 
 let fold_left_one : ('a -> 'a -> 'a) -> 'a -> 'a list -> 'a =
@@ -374,7 +400,24 @@ let lines_to_string : string list -> string = fun xs ->
   fold_left_one (fun acc line -> acc ^ "\n" ^ line) "" xs
 ;;
 
-let qwer3 = lines_to_string (lines_of_C_code qwer2);;
+let flat_program_to_C
+: (referenced_flat_code * flat_code) -> (string * string) = fun flat_program ->
+  let (declarations, definitions) =
+    lines_of_C_code (flat_program_to_c_code_fragments flat_program) in
+  let include_vm = "#include \"virtual-machine.h\"" in
+  let include_header = "#include \"generated.h\"" in
+  let cpp_dirs x =
+    "#ifndef GENERATED_H\n#define GENERATED_H\n" ::
+    include_vm :: "" :: x @ [""; "#endif"] in
+  let header = cpp_dirs declarations in
+  let c_file = include_vm :: include_header :: "" :: definitions in
+  (lines_to_string header, lines_to_string c_file)
+;;
+
+let qwer3 = 
+  let (a, b) = lines_of_C_code qwer2 in
+  lines_to_string a ^ "\n" ^ lines_to_string b
+;;
 
 let rec factorial =
   fun n -> if n = 0 then 1 else n * factorial (n - 1)
@@ -397,5 +440,10 @@ let factorial_mlexp =
 
 let factorial_code = compile [] factorial_mlexp;; 
 let factorial_flat_code = flatten_program factorial_code;;
-let factorial_C = flat_program_to_C factorial_flat_code;;
-let factorial_str = lines_to_string (lines_of_C_code factorial_C);;
+let factorial_C = flat_program_to_c_code_fragments factorial_flat_code;;
+let factorial_str =
+  let (a, b) = lines_of_C_code factorial_C in
+  lines_to_string a ^ "\n" ^ lines_to_string b
+;;
+
+
