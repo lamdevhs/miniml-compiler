@@ -153,23 +153,23 @@ void print_value(ValueT *value) {
   else {
     enum ValueTag tag = value->tag;
     if (tag == ValueIsNull) {
-      printf("NullValue");
+      printf("Null");
     }
     else if (tag == ValueIsBool) {
-      printf("BoolValue(%c)", value->as.boolean ? 'T' : 'F');
+      printf("%s", value->as.boolean ? "True" : "False");
     }
     else if (tag == ValueIsInt) {
-      printf("IntValue(%ld)", value->as.integer);
+      printf("%ld", value->as.integer);
     }
     else if (tag == ValueIsPair) {
-      printf("PairValue(");
+      printf("(");
       print_value(value->as.pair.first);
       printf(", ");
       print_value(value->as.pair.second);
       printf(")");
     }
     else if (tag == ValueIsClosure) {
-      printf("ClosureValue(@%ld, ", (long)value->as.closure.code);
+      printf("Closure(%p, ", value->as.closure.code);
       print_value(value->as.closure.value);
       printf(")");
     }

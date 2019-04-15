@@ -186,3 +186,10 @@ Was long overdue.
 
 Those are two instructions of the CAM.
 Also added factorial to /test-programs/.
+
+# ccam: Simplify print_value()
+
+Essentially, removing the constructors to make it less verbose:
+((1,False),Closure(0x000000000000,Null)) instead of
+PairValue((IntValue(1),BoolValue(False)),
+  ClosureValue(0x000000000000,NullValue))
