@@ -209,3 +209,11 @@ On several respects:
   
   Note that now the generated files in generated-programs aren't
   usable anymore, they'd have to be regenerated.
+
+# ccam: Alter printers for execution traces
+
+Among others, altered:
+- print_instruction()
+- print_stack()
+- error printing in runtime.c
+Most of it is just to have nice, more readable execution traces.

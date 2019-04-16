@@ -32,7 +32,7 @@ enum unary_operations {
   Fst, Snd,
 };
 
-enum primitive_operations {
+enum binary_operations {
 //| there are just int constants,
 //| i.e. this enum is not treated as a separate type
   Plus, Sub, Mul, Div, Mod,
@@ -186,7 +186,9 @@ StackT *CodeOnStack(CodeT *code, StackT *old_stack);
 ValueOnStackT match_stacktop_with_value(StackT *stack, enum Status *status);
 CodeOnStackT match_stacktop_with_code(StackT *stack, enum Status *status);
   ///
-void print_stack(StackT *stack);
+void print_stack(StackT *stack); //| using:
+  void __print_stack(StackT *stack, int code_count, int is_stack_top);
+  void __print_code_in_stack(int code_count);
 int equal_stacks(StackT *a, StackT *b);
 
 
@@ -217,7 +219,8 @@ enum Status exec_Branch(MachineStateT *ms);
 enum Status exec_Call(MachineStateT *ms);
   ///
 long eval_binary_operation(int operation, long a, long b, enum Status *status);
-void print_instruction(int instruction);
+void print_instruction(CodeT *code);
+void print_operation(int operation);
 void print_state(MachineStateT *ms);
 void print_status(enum Status status);
 CodeT *CodeRef(long x);

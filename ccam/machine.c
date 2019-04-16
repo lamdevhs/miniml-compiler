@@ -28,7 +28,7 @@ enum Status run_machine(MachineStateT *ms, int verbose) {
   while (status == AllOk) {
     if (verbose) {
       print_state(ms);
-      printf("Instruction = "); print_instruction(ms->code[0].instruction); printf(NL);
+      printf("Next instruction: "); print_instruction(ms->code); printf(NL);
     }
     status = exec(ms);
   }
@@ -384,24 +384,65 @@ long eval_binary_operation(int operation, long a, long b, enum Status *status)
   }
 }
 
-void print_instruction(int instruction)
+void print_instruction(CodeT *code)
 {
+  int instruction = code[0].instruction;
   switch(instruction) {
     case Halt: printf("Halt"); break;
-    case Unary: printf("Unary"); break;
-    case Arith: printf("Arith"); break;
-    case Compare: printf("Compare"); break;
+    case Unary:
+      printf("Unary(");
+      printf("%s",
+        code[1].operation == Fst ? "Fst"
+        : (code[1].operation == Snd ? "Snd" : "<Unknown Unary>")
+      );
+      printf(")");
+      break;
+    case Arith:
+      printf("Arith(");
+      print_operation(code[1].operation);
+      printf(")");
+      break;
+    case Compare:
+      printf("Compare(");
+      print_operation(code[1].operation);
+      printf(")");
+      break;
     case Cons: printf("Cons"); break;
     case Push: printf("Push"); break;
     case Swap: printf("Swap"); break;
     case Apply: printf("Apply"); break;
     case Return: printf("Return"); break;
-    case QuoteInt: printf("QuoteInt"); break;
-    case QuoteBool: printf("QuoteBool"); break;
-    case Curry: printf("Curry"); break;
-    case Branch: printf("Branch"); break;
-    case Call: printf("Call"); break;
-    default: printf("<Unknown>"); break;
+    case QuoteInt: printf("QuoteInt(%ld)", code[1].data); break;
+    case QuoteBool:
+      printf("QuoteBool(%s)", code[1].data ? "True" : "False");
+      break;
+    case Curry: printf("Curry(%p)", code[1].reference); break;
+    case Branch:
+      printf("Branch(%p,%p)", code[1].reference, code[2].reference);
+      break;
+    case Call: printf("Call(%p)", code[1].reference); break;
+    default: printf("<Unknown Instruction>"); break;
+  }
+}
+
+void print_operation(int operation)
+{
+  switch (operation)
+  {
+    case Plus: printf("Plus"); break;
+    case Sub: printf("Sub"); break;
+    case Mul: printf("Mul"); break;
+    case Div: printf("Div"); break;
+    case Mod: printf("Mod"); break;
+  
+    case Eq: printf("Eq"); break;
+    case Neq: printf("Neq"); break;
+    case Ge: printf("Ge"); break;
+    case Gt: printf("Gt"); break;
+    case Le: printf("Le"); break;
+    case Lt: printf("Lt"); break;
+    
+    default: printf("<Unknown Operation>"); break;
   }
 }
 
@@ -410,10 +451,9 @@ void print_state(MachineStateT *ms) {
     printf("<NULL MachineState>" NL);
   }
   else {
-    printf("MachineState:" NL);
-    printf("  term = "); print_value(ms->term); printf(NL);
-    printf("  code = %p" NL, ms->code);
-    printf("  stack = "); print_stack(ms->stack); printf(NL);
+    printf("# term = "); print_value(ms->term); printf(NL);
+    printf("# code = %p" NL, ms->code);
+    printf("# stack = "); print_stack(ms->stack); printf(NL);
   }
 }
 

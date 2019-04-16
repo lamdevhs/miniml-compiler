@@ -12,16 +12,18 @@ int main () {
   enum Status status = run_machine (ms, verbosity);
   if (status == Halted) {
 #ifdef DEBUGMODE
-    printf(NL); print_state(ms);
+    printf(NL "[DEBUG] Final state: " NL);
+    print_state (ms) ;
 #else
-    print_value (ms->term); printf(NL);
+    print_value (ms->term) ; printf(NL);
 #endif
     return 0;
   }
   else {
-    print_status (status);
+    printf(NL NL "CAM crashed! Status = "); print_status (status); printf(NL);
 #ifdef DEBUGMODE
-    printf("Final State: "); print_state(ms);
+    printf(NL "[DEBUG] Stopped on instruction: "); print_instruction(ms->code); printf(NL);
+    printf("[DEBUG] Last state:" NL); print_state(ms);
 #endif
     return 1;
   }

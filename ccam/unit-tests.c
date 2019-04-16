@@ -83,7 +83,7 @@ void exec_went_fine(char *msg, MachineStateT *ms, MachineStateT *expected) {
   enum Status status = exec(ms);
   int condition = status == AllOk && equal_states(ms, expected);
   if (!!! condition) {
-    print_state(ms);
+    print_state(ms); printf(NL);
     print_status(status); printf(NL);
   }
   assert(msg, condition);
@@ -93,6 +93,7 @@ void exec_failed(char *msg, MachineStateT *ms, enum Status expected) {
   enum Status status = exec(ms);
   int condition = status == expected;
   if (!!! condition) {
+    print_state(ms); printf(NL);
     print_status(status); printf(NL);
   }
   assert(msg, condition);
