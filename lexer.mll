@@ -15,7 +15,7 @@
 }
 
 let alph =           ['a'-'z''A'-'Z']
-let num  =           ['0'-'9'] 
+let num  =           ['0'-'9']
 let decimal	=	'0'|(['1'-'9']['0'-'9']*)
 let comment = '(' '*' [^'*']* ('*' (('*'*)|([^'*'')'][^'*']*)))* '*' ')'
 
@@ -27,6 +27,8 @@ rule token = parse
 | comment
     { token lexbuf }    (* comment --> ignore *)
 | decimal  as i	  { INTCONSTANT (int_of_string i)}
+| "::"  { LIST_CONS }
+| "[]"  { EMPTY_LIST }
 | '('  { LPAREN }
 | ')'  { RPAREN }
 | '{'  { LBRACE }
@@ -40,6 +42,8 @@ rule token = parse
 | "false"      {BCONSTANT false}
 | "fst"        {FST}
 | "snd"        {SND}
+| "head"       {HEAD}
+| "tail"       {TAIL}
 | "if"         {IF}
 | "then"       {THEN}
 | "else"       {ELSE}

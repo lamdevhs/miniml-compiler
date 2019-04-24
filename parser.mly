@@ -27,9 +27,10 @@ let binary_exp e1 oper e2 = App(PrimOp (primop_of_token oper), Pair(e1, e2))
 %token BLAND BLOR
 %token LPAREN RPAREN LBRACE RBRACE
 %token COMMA SEMICOLON COLON QMARK
-%token IF THEN ELSE WHILE FOR RETURN 
+%token IF THEN ELSE WHILE FOR RETURN
 %token AND ARROW FUN IN LET REC TYPE
 %token EOF
+%token LIST_CONS EMPTY_LIST HEAD TAIL
 
 %right ELSE
 
@@ -119,12 +120,18 @@ and_exp
 
 /* a == b == c is deemed invalid */
 compare_exp
-  : plus_exp EQ plus_exp { binary_exp $1 EQ $3 }
-  | plus_exp GE plus_exp { binary_exp $1 GE $3 }
-  | plus_exp GT plus_exp { binary_exp $1 GT $3 }
-  | plus_exp LE plus_exp { binary_exp $1 LE $3 }
-  | plus_exp LT plus_exp { binary_exp $1 LT $3 }
-  | plus_exp NE plus_exp { binary_exp $1 NE $3 }
+  : list_exp EQ list_exp { binary_exp $1 EQ $3 }
+  | list_exp GE list_exp { binary_exp $1 GE $3 }
+  | list_exp GT list_exp { binary_exp $1 GT $3 }
+  | list_exp LE list_exp { binary_exp $1 LE $3 }
+  | list_exp LT list_exp { binary_exp $1 LT $3 }
+  | list_exp NE list_exp { binary_exp $1 NE $3 }
+  | list_exp { $1 }
+;
+
+/* e.g.: (1, 2) :: (5, 6) :: [] */
+list_exp
+  : plus_exp LIST_CONS list_exp { ListCons($1, $3) }
   | plus_exp { $1 }
 ;
 
@@ -156,10 +163,13 @@ lowest_exp
   | BCONSTANT { Bool($1) }
   | INTCONSTANT { Int($1) }
   | unary { PrimOp (UnOp($1)) }
+  | EMPTY_LIST { EmptyList }
   /* OMITTED: string-literal */
 ;
 
 unary
   : FST { Fst }
   | SND { Snd }
+  | HEAD { Head }
+  | TAIL { Tail }
 ;

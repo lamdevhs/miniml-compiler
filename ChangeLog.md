@@ -246,4 +246,9 @@ recursively ValueT values: we just go through the structure
 incrementing the reference counts (which I called copy_count's) then
 return the input as if we'd actually made a hard copy of it.
 
-# Add a type List to mlexp in miniml.ml
+# Add type List to mlexp in miniml.ml
+
+# Add type List to parser
+
+Only the syntax of construction with the tokens :: and [].
+I'll add support for the syntax sugar [1;2;3] later.
