@@ -1,5 +1,6 @@
 /IGNORED/
 /comp
+/simu
 /lexer.ml
 /parser.ml
 /parser.output

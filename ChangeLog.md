@@ -254,3 +254,23 @@ Only the syntax of construction with the tokens :: and [].
 I'll add support for the syntax sugar [1;2;3] later.
 
 # Add [1;2;3] syntax sugar to parser
+
+# Rewrite CAM simulator: New file simulator.ml
+
+CAM simulator: the one written in ocaml instead of in C, and which
+executes instructions according to the theoretical model of the CAM
+studied in class.
+
+This simulator was previously in /instrs.ml; now it's isolated into
+its very own file (/simulator.ml), and has now *its own executable*,
+called /simu. This executable is built via /Makefile just like for
+the compiler /comp.
+In the same breath I added /simu to /.gitignore.
+
+I ended up adding a new instruction to the type `instr`: `Halt`,
+in order to halt the CAM at the end of a program.
+Also I added clearer "usage error" messages to /comp.ml.
+
+In the end, now, the ocaml simulator has support for let-rec
+bindings, and can also handle values of type lists and list operators
+(like head).

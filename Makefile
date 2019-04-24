@@ -1,8 +1,8 @@
-all: comp
+all: comp simu
 
 # Compilation of Ocaml files
-# Attention: order of object files important 
-comp: miniml.cmo parser.cmo lexer.cmo instrs.cmo interf.cmo comp.cmo 
+# Attention: order of object files important
+comp: miniml.cmo parser.cmo lexer.cmo instrs.cmo interf.cmo comp.cmo
 	ocamlc -o comp $^
 
 # Compilation of .ml files
@@ -31,6 +31,13 @@ lexer.cmo: lexer.ml parser.cmo
 parser.cmo: parser.ml parser.cmi miniml.cmo
 	ocamlc -c $<
 
+## >>> Added to the original Makefile:
+simu: miniml.cmo parser.cmo lexer.cmo instrs.cmo interf.cmo simulator.cmo
+	ocamlc -o simu $^
+
+simulator.cmo: simulator.ml miniml.cmo instrs.cmo
+	ocamlc -c $<
+## <<< end
 
 #### Generic rules
 
@@ -40,5 +47,5 @@ parser.cmo: parser.ml parser.cmi miniml.cmo
 
 .PHONY: clean
 
-clean: 
+clean:
 	rm -f lexer.ml parser.ml parser.output *.mli *.cmi *.cmo

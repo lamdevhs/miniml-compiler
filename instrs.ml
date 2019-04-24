@@ -4,105 +4,51 @@ open Miniml;;
 
 
 (* staple tools *)
-  let rec zip : 'a list -> 'b list ->  ('a * 'b) list =
-    fun xlist ylist -> match (xlist, ylist) with
-    | ([], _) -> []
-    | (_, []) -> []
-    | (x :: xs, y :: ys) -> (x, y) :: zip xs ys
-  ;;
+let rec zip : 'a list -> 'b list ->  ('a * 'b) list =
+  fun xlist ylist -> match (xlist, ylist) with
+  | ([], _) -> []
+  | (_, []) -> []
+  | (x :: xs, y :: ys) -> (x, y) :: zip xs ys
+;;
 
-  let rec unzip : ('a * 'b) list -> ('a list * 'b list) =
-    function
-    | [] -> ([], [])
-    | (x, y) :: tail ->
-      let (xs, ys) = unzip tail in
-      (x :: xs, y :: ys)
-  ;;
+let rec unzip : ('a * 'b) list -> ('a list * 'b list) =
+  function
+  | [] -> ([], [])
+  | (x, y) :: tail ->
+    let (xs, ys) = unzip tail in
+    (x :: xs, y :: ys)
+;;
 
 
-type instr =
-  PrimInstr of primop
-| Cons
-| Push
-| Swap
-| Return
-| QuoteB of bool
-| QuoteI of int
-| Cur of code
-| App
-| Branch of code * code
-(* new for recursive calls *)
-| Call of var
-| AddDefs of (var * code) list
-| RmDefs of int
-and value =
-  NullV
-| VarV of Miniml.var
-| IntV of int
-| BoolV of bool
-| PairV of value * value
-| ClosureV of code * value
+type instr
+  =  PrimInstr of primop
+  | Cons
+  | Push
+  | Swap
+  | Return
+  | QuoteB of bool
+  | QuoteI of int
+  | Cur of code
+  | App
+  | Branch of code * code
+  | Halt
+  (* new for recursive calls *)
+  | Call of var
+  | AddDefs of (var * code) list
+  | RmDefs
+  (* new for lists *)
+  | ListCons
+  | QuoteEmptyList
 and code = instr list
 
-type stackelem = Val of value | Cod of code
-type stack = stackelem list
 
 let iSnd = PrimInstr (UnOp Snd);;
 let iFst = PrimInstr (UnOp Fst);;
 
-let eval_arith : barith -> int -> int -> int = function
-  BAadd -> (+) | BAsub -> (-) | BAmul -> ( * ) | BAdiv -> (/) | BAmod -> (mod)
-;;
-
-let eval_compar : bcompar -> 'a -> 'a -> bool = function
-  BCeq -> (=) | BCge -> (>=) | BCgt -> (>) | BCle -> (<=) | BClt -> (<) | BCne -> (<>)
-;;
-
-let eval_one
-: (value * code * stack) -> (value * code * stack) =
-  function
-  | (_, QuoteB(x) :: c, st) -> (BoolV(x), c, st)
-  | (_, QuoteI(x) :: c, st) -> (IntV(x), c, st)
-  (* --------- paires --------- *)
-  | (x, Cons :: c, Val(y) :: st) -> (PairV(y, x), c, st)
-  | (x, Push :: c, st) -> (x, c, Val x :: st)
-  | (x, Swap :: c, Val(y) :: st) -> (y, c, Val (x) :: st)
-  (* --------- clotures --------- *)
-  | (x, Cur (c1) :: c, st) -> (ClosureV(c1, x), c, st)
-  | (PairV(ClosureV(cd, y), z), App :: c, st) -> (PairV(y, z), cd, Cod(c) :: st)
-  | (x, Return :: c, Cod(c1) :: st) -> (x, c1, st)
-  (* --------- primInstr --------- *)
-  | (PairV(x, y), PrimInstr (UnOp Fst) :: c, st) -> (x, c, st)
-  | (PairV(x, y), PrimInstr (UnOp Snd) :: c, st) -> (y, c, st)
-  | (PairV(IntV x, IntV y), PrimInstr (BinOp (BArith op)) :: c, st) ->
-    (IntV (eval_arith op x y), c, st)
-  | (PairV(IntV x, IntV y), PrimInstr (BinOp (BCompar op)) :: c, st) ->
-    (BoolV (eval_compar op x y), c, st)
-  | (PairV(BoolV x, BoolV y), PrimInstr (BinOp (BCompar op)) :: c, st) ->
-    (BoolV (eval_compar op x y), c, st)
-  (* --------- Branch --------- *)
-  | (BoolV(b), Branch (if_then, if_else) :: c, Val(x) :: st) ->
-    (x, (if b then if_then else if_else), Cod(c) :: st)
-  (* --------- otherwise --------- *)
-  | otherwise -> otherwise
-;;
-
-let rec till_no_change : ('a -> 'a) -> 'a -> 'a = fun f x ->
-  let y = f x in if y = x then y else till_no_change f y
-;;
-
-let initial_cfg x = (NullV, x, []);;
-
-let test_prog = [Push; Cur [Push; iSnd; Swap; QuoteI(1); Cons;
-              PrimInstr (BinOp (BArith BAadd)); Return];
-   Swap; QuoteI(2); Cons; App]
-;;
-let eval_prog instrs = till_no_change eval_one (initial_cfg instrs)
-;;
 
 (* compilation *)
 
-type compilation_env = envelem list 
+type compilation_env = envelem list
 and envelem = EVar of var | EDef of var list;;
 
 let rec several : int -> 'a -> 'a list = fun n x ->
@@ -128,7 +74,7 @@ let rec str_of_access : code -> string = function
   | PrimInstr (UnOp Snd) :: xs -> "Head," ^ str_of_access xs
   | _ -> failwith "str_of_access: won't ever happen"
 ;;
-  
+
 
 let access : string -> compilation_env -> code = fun x env ->
   let has y zs = List.exists (fun z -> z = y) zs in
@@ -144,27 +90,37 @@ let access : string -> compilation_env -> code = fun x env ->
   res
 ;;
 
-let rec compile : compilation_env -> mlexp -> code =
-  fun env x -> match x with
-  | Var v -> access v env
-  | Bool x -> [QuoteB x]
-  | Int x -> [QuoteI x]
-  | Pair(a, b) -> Push :: compile env a @ [Swap] @ compile env b @ [Cons]
-  | App(PrimOp op, e) -> compile env e @ [PrimInstr op]
-  | App(f, x) -> Push :: compile env f @ [Swap] @ compile env x @ [Cons; App]
-  | Fn(arg, body) -> Cur (compile (EVar arg :: env) body @ [Return]) :: []
-  | Cond(cond, if_then, if_else) ->
-    let compiled_br x = compile env x @ [Return] in
+let compile : compilation_env -> mlexp -> code = fun env x ->
+  let rec compile_rec env x =
+  (
+    match x with
+    | Var v -> access v env
+    | Bool x -> [QuoteB x]
+    | Int x -> [QuoteI x]
+    | Pair(a, b)
+      -> Push :: compile_rec env a @ [Swap] @ compile_rec env b @ [Cons]
+    | App(PrimOp op, e) -> compile_rec env e @ [PrimInstr op]
+    | App(f, x)
+      -> Push :: compile_rec env f @ [Swap] @ compile_rec env x @ [Cons; App]
+    | Fn(arg, body)
+      -> Cur (compile_rec (EVar arg :: env) body @ [Return]) :: []
+    | Cond(cond, if_then, if_else) ->
+    let compiled_br x = compile_rec env x @ [Return] in
     let branches = Branch(compiled_br if_then, compiled_br if_else) in
-    Push :: compile env cond @ [branches]
-  | Fix(defs, exp) ->
+    Push :: compile_rec env cond @ [branches]
+    | Fix(defs, exp) ->
     let (defs_names, defs_mlexps) = unzip defs in
     let new_env = EDef defs_names :: env in
-    let defs_code = List.map (compile new_env) defs_mlexps in
+    let defs_code = List.map (compile_rec new_env) defs_mlexps in
     let dc = zip defs_names defs_code in
-    let ec = compile new_env exp in
-    [AddDefs dc] @ ec @ [RmDefs (List.length dc)]
-  | otherwise -> failwith "this compiler is somehow buggy 1"
+    let ec = compile_rec new_env exp in
+    [AddDefs dc] @ ec @ [RmDefs]
+    | EmptyList -> [QuoteEmptyList]
+    | ListCons(head, tail) ->
+    Push :: compile_rec env head @ [Swap] @ compile_rec env tail @ [ListCons]
+    | otherwise -> failwith "CompilerBug: mlexp expression unsupported!"
+  ) in
+  compile_rec env x @ [Halt]
 ;;
 
 type flat_instr
@@ -183,6 +139,9 @@ type flat_instr
   | FlatBranch of string * string
   (* new for recursive calls *)
   | FlatCall of string
+  (* new for lists *)
+  | FlatQuoteEmptyList
+  | FlatListCons
 and flat_code = flat_instr list;;
 
 type referenced_flat_code = (string * flat_code) list;;
@@ -234,6 +193,8 @@ let rec flatten_code
     | Return -> (n, defsDict, refCode, mainCode @ [FlatReturn])
     | QuoteB(b) -> (n, defsDict, refCode, mainCode @ [FlatQuoteB(b)])
     | QuoteI(i) -> (n, defsDict, refCode, mainCode @ [FlatQuoteI(i)])
+    | QuoteEmptyList -> (n, defsDict, refCode, mainCode @ [FlatQuoteEmptyList])
+    | ListCons -> (n, defsDict, refCode, mainCode @ [FlatListCons])
     | Cur(curCode) ->
       let (curN, curRefCode, curFlatCode) = flatten_code n defsDict curCode in
       let (curName, nextN) = code_namer "lambda" curN in
@@ -265,9 +226,10 @@ let rec flatten_code
     | Call(var) ->
       let nameToCall = find_def var defsDict in
       (n, defsDict, refCode, mainCode @ [FlatCall(nameToCall)])
-    | RmDefs _ -> (match defsDict with
+    | RmDefs -> (match defsDict with
       | [] -> failwith "flatten_code says: compiler bug! near RmDefs"
       | (d :: ds) -> (n, ds, refCode, mainCode))
+    | Halt -> (n, defsDict, refCode, mainCode @ [FlatHalt])
   ) in
   let seed = (seedN, seedDefsDict, [], []) in
   let (outN, _, outRefCode, outMainCode) = List.fold_left folder seed code in
@@ -286,7 +248,7 @@ and flatten_defs
 
 let flatten_program : code -> (referenced_flat_code * flat_code) = fun code ->
   let (_, refs, program) = flatten_code 0 [] code in
-  (refs, program @ [FlatHalt])
+  (refs, program)
 ;;
 
 
@@ -300,7 +262,7 @@ let sample_program =
       ("h", [Call "i"]);
       ("i", [Call "h"])
     ] in
-    [AddDefs(defs); Call("f"); RmDefs(42); Return] in
+    [AddDefs(defs); Call("f"); RmDefs; Return] in
   let cur1 =
     [Push; iSnd; Swap; Branch(if1, else1); Cons;
     PrimInstr (BinOp (BArith BAadd)); Return]
@@ -369,6 +331,8 @@ let lines_of_C_code : c_code_fragment list -> (string list * string list) =
         write_data (if b then "True" else "False")
     | FlatQuoteI i -> write_instruction "QuoteInt" ^
         write_data (string_of_int i ^ "L")
+    | FlatQuoteEmptyList -> write_instruction "QuoteEmptyList"
+    | FlatListCons -> write_instruction "ListCons"
     | FlatCur ref -> write_instruction "Curry" ^ write_reference ref
     | FlatApp -> write_instruction "Apply"
     | FlatBranch (ifref, elseref) ->
@@ -410,7 +374,7 @@ let flat_program_to_C
   (lines_to_string c_file ^ "\n")
 ;;
 
-let qwer3 = 
+let qwer3 =
   let (a, b) = lines_of_C_code qwer2 in
   lines_to_string a ^ "\n" ^ lines_to_string b
 ;;
@@ -434,12 +398,10 @@ let factorial_mlexp =
   Fix ([("factorial", def)], app "factorial" (Int 10))
 ;;
 
-let factorial_code = compile [] factorial_mlexp;; 
+let factorial_code = compile [] factorial_mlexp;;
 let factorial_flat_code = flatten_program factorial_code;;
 let factorial_C = flat_program_to_c_code_fragments factorial_flat_code;;
 let factorial_str =
   let (a, b) = lines_of_C_code factorial_C in
   lines_to_string a ^ "\n" ^ lines_to_string b
 ;;
-
-
