@@ -83,7 +83,8 @@ int equal_stacks(StackT *a, StackT *b) {
   else return True; //| StackIsEmpty, or maybe an invalid tag...
 }
 
-void print_stack(StackT *stack) {
+void print_stack(StackT *stack)
+{
   __print_stack(stack, 0, True);
 }
 //| where:
@@ -129,3 +130,24 @@ void print_stack(StackT *stack) {
   {
     if (code_count != 0) printf("{Code x%d} :: ", code_count);
   }
+  
+void print_stacktop(StackT *stack)
+{
+  if (stack == NULL) {
+    printf("<NULL Stack>");
+  }
+  else {
+    if (stack->tag == StackIsEmpty) {
+      printf("[]");
+    }
+    else if (stack->tag == StackTopIsValue) {
+      print_value(stack->as.with_value.top);
+    }
+    else if (stack->tag == StackTopIsCode) {
+      printf("%p", stack->as.with_code.top);
+    }
+    else {
+      printf("<ERROR Stack>");
+    }
+  }
+}

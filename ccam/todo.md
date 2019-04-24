@@ -9,8 +9,7 @@
   
 - write script to generate normal and debug versions for each file in
   test-programs
-- only print the top of the stack when writing the exec state (or just the
-  two topmost items maybe)
+
 
 # PITFALLS
 - /!\ when hitting an error, it may happen that some malloced stuff are in local
@@ -78,3 +77,8 @@ These are in chronological order, hopefully:
 - meliorate the format of the generated code
 - add a function taking a CodeT* and pretty-printing the next instruction,
   use it to change print_state to sth more friendly
+  
+
+///
+- only print the top of the stack when writing the exec state (or just the
+  two topmost items maybe)

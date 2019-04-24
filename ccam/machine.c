@@ -453,7 +453,7 @@ void print_state(MachineStateT *ms) {
   else {
     printf("# term = "); print_value(ms->term); printf(NL);
     printf("# code = %p" NL, ms->code);
-    printf("# stack = "); print_stack(ms->stack); printf(NL);
+    printf("# stacktop = "); print_stacktop(ms->stack); printf(NL);
   }
 }
 
