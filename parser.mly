@@ -30,7 +30,7 @@ let binary_exp e1 oper e2 = App(PrimOp (primop_of_token oper), Pair(e1, e2))
 %token IF THEN ELSE WHILE FOR RETURN
 %token AND ARROW FUN IN LET REC TYPE
 %token EOF
-%token LIST_CONS EMPTY_LIST HEAD TAIL
+%token LIST_CONS HEAD TAIL LBRACKET RBRACKET
 
 %right ELSE
 
@@ -159,12 +159,25 @@ app_exp
 /* terminal values and parentheses */
 lowest_exp
   : LPAREN main_exp RPAREN { $2 }
+  | LBRACKET sugary_list RBRACKET { $2 }
   | IDENTIFIER { Var($1) }
   | BCONSTANT { Bool($1) }
   | INTCONSTANT { Int($1) }
   | unary { PrimOp (UnOp($1)) }
-  | EMPTY_LIST { EmptyList }
   /* OMITTED: string-literal */
+;
+
+/*
+  syntax sugar for lists:
+  [1; 2; 3]
+  [2] -- singleton
+  [1;2;]
+  (trailing semicolon is allowed)
+*/
+sugary_list
+  : { EmptyList } /* nothing in between the brackets */
+  | main_exp { ListCons($1, EmptyList) }
+  | main_exp SEMICOLON sugary_list { ListCons($1, $3) }
 ;
 
 unary

@@ -252,3 +252,5 @@ return the input as if we'd actually made a hard copy of it.
 
 Only the syntax of construction with the tokens :: and [].
 I'll add support for the syntax sugar [1;2;3] later.
+
+# Add [1;2;3] syntax sugar to parser

@@ -28,7 +28,8 @@ rule token = parse
     { token lexbuf }    (* comment --> ignore *)
 | decimal  as i	  { INTCONSTANT (int_of_string i)}
 | "::"  { LIST_CONS }
-| "[]"  { EMPTY_LIST }
+| '['  { LBRACKET }
+| ']'  { RBRACKET }
 | '('  { LPAREN }
 | ')'  { RPAREN }
 | '{'  { LBRACE }
