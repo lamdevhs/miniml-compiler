@@ -49,6 +49,9 @@ void test_mini_program() {
   enum Status status = run_machine(ms, info(verbosity -->) True);
   printf("final status: %d, Halt = %d; NotPair = %d, code = %ld" NL,
     status, Halted, ValueIsNotPair, ms->code - program);
+#ifdef TRACE_MEMORY
+  memory_value_report();
+#endif
 }
 
 void test_unions()

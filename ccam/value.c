@@ -4,7 +4,7 @@
 
 
 ValueT *PairValue(ValueT *first, ValueT *second) {
-  ValueT *value = malloc(sizeof(ValueT));
+  ValueT *value = malloc_value();
   value->tag = ValueIsPair;
   value->as.pair.first = first;
   value->as.pair.second = second;
@@ -12,7 +12,7 @@ ValueT *PairValue(ValueT *first, ValueT *second) {
 }
 
 ValueT *ClosureValue(CodeT *code, ValueT *closure_value) {
-  ValueT *value = malloc(sizeof(ValueT));
+  ValueT *value = malloc_value();
   value->tag = ValueIsClosure;
   value->as.closure.code = code;
   value->as.closure.value = closure_value;
@@ -20,21 +20,21 @@ ValueT *ClosureValue(CodeT *code, ValueT *closure_value) {
 }
 
 ValueT *BoolValue(long x) {
-  ValueT *value = malloc(sizeof(ValueT));
+  ValueT *value = malloc_value();
   value->tag = ValueIsBool;
   value->as.boolean = !! x;
   return value;
 }
 
 ValueT *IntValue(long x) {
-  ValueT *value = malloc(sizeof(ValueT));
+  ValueT *value = malloc_value();
   value->tag = ValueIsInt;
   value->as.integer = x;
   return value;
 }
 
 ValueT *NullValue() {
-  ValueT *value = malloc(sizeof(ValueT));
+  ValueT *value = malloc_value();
   value->tag = ValueIsNull;
   return value;
 }
@@ -56,7 +56,7 @@ ValueT *deepcopy_value(ValueT *value) {
     copy = ClosureValue(value->as.closure.code, t);
   }
   else {
-    copy = malloc(sizeof(ValueT));
+    copy = malloc_value();
     *copy = *value; //| direct struct copy
   }
   return copy;
@@ -72,7 +72,7 @@ void deepfree_value(ValueT *value) {
     else if (tag == ValueIsClosure) {
       deepfree_value(value->as.closure.value);
     }
-    free(value);
+    free_value(value);
   }
 }
 
@@ -90,7 +90,7 @@ PairT match_value_with_pair(ValueT *value, enum Status *status) {
   //| else:
   output = value->as.pair;
   
-  free(value);
+  free_value(value);
   return output;
 }
 
@@ -108,7 +108,7 @@ ClosureT match_value_with_closure(ValueT *value, enum Status *status) {
   //| else:
   output = value->as.closure;
   
-  free(value);
+  free_value(value);
   return output;
 }
 
@@ -125,7 +125,7 @@ long match_value_with_boolean(ValueT *value, enum Status *status) {
   //| else:
   long output = value->as.boolean;
   
-  free(value);
+  free_value(value);
   return output;
 }
 
@@ -142,7 +142,7 @@ long match_value_with_integer(ValueT *value, enum Status *status) {
   //| else:
   long output = value->as.integer;
   
-  free(value);
+  free_value(value);
   return output;
 }
 
@@ -203,4 +203,33 @@ int equal_values(ValueT *a, ValueT *b) {
       && equal_values(a->as.closure.value, b->as.closure.value);
   }
   else return True; //| tag == ValueIsNull, or is invalid...
+}
+
+#ifdef TRACE_MEMORY
+int mallocated_values_count = 0;
+int freed_values_count = 0;
+
+void memory_value_report()
+{
+  printf("[VALUE MEMORY USAGE]: malloced: %d, freed: %d" NL,
+    mallocated_values_count,
+    freed_values_count);
+}
+#endif
+
+ValueT *malloc_value()
+{
+#ifdef TRACE_MEMORY
+  mallocated_values_count += 1;
+#endif
+  ValueT *value = malloc(sizeof(ValueT));
+  return value;
+}
+
+void free_value(ValueT *value)
+{
+#ifdef TRACE_MEMORY
+  freed_values_count += 1;
+#endif
+  free(value);
 }

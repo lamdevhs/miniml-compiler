@@ -10,6 +10,7 @@ int main () {
 #endif
   
   enum Status status = run_machine (ms, verbosity);
+  int return_value;
   if (status == Halted) {
 #ifdef DEBUGMODE
     printf(NL "[DEBUG] Final state: " NL);
@@ -17,7 +18,7 @@ int main () {
 #else
     print_value (ms->term) ; printf(NL);
 #endif
-    return 0;
+    return_value = 0;
   }
   else {
     printf(NL NL "CAM crashed! Status = "); print_status (status); printf(NL);
@@ -25,6 +26,11 @@ int main () {
     printf(NL "[DEBUG] Stopped on instruction: "); print_instruction(ms->code); printf(NL);
     printf("[DEBUG] Last state:" NL); print_state(ms);
 #endif
-    return 1;
+    return_value = 1;
   }
+  
+#ifdef TRACE_MEMORY
+  memory_value_report();
+#endif
+  return return_value;
 }

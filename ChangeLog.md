@@ -225,3 +225,15 @@ Most of it is just to have nice, more readable execution traces.
 # Alter print_state() to only print the stacktop
 
 Printing the whole stack each time makes no sense after all.
+
+# Keep trace of mallocated ValueT values
+
+By way of wrapping the calls to malloc() and free(). It's the first
+step needed before we implement a basic garbage-collecting system.
+That system will simply follow the strategy of reference-counting
+every single value created, copied, and destroyed. Not the most
+efficient, but not really the point here.
+
+Also fixed ccam/Makefile: apparently the bash command `read` on some
+systems require an actual variable name passed in parameter. On mine
+it's optional.

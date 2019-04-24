@@ -177,6 +177,14 @@ long match_value_with_integer(ValueT *value, enum Status *status);
   ///
 void print_value(ValueT *value);
 int equal_values(ValueT *a, ValueT *b);
+  ///
+#ifdef TRACE_MEMORY
+int mallocated_values_count;
+int freed_values_count;
+void memory_value_report();
+#endif
+ValueT *malloc_value();
+void free_value(ValueT *value);
 
 //| stack.c
 StackT *EmptyStack();
