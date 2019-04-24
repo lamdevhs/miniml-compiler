@@ -106,6 +106,7 @@ typedef struct ClosureT {
 } ClosureT;
 
 typedef struct ValueT {
+  int copy_count;
   enum ValueTag tag;
   union {
     long integer;
@@ -168,6 +169,7 @@ ValueT *IntValue(long x);
 ValueT *NullValue();
   ///
 ValueT *deepcopy_value(ValueT *value);
+void deepincrement_copy_count(ValueT *value);
 void deepfree_value(ValueT *value);
   ///
 PairT match_value_with_pair(ValueT *value, enum Status *status);
@@ -180,7 +182,8 @@ int equal_values(ValueT *a, ValueT *b);
   ///
 #ifdef TRACE_MEMORY
 int mallocated_values_count;
-int freed_values_count;
+int freed_values_fake_count;
+int freed_values_real_count;
 void memory_value_report();
 #endif
 ValueT *malloc_value();

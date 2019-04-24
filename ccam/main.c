@@ -89,6 +89,10 @@ int main () {
   test_unions();
   test_local_vars();
   printf("size of CodeT: %ld, of ptr: %ld" NL, sizeof(CodeT), sizeof(void *));
+  printf("size of old value: %ld" NL,
+    sizeof(struct { enum { Y } b; int *c; int *d; }));
+  printf("size of new value: %ld" NL,
+    sizeof(struct { int a; enum { X } b; int *c; int *d; }));
   
 }
 

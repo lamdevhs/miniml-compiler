@@ -1,15 +1,8 @@
 # TODO
 
-- handle memory via refcounts:
-  use wrappers around malloc and free to measure the gain
-
-- define the runtime() in the generated code, so that the compilation
-  process does not depend on how the files are named (does not depend
-  on a header either).
-  
 - write script to generate normal and debug versions for each file in
   test-programs
-
+- add type list, and equality operators on those?
 
 # PITFALLS
 - /!\ when hitting an error, it may happen that some malloced stuff are in local
@@ -77,8 +70,10 @@ These are in chronological order, hopefully:
 - meliorate the format of the generated code
 - add a function taking a CodeT* and pretty-printing the next instruction,
   use it to change print_state to sth more friendly
-  
 
 ///
 - only print the top of the stack when writing the exec state (or just the
   two topmost items maybe)
+
+- handle memory via refcounts:
+  use wrappers around malloc and free to measure the gain

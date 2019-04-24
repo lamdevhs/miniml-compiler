@@ -355,7 +355,8 @@ void test_exec() {
     assert("instruction Push",
       status == AllOk
       && equal_states(expected, ms)
-      && (ms->term != ms->stack->as.with_value.top)
+      //&& (ms->term != ms->stack->as.with_value.top)
+      //| ^ not true anymore now we only copy values virtually
     );
   }
   

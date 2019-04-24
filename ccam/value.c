@@ -40,26 +40,29 @@ ValueT *NullValue() {
 }
 
 ValueT *deepcopy_value(ValueT *value) {
-  if (value == NULL) {
-    return NULL;
-  }
-  // else:
-  ValueT *copy;
-  enum ValueTag tag = value->tag;
-  if (tag == ValueIsPair) {
-    ValueT *x = deepcopy_value(value->as.pair.first);
-    ValueT *y = deepcopy_value(value->as.pair.second);
-    copy = PairValue(x, y);
-  }
-  else if (tag == ValueIsClosure) {
-    ValueT *t = deepcopy_value(value->as.closure.value);
-    copy = ClosureValue(value->as.closure.code, t);
-  }
-  else {
-    copy = malloc_value();
-    *copy = *value; //| direct struct copy
-  }
-  return copy;
+  if (value == NULL) return NULL;
+  
+  deepincrement_copy_count(value);
+  //| now we can safely return the input
+  //| as if we'd actually copied the structure
+  //| recursively
+  return value;
+}
+
+void deepincrement_copy_count(ValueT *value)
+{
+  if (value != NULL) {
+    enum ValueTag tag = value->tag;
+    if (tag == ValueIsPair) {
+      deepincrement_copy_count(value->as.pair.first);
+      deepincrement_copy_count(value->as.pair.second);
+    }
+    else if (tag == ValueIsClosure) {
+      deepincrement_copy_count(value->as.closure.value);
+    }
+    else {} //| `value` does not contain any other value
+    value->copy_count += 1; //| <---
+  }  
 }
 
 void deepfree_value(ValueT *value) {
@@ -72,6 +75,7 @@ void deepfree_value(ValueT *value) {
     else if (tag == ValueIsClosure) {
       deepfree_value(value->as.closure.value);
     }
+    else {} //| `value` does not contain any other value
     free_value(value);
   }
 }
@@ -207,13 +211,18 @@ int equal_values(ValueT *a, ValueT *b) {
 
 #ifdef TRACE_MEMORY
 int mallocated_values_count = 0;
-int freed_values_count = 0;
+int freed_values_fake_count = 0;
+int freed_values_real_count = 0;
 
 void memory_value_report()
 {
-  printf("[VALUE MEMORY USAGE]: malloced: %d, freed: %d" NL,
+  printf("[VALUE MEMORY USAGE]: "
+    "malloced: %d, "
+    "copy-freed: %d, "
+    "really freed: %d" NL,
     mallocated_values_count,
-    freed_values_count);
+    freed_values_fake_count,
+    freed_values_real_count);
 }
 #endif
 
@@ -223,13 +232,25 @@ ValueT *malloc_value()
   mallocated_values_count += 1;
 #endif
   ValueT *value = malloc(sizeof(ValueT));
+  value->copy_count = 1;
   return value;
 }
 
 void free_value(ValueT *value)
 {
+  value->copy_count -= 1;
+  if (value->copy_count == 0) {
+    //| this value has no existing copy left,
+    //| so we can genuinely free it for real
+    //| without risk of creating dangling pointers
 #ifdef TRACE_MEMORY
-  freed_values_count += 1;
+    freed_values_real_count += 1;
 #endif
-  free(value);
+    free(value);
+  }
+  else {
+#ifdef TRACE_MEMORY
+    freed_values_fake_count += 1;
+#endif
+  }
 }

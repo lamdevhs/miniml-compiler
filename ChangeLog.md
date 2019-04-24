@@ -226,7 +226,7 @@ Most of it is just to have nice, more readable execution traces.
 
 Printing the whole stack each time makes no sense after all.
 
-# Keep trace of mallocated ValueT values
+# ccam: Keep trace of mallocated ValueT
 
 By way of wrapping the calls to malloc() and free(). It's the first
 step needed before we implement a basic garbage-collecting system.
@@ -237,3 +237,11 @@ efficient, but not really the point here.
 Also fixed ccam/Makefile: apparently the bash command `read` on some
 systems require an actual variable name passed in parameter. On mine
 it's optional.
+
+# ccam: Implement Garbage Collector for ValueT
+
+As mentioned, it'd done via reference counting. It's obviously not
+perfect or optimized. But it avoids the need to actually copy
+recursively ValueT values: we just go through the structure
+incrementing the reference counts (which I called copy_count's) then
+return the input as if we'd actually made a hard copy of it.
