@@ -1,7 +1,7 @@
 type var = string
 
 (* Unary operators *)
-type unop = Fst | Snd
+type unop = Fst | Snd | Head | Tail
 
 (* Binary Arithmetic operators *)
 type barith = BAadd | BAsub | BAmul | BAdiv | BAmod
@@ -9,7 +9,7 @@ type barith = BAadd | BAsub | BAmul | BAdiv | BAmod
 (* Binary Comparison operators *)
 type bcompar = BCeq | BCge | BCgt | BCle | BClt | BCne
 
-type binop = 
+type binop =
   BArith of barith
 | BCompar of bcompar
 
@@ -27,7 +27,9 @@ type mlexp =
 | App of mlexp * mlexp
 | Fn of var * mlexp
 | Fix of (var * mlexp) list * mlexp
-    
+| ListCons of mlexp * mlexp
+| EmptyList
+
 type typedef = string
 type prog = Prog of typedef option * mlexp
 
@@ -37,7 +39,7 @@ let mlexp_of_prog (Prog(t, e)) = e
 (* -------------------- pretty printer: ---------------- *)
 
 let pp_unop : unop ->  string = function
-  Fst -> "first" | Snd -> "second"
+  Fst -> "fst" | Snd -> "snd" | Head -> "head" | Tail -> "tail"
 ;;
 
 let pp_barith : barith -> string = function
@@ -73,6 +75,8 @@ let rec pp_exp : mlexp -> string = function
   | Fn (v, b) -> "(fun " ^ v ^ " -> " ^ pp_exp b ^ ")"
   | Fix (d :: defs, exp) -> "let rec " ^ pp_def d ^ pp_defs defs ^ " in " ^ pp_exp exp
   | Fix _ -> "(empty let rec ???)"
+  | ListCons (x, y) -> "(" ^ pp_exp x ^ " :: " ^ pp_exp y ^ ")"
+  | EmptyList -> "[]"
 and pp_def : (var * mlexp) -> string = fun (name, value) ->
   name ^ " = " ^ pp_exp value
 and pp_defs : (var * mlexp) list -> string = function
