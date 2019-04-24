@@ -219,3 +219,5 @@ Among others, altered:
 Most of it is just to have nice, more readable execution traces.
 
 # Add a test program and some generated ones
+
+# Add the pdf specifying the project's requirements
