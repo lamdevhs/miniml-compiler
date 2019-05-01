@@ -339,3 +339,5 @@ those almost entirely made of one big switch.
 The purpose of this separation is to make less likely the risk of
 not updating the corresponding code after having updated the
 definition of an enumeration. If only C was type safe...
+
+# Meliorate usage error message for /simu and /comp

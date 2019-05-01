@@ -152,7 +152,7 @@ let simulate_execution infilename =
 
 let main () =
   if Array.length Sys.argv != 2
-  then (print_endline "User Error: expects exactly one argument, a filename")
+  then (print_endline "usage error: expected exactly one argument (an input filename)")
   else (simulate_execution Sys.argv.(1))
 ;;
 
