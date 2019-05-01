@@ -320,3 +320,7 @@ delete all the files ending with .c or .out in /test-programs/.
 # ccam: Fix a bug in the memory tracing system
 
 The numbers were wrong.
+
+# Move /ccam/todo.md to /todo.md
+
+Since it concerns the whole project and not just the CCAM.
