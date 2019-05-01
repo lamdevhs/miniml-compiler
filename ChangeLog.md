@@ -290,3 +290,10 @@ all the values allocated should be freed at the end if everything
 went fine.
 
 # ccam: Rename virtual-machine.h into ccam.h
+
+# Tidy up ccam/Makefile, Delete vestigial files
+
+I took the opportunity of getting rid of ccam/main.c, which had
+merely been used as a testing ground to quickly sketch out ideas and
+check if they were possible.
+Same for ccam/stuff.c actually.

@@ -1,21 +1,26 @@
-all: core
+# usage: if you have generated a "gen.c" file with the compiler written in caml:
+#	(normal mode)  $ make build name="gen"
+# (debug mode)   $ make build name="gen" DBG=y
+# (memory trace) $ make build name="gen" MEM=y
+# and you can combine DBG=y and MEM=y together too.
+build: $(name).c runtime.c stack.c machine.c value.c ccam.h
+	gcc -Wall $(if $(MEM),-DTRACE_MEMORY,) $(if $(DBG),-DDEBUGMODE,) \
+	  -o $(name).out $^
 
-core: main.c stack.c machine.c value.c ccam.h
-	gcc -Wall -DTRACE_MEMORY -o core.out $^ && read PAUSING && ./core.out
+# builds then runs a miniml program on top of the CCAM (CAM written in C).
+# usage: same as for 'make build'.
+run: build
+		read PRESS_ENTER_TO_CONTINUE && ./$(name).out
 
-test: unit-tests.c stack.c machine.c value.c ccam.h
-	gcc -Wall -o unit-tests.out $^ && read PAUSING && ./unit-tests.out
-
-testv: unit-tests.c stack.c machine.c value.c ccam.h
-	gcc -Wall -DVERBOSE -o unit-tests.out $^ && read PAUSING && ./unit-tests.out
-
-gen: $(name).c runtime.c stack.c machine.c value.c ccam.h
-	gcc -Wall -o $(name).out $^ && read PAUSING && ./$(name).out
-
-gendbg: $(name).c runtime.c stack.c machine.c value.c ccam.h
-	gcc -Wall -DTRACE_MEMORY -DDEBUGMODE -o $(name).out $^ && read PAUSING && ./$(name).out
+# launch the unit tests for the CCAM. usage:
+# (silent)  $ make tests
+# (verbose) $ make tests V=y
+tests: unit-tests.c stack.c machine.c value.c ccam.h
+	gcc -Wall $(if $(V),-DVERBOSE,) -o unit-tests.out $^ \
+	  && read PRESS_ENTER_TO_CONTINUE \
+		&& ./unit-tests.out
 
 .PHONY: clean
 
 clean:
-	rm -f unit-tests.out core.out
+	rm -f unit-tests.out
