@@ -299,3 +299,5 @@ check if they were possible.
 Same for ccam/stuff.c actually.
 
 # Update todo.md
+
+# Delete generated-programs/
