@@ -1,7 +1,8 @@
 let rec map = fun f xs ->
-  if head xs = 0 (*marks the end of list*)
+  let h = head xs in
+  if h = 0 (*marks the end of list*)
     then [0]
-    else f (head xs) :: map f (tail xs)
+    else f h :: map f (tail xs)
 in
 let g = fun x -> x + 3 in
 map g [

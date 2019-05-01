@@ -279,3 +279,12 @@ bindings, and can also handle values of type lists and list operators
 
 Including the unary operations head and tail. Lists are now
 completely supported by the miniml compiler/runtime machine.
+
+# ccam: Fix memory usage report to make it clearer
+
+The old was was kind of cryptic, now it should be understandable
+even by someone else than myself.
+Also fixed ccam/runtime.c so that we free the final term in the
+machine state before the memory usage report is printed. That way
+all the values allocated should be freed at the end if everything
+went fine.

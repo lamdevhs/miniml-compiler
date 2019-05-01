@@ -299,13 +299,16 @@ int freed_values_real_count = 0;
 
 void memory_value_report()
 {
-  printf("[VALUE MEMORY USAGE]: "
-    "malloced: %d, "
-    "copy-freed: %d, "
-    "really freed: %d" NL,
+  printf(
+    "[ValueT MEMORY USAGE REPORT] " NL
+    "- mallocated values: %d " NL
+    "- freed values: %d" NL
+    "- reference counting prevented the allocation of" NL
+    "  %d unncecessary copies of values" NL,
     mallocated_values_count,
-    freed_values_fake_count,
-    freed_values_real_count);
+    freed_values_real_count,
+    freed_values_fake_count - freed_values_real_count
+  );
 }
 #endif
 

@@ -2,13 +2,13 @@
 
 int main () {
   MachineStateT *ms = blank_state (get_main_code());
-  
+
 #ifdef DEBUGMODE
   int verbosity = True;
 #else
   int verbosity = False;
 #endif
-  
+
   enum Status status = run_machine (ms, verbosity);
   int return_value;
   if (status == Halted) {
@@ -28,8 +28,10 @@ int main () {
 #endif
     return_value = 1;
   }
-  
+
 #ifdef TRACE_MEMORY
+  deepfree_value(ms->term);
+  //| ^ freeing all the values before displaying the memory trace
   memory_value_report();
 #endif
   return return_value;
