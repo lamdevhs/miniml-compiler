@@ -1,7 +1,7 @@
 #include <stdlib.h>
+#include <stdio.h>
 ///
 #include "ccam.h"
-
 
 MachineStateT *MachineState(ValueT *term, CodeT *code, StackT *stack) {
   MachineStateT *ms = malloc(sizeof(MachineStateT));

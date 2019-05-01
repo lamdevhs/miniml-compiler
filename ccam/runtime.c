@@ -1,3 +1,5 @@
+#include <stdio.h>
+///
 #include "ccam.h"
 
 int main ()

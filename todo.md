@@ -1,8 +1,6 @@
 # TODO
 
 simple ones:
-- remove the info() macro from ccam/
-- check if we can remove `__print_stack_` stuff
 - fix comments in machine.c's exec_zzz functions based on the new simulator.ml
 
 ccam:
@@ -88,3 +86,5 @@ These are in chronological order, hopefully:
 - rename virtual-machine to ccam.h
 - write script to generate normal and debug versions for each file in
   test-programs
+- remove the info() macro from ccam/
+- check if we can remove `__print_stack_` stuff

@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 ///
 #include "ccam.h"
 
@@ -82,54 +83,6 @@ int equal_stacks(StackT *a, StackT *b) {
   }
   else return True; //| StackIsEmpty, or maybe an invalid tag...
 }
-
-void print_stack(StackT *stack)
-{
-  __print_stack(stack, 0, True);
-}
-//| where:
-  #define STACK_CONS() printf(" :: ")
-  void __print_stack(StackT *stack, int code_count, int is_stack_top)
-  {
-    if (stack == NULL) {
-      __print_code_in_stack(code_count);
-      printf("<NULL Stack>");
-    }
-    else {
-      if (stack->tag == StackIsEmpty) {
-        __print_code_in_stack(code_count);
-        printf("[]");
-      }
-      else if (stack->tag == StackTopIsValue) {
-        __print_code_in_stack(code_count);
-        print_value(stack->as.with_value.top);
-        STACK_CONS();
-        __print_stack(stack->as.with_value.bottom, 0, False);
-      }
-      else if (stack->tag == StackTopIsCode) {
-        if (is_stack_top) {
-          //| this code is on the top of the stack
-          //| so it could be useful to actually print its value
-          printf("%p", stack->as.with_code.top);
-          STACK_CONS();
-          __print_stack(stack->as.with_code.bottom, 0, False);
-        }
-        else {
-          //| this code is not on the top of the stack
-          //| so we just add 1 to the count
-          __print_stack(stack->as.with_code.bottom, code_count + 1, False);
-        }
-      }
-      else {
-        __print_code_in_stack(code_count);
-        printf("<ERROR Stack>");
-      }
-    }
-  }
-  void __print_code_in_stack(int code_count)
-  {
-    if (code_count != 0) printf("{Code x%d} :: ", code_count);
-  }
 
 void print_stacktop(StackT *stack)
 {

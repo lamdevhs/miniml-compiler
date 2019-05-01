@@ -324,3 +324,10 @@ The numbers were wrong.
 # Move /ccam/todo.md to /todo.md
 
 Since it concerns the whole project and not just the CCAM.
+
+# Unimportant tidying
+
+- removed two unused macros in ccam.h
+- .gitignore /ccam/unit-tests.out
+- removed `print_stack()` and friends from stack.c (derelict)
+- moved `#include <stdio.h>` out of ccam.h

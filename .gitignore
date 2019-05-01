@@ -8,5 +8,6 @@
 /*.cmi
 /*.cmo
 *~
+/ccam/*.out
 /test-programs/*.out
 /test-programs/*.c
