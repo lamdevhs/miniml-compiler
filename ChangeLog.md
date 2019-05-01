@@ -316,3 +316,7 @@ The generated C and executable files are written to /test-programs/.
 
 If the script is called with the parameter "clean", it will instead
 delete all the files ending with .c or .out in /test-programs/.
+
+# ccam: Fix a bug in the memory tracing system
+
+The numbers were wrong.

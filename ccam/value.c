@@ -293,30 +293,30 @@ int equal_values(ValueT *a, ValueT *b) {
 }
 
 #ifdef TRACE_MEMORY
-int mallocated_values_count = 0;
-int freed_values_fake_count = 0;
-int freed_values_real_count = 0;
+  int mallocated_values_count = 0;
+  int freed_values_fake_count = 0;
+  int freed_values_real_count = 0;
 
-void memory_value_report()
-{
-  printf(
-    "[ValueT MEMORY USAGE REPORT] " NL
-    "- mallocated values: %d " NL
-    "- freed values: %d" NL
-    "- reference counting prevented the allocation of" NL
-    "  %d unncecessary values" NL,
-    mallocated_values_count,
-    freed_values_real_count,
-    freed_values_fake_count - freed_values_real_count
-  );
-}
+  void memory_value_report()
+  {
+    printf(
+      "[ValueT MEMORY USAGE REPORT] " NL
+      "- mallocated values: %d " NL
+      "- freed values: %d" NL
+      "- reference counting prevented the allocation of" NL
+      "  %d unnecessary values" NL,
+      mallocated_values_count,
+      freed_values_real_count,
+      freed_values_fake_count - freed_values_real_count
+    );
+  }
 #endif
 
 ValueT *malloc_value()
 {
-#ifdef TRACE_MEMORY
-  mallocated_values_count += 1;
-#endif
+  #ifdef TRACE_MEMORY
+    mallocated_values_count += 1;
+  #endif
   ValueT *value = malloc(sizeof(ValueT));
   value->copy_count = 1;
   return value;
@@ -325,23 +325,25 @@ ValueT *malloc_value()
 void free_value(ValueT *value)
 {
   value->copy_count -= 1;
-  if (value->copy_count == 0
-    && value != &the_empty_list
-    && value != &the_null_value)
-  {
+  if (value == &the_empty_list || value == &the_null_value) {
+    //| if `value` points at one of the two static, unique values
+    //| the_empty_list and the_null_value, we do nothing else.
+    return;
+  }
+  //| else:
+  if (value->copy_count == 0) {
     //| this value has no existing copy left,
     //| so we can genuinely free it for real
     //| without risk of creating dangling pointers.
-    //| we also checked that it was not one of
-    //| the two static, unique values: the_empty_list and the_null_value.
-#ifdef TRACE_MEMORY
-    freed_values_real_count += 1;
-#endif
+    #ifdef TRACE_MEMORY
+      freed_values_real_count += 1;
+      freed_values_fake_count += 1;
+    #endif
     free(value);
   }
   else {
-#ifdef TRACE_MEMORY
-    freed_values_fake_count += 1;
-#endif
+    #ifdef TRACE_MEMORY
+      freed_values_fake_count += 1;
+    #endif
   }
 }
