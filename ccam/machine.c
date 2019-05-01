@@ -21,7 +21,7 @@ int equal_states(MachineStateT *a, MachineStateT *b) {
   if (!!! equal_values(a->term, b->term)) return False;
   return equal_stacks(a->stack, b->stack);
 }
-  
+
 
 enum Status run_machine(MachineStateT *ms, int verbose) {
   enum Status status = AllOk;
@@ -53,6 +53,8 @@ enum Status exec(MachineStateT *ms) {
     case Curry: status = exec_Curry(ms); break;
     case Branch: status = exec_Branch(ms); break;
     case Call: status = exec_Call(ms); break;
+    case QuoteEmptyList: status = exec_QuoteEmptyList(ms); break;
+    case MakeList: status = exec_MakeList(ms); break;
     default: status = UnknownInstruction; break;
   }
   return status;
@@ -63,7 +65,7 @@ enum Status exec(MachineStateT *ms) {
 //| individual instructions:
 
 enum Status exec_Halt(MachineStateT *ms)
-{  
+{
   //| ms->term unchanged
   ms->code += 1; //| arbitrary choice here to make
   //| ms->stack unchanged
@@ -72,33 +74,77 @@ enum Status exec_Halt(MachineStateT *ms)
 
 enum Status exec_Unary(MachineStateT *ms)
 {
-  //| (PairV(x, y), PrimInstr (UnOp Fst) :: c, st) -> (x, c, st)
-  //| (PairV(x, y), PrimInstr (UnOp Snd) :: c, st) -> (y, c, st)
-  ValueT *term = ms->term;
-  
-  enum Status status = AllOk;
-  PairT pair = match_value_with_pair(term, &status);
-  if (status != AllOk) return status;
-  ValueT *x = pair.first;
-  ValueT *y = pair.second;
-  long operation = ms->code[1].operation;
-  
-  if (operation == Fst) {
-    ms->term = x;
-    deepfree_value(y);
-  }
-  else if (operation == Snd) {
-    ms->term = y;
-    deepfree_value(x);
-  }
-  else info(invalid operation) {
-    //| reset the machine state
-    ms->term = PairValue(x, y);
-    return UnknownUnary;
-  }
-  ms->code += 2;
-  //| ms->stack unchanged
-  return AllOk;
+  int operation = ms->code[1].operation;
+
+  switch (operation) {
+    case Fst:
+    case Snd:
+    {
+      //| (PairV(x, y), PrimInstr (UnOp Fst) :: c, st) -> (x, c, st)
+      //| (PairV(x, y), PrimInstr (UnOp Snd) :: c, st) -> (y, c, st)
+      ValueT *term = ms->term;
+
+      enum Status status = AllOk;
+      PairT pair = match_value_with_pair(term, &status);
+      if (status != AllOk) return status;
+      ValueT *x = pair.first;
+      ValueT *y = pair.second;
+
+      if (operation == Fst) {
+        ms->term = x;
+        deepfree_value(y);
+      }
+      else if (operation == Snd) {
+        ms->term = y;
+        deepfree_value(x);
+      }
+      else {
+        printf("exec_Unary: Fatal, impossible, crazy bug!"); exit(1);
+      }
+      ms->code += 2;
+      //| ms->stack unchanged
+      return AllOk;
+    } break;
+
+    case Head:
+    case Tail:
+    {
+      //| (l, PrimInstr (UnOp Head) :: c, st, fds) ->
+      //|     match l with
+      //|     | ListV EmptyListV -> failwith "RuntimeError: can't take the head of an empty list"
+      //|     | ListV (ListConsV (h, t)) -> exec (h, c, st, fds)
+      //|     | otherwise -> failwith "TypeError: can't take the head: not a list"
+      //| (l, PrimInstr (UnOp Tail) :: c, st, fds) ->
+      //|     match l with
+      //|     | ListV EmptyListV -> failwith "RuntimeError: can't take the tail of an empty list"
+      //|     | ListV (ListConsV (h, t)) -> exec (ListV t, c, st, fds)
+      //|     | otherwise -> failwith "TypeError: can't take the head: not a list"
+      ValueT *l = ms->term;
+
+      enum Status status = AllOk;
+      ListConsT pattern = match_value_with_list_cons(l, &status);
+      if (status != AllOk) return status;
+      ValueT *h = pattern.head;
+      ValueT *t = pattern.tail;
+
+      if (operation == Head) {
+        ms->term = h;
+        deepfree_value(t);
+      }
+      else if (operation == Tail) {
+        ms->term = t;
+        deepfree_value(h);
+      }
+      else {
+        printf("exec_Unary: Fatal, impossible, crazy bug!"); exit(2);
+      }
+      ms->code += 2;
+      //|ms->stack unchanged
+      return AllOk;
+    } break;
+
+    default: return UnknownUnary; break;
+  } //| end of switch
 }
 
 enum Status exec_Arith(MachineStateT *ms)
@@ -106,7 +152,7 @@ enum Status exec_Arith(MachineStateT *ms)
   //| (PairV(IntV x, IntV y), PrimInstr (BinOp (BArith op)) :: c, st)
   //| -> (IntV (eval_arith op x y), c, st)
   ValueT *term = ms->term;
-  
+
   enum Status status = AllOk;
   PairT pair = match_value_with_pair(term, &status);
   if (status != AllOk) {
@@ -131,7 +177,7 @@ enum Status exec_Arith(MachineStateT *ms)
     ms->term = PairValue(IntValue(x), IntValue(y));
     return status;
   }
-  
+
   ms->term = IntValue(result);
   ms->code += 2;
   //| ms->stack unchanged
@@ -146,11 +192,11 @@ enum Status exec_Compare(MachineStateT *ms)
   //|  (BoolV (eval_compare op x y), c, st)
   ValueT *term = ms->term;
   enum Status status = AllOk;
-  
+
   PairT pair = match_value_with_pair(term, &status);
   if (status != AllOk) return status;
   enum ValueTag tag = pair.first->tag;
-  
+
   long x, y;
   //| either both operands are IntValues...
   if (tag == ValueIsInt && tag == pair.second->tag) {
@@ -174,11 +220,11 @@ enum Status exec_Compare(MachineStateT *ms)
     ms->term = PairValue(pair.first, pair.second);
     return UnknownBinary;
   }
-  
+
   //| memory management:
   deepfree_value(pair.first);
   deepfree_value(pair.second);
-  
+
   ms->term = BoolValue(result);
   ms->code += 2;
   // ms->stack unchanged
@@ -191,7 +237,7 @@ enum Status exec_Push(MachineStateT *ms)
   ValueT *x = ms->term;
   StackT *stack = ms->stack;
   ValueT *cloned_x = deepcopy_value(x);
-  
+
   //| ms->term unchanged
   ms->code += 1;
   ms->stack = ValueOnStack(cloned_x, stack);
@@ -202,12 +248,12 @@ enum Status exec_Cons(MachineStateT *ms)
 {
   //| (x, Cons :: c, Val(y) :: st) -> (PairV(y, x), c, st)
   StackT *stack = ms->stack;
-  
+
   enum Status status = AllOk;
   ValueOnStackT pattern = match_stacktop_with_value(stack, &status);
   if (status != AllOk) return status;
   ValueT *x = ms->term;
-  
+
   ms->term = PairValue(pattern.top, x);
   ms->code += 1;
   ms->stack = pattern.bottom;
@@ -219,7 +265,7 @@ enum Status exec_QuoteBool(MachineStateT *ms)
   //| (_, QuoteBool(v) :: c, st) -> (BoolV(v), c, st)
   deepfree_value(ms->term);
   long v = ms->code[1].data;
-  
+
   ms->term = BoolValue(v);
   ms->code += 2;
   // ms->stack unchanged
@@ -231,7 +277,7 @@ enum Status exec_QuoteInt(MachineStateT *ms)
   //| (_, QuoteInt(v) :: c, st) -> (IntV(v), c, st)
   deepfree_value(ms->term);
   long v = ms->code[1].data;
-  
+
   ms->term = IntValue(v);
   ms->code += 2;
   // ms->stack unchanged
@@ -242,12 +288,12 @@ enum Status exec_Swap(MachineStateT *ms)
 {
   //| (x, Swap :: c, Val(y) :: st) -> (y, c, Val (x) :: st)
   StackT *stack = ms->stack;
-  
+
   enum Status status = AllOk;
   ValueOnStackT pattern = match_stacktop_with_value(stack, &status);
   if (status != AllOk) return status;
   ValueT *x = ms->term;
-  
+
   ms->term = pattern.top;
   ms->code += 1;
   ms->stack = ValueOnStack(x, pattern.bottom);
@@ -259,7 +305,7 @@ enum Status exec_Curry(MachineStateT *ms)
   //| (x, Curry (closure_code) :: c, st) -> (ClosureV(closure_code, x), c, st)
   CodeT *closure_code = ms->code[1].reference;
   ValueT *x = ms->term;
-  
+
   ms->term = ClosureValue(closure_code, x);
   ms->code += 2;
   //| ms-stack unchanged
@@ -270,7 +316,7 @@ enum Status exec_Apply(MachineStateT *ms) {
   //| (PairV(ClosureV(new_code, y), z), Apply :: old_code, st)
   //| -> (PairV(y, z), new_code, Cod(old_code) :: st)
   ValueT *term = ms->term;
-  
+
   enum Status status = AllOk;
   PairT pair = match_value_with_pair(term, &status);
   if (status != AllOk) return status;
@@ -280,13 +326,13 @@ enum Status exec_Apply(MachineStateT *ms) {
     ms->term = PairValue(pair.first, pair.second);
     return status;
   }
-  
+
   ValueT *z = pair.second;
   ValueT *y = closure.value;
   CodeT *new_code = closure.code;
   StackT *stack = ms->stack;
   CodeT *old_code = ms->code + 1;
-  
+
   ms->term = PairValue(y, z);
   ms->code = new_code;
   ms->stack = CodeOnStack(old_code, stack);
@@ -296,11 +342,11 @@ enum Status exec_Apply(MachineStateT *ms) {
 enum Status exec_Return(MachineStateT *ms) {
   //| (x, Return :: c, Cod(new_code) :: st) -> (x, new_code, st)
   StackT *stack = ms->stack;
-  
+
   enum Status status = AllOk;
   CodeOnStackT pattern = match_stacktop_with_code(stack, &status);
   if (status != AllOk) return status;
-  
+
   // ms->term unchanged
   ms->code = pattern.top;
   ms->stack = pattern.bottom;
@@ -312,7 +358,7 @@ enum Status exec_Branch(MachineStateT *ms) {
   //| -> (x, (if b then if_then else if_else), Cod(c) :: st)
   ValueT *term = ms->term;
   StackT *stack = ms->stack;
-  
+
   enum Status status = AllOk;
   long b = match_value_with_boolean(term, &status);
   if (status != AllOk) return status;
@@ -322,12 +368,12 @@ enum Status exec_Branch(MachineStateT *ms) {
     ms->term = BoolValue(b);
     return status;
   }
-  
+
   CodeT *code = ms->code;
   CodeT *if_then = code[1].reference;
   CodeT *if_else = code[2].reference;
   CodeT *c = code + 3;
-  
+
   ms->term = pattern.top;
   ms->code = (b ? if_then : if_else);
   ms->stack = CodeOnStack(c, pattern.bottom);
@@ -340,15 +386,53 @@ enum Status exec_Call(MachineStateT *ms)
   CodeT *ref = ms->code[1].reference;
   CodeT *c = ms->code + 2;
   StackT *st = ms->stack;
-  
+
   //| ms->term unchanged
   ms->code = ref;
   ms->stack = CodeOnStack(c, st);
   return AllOk;
 }
 
+enum Status exec_QuoteEmptyList(MachineStateT *ms)
+{
+  //| (_, QuoteEmptyList :: c, st) -> ([], c, st)
+  deepfree_value(ms->term);
+  long v = ms->code[1].data;
 
-//| utilitary:
+  ms->term = EmptyListValue(v);
+  ms->code += 1;
+  // ms->stack unchanged
+  return AllOk;
+}
+
+enum Status exec_MakeList(MachineStateT *ms)
+{
+  //| (ListV (tail), MakeList :: c, Val(head) :: st, fds)
+  //|   -> (ListV(ListConsV (head, tail)), c, st, fds)
+  //| (_, MakeList :: c, Val(head) :: st, fds)
+  //|   -> failwith "CompilerBug: can't construct list: tail is not a list"
+  //| (_, MakeList :: c, st, fds)
+  //|   -> failwith "CompilerBug: can't construct list: stacktop is not a value"
+  StackT *stack = ms->stack;
+  ValueT *tail = ms->term;
+
+  if (!!! value_is_list(tail)) {
+    return ValueIsNotAList;
+  }
+
+  enum Status status = AllOk;
+  ValueOnStackT pattern = match_stacktop_with_value(stack, &status);
+  if (status != AllOk) return status;
+
+  ms->term = ListConsValue(pattern.top, tail);
+  ms->code += 1;
+  ms->stack = pattern.bottom;
+  return AllOk;
+}
+
+
+
+//| utilitary functions:
 
 long eval_binary_operation(int operation, long a, long b, enum Status *status)
 {
@@ -390,12 +474,7 @@ void print_instruction(CodeT *code)
   switch(instruction) {
     case Halt: printf("Halt"); break;
     case Unary:
-      printf("Unary(");
-      printf("%s",
-        code[1].operation == Fst ? "Fst"
-        : (code[1].operation == Snd ? "Snd" : "<Unknown Unary>")
-      );
-      printf(")");
+      printf("Unary("); print_unary(code[1].operation); printf(")");
       break;
     case Arith:
       printf("Arith(");
@@ -425,6 +504,17 @@ void print_instruction(CodeT *code)
   }
 }
 
+void print_unary(int unary_op)
+{
+  switch (unary_op)
+  {
+    case Fst: printf("Fst"); break;
+    case Snd: printf("Snd"); break;
+    case Head: printf("Head"); break;
+    case Tail: printf("Tail"); break;
+  }
+}
+
 void print_operation(int operation)
 {
   switch (operation)
@@ -434,14 +524,14 @@ void print_operation(int operation)
     case Mul: printf("Mul"); break;
     case Div: printf("Div"); break;
     case Mod: printf("Mod"); break;
-  
+
     case Eq: printf("Eq"); break;
     case Neq: printf("Neq"); break;
     case Ge: printf("Ge"); break;
     case Gt: printf("Gt"); break;
     case Le: printf("Le"); break;
     case Lt: printf("Lt"); break;
-    
+
     default: printf("<Unknown Operation>"); break;
   }
 }
@@ -474,6 +564,7 @@ void print_status(enum Status status) {
     case ValueIsNotClosure: printf("ValueIsNotClosure"); break;
     case ValueIsNotBool: printf("ValueIsNotBool"); break;
     case ValueIsNotInt: printf("ValueIsNotInt"); break;
+    case ValueIsNotAList: printf("ValueIsNotAList"); break;
     default: printf("<Unknown>");
   }
 }

@@ -302,6 +302,13 @@ let flat_program_to_c_code_fragments
 
 let qwer2 = flat_program_to_c_code_fragments (flatten_program sample_program);;
 
+let operation_of_unary = function
+  | Fst -> "Fst"
+  | Snd -> "Snd"
+  | Head -> "Head"
+  | Tail -> "Tail"
+;;
+
 let lines_of_C_code : c_code_fragment list -> (string list * string list) =
   fun fragments ->
   let union_field field content = "{." ^field^ " = " ^content^ "}," in
@@ -312,8 +319,7 @@ let lines_of_C_code : c_code_fragment list -> (string list * string list) =
   let string_of_flat_instr = (function
     | FlatHalt -> write_instruction "Halt"
     | FlatUnary op ->
-        let opstr = if (op = Fst) then "Fst" else "Snd" in
-        write_instruction "Unary" ^ write_operation opstr
+        write_instruction "Unary" ^ write_operation (operation_of_unary op)
     | FlatArith op ->
         let opstr = (match op with
           BAadd->"Plus" |BAsub->"Sub" |BAmul->"Mul" |BAdiv->"Div" |BAmod->"Mod") in
@@ -332,7 +338,7 @@ let lines_of_C_code : c_code_fragment list -> (string list * string list) =
     | FlatQuoteI i -> write_instruction "QuoteInt" ^
         write_data (string_of_int i ^ "L")
     | FlatQuoteEmptyList -> write_instruction "QuoteEmptyList"
-    | FlatListCons -> write_instruction "ListCons"
+    | FlatListCons -> write_instruction "MakeList"
     | FlatCur ref -> write_instruction "Curry" ^ write_reference ref
     | FlatApp -> write_instruction "Apply"
     | FlatBranch (ifref, elseref) ->

@@ -17,7 +17,7 @@ void assert(char *str, int boolean) {
 
 void test_value() {
   enum Status status = AllOk;
-  
+
   //| -------- testing BoolValue
   {
     long b0 = False;
@@ -67,24 +67,29 @@ void test_value() {
     assert("Int(43)", i == 43L && status == AllOk);
   }
 
-  // ValueT *all_values[] = {
-  //   NULL, NullValue(), BoolValue(True), IntValue(55L),
-  //   PairValue(NullValue(), NullValue()),
-  //   ClosureValue((CodeT *)123L, NullValue())
-  // };
-  // //| -------- testing match_value_with_boolean
-  // {
-  //   for (int i = 0; i < 6; i++) {
-  //     long b =
+  //| -------- testing Lists
+  {
+    ValueT *empty = EmptyListValue();
+    int b =
+    (
+      value_is_list(empty)
+      && empty == &the_empty_list
+      && equal_values(empty, EmptyListValue())
+    );
+    free_value(empty); //| trying to (pretend-)free it, should work all right
+    assert("[]", b);
+  }
 }
 
 
 void exec_went_fine(char *msg, MachineStateT *ms, MachineStateT *expected) {
   enum Status status = exec(ms);
+  CodeT *start = ms->code;
   int condition = status == AllOk && equal_states(ms, expected);
   if (!!! condition) {
     print_state(ms); printf(NL);
     print_status(status); printf(NL);
+    printf("code shift: %ld" NL, expected->code - start);
   }
   assert(msg, condition);
 }
@@ -105,7 +110,7 @@ void test_exec() {
     CodeT program[] = { { .data = 42L }, { .instruction = Halt }, { .instruction = Swap } };
     MachineStateT *ms = blank_state(program + 1);
     enum Status status = exec(ms);
-    
+
     MachineStateT *expected = MachineState(NullValue(), program + 2, EmptyStack());
     assert("instruction Halt", status == Halted && equal_states(expected, ms));
   }
@@ -174,7 +179,7 @@ void test_exec() {
     enum Status status = exec(ms);
     assert("instruction Unary Fst(NULL)", status == MatchNULLValue);
   }
-  
+
   //| -------- testing Arith
   {
     CodeT program[] = {
@@ -220,8 +225,8 @@ void test_exec() {
     enum Status status = exec(ms);
     assert("instruction Arith 42", status == UnknownBinary);
   }
-  
-  
+
+
   //| -------- testing Compare
   {
     CodeT program1[] = {
@@ -239,7 +244,7 @@ void test_exec() {
       {.instruction = Compare},{.operation = 42},
       {.instruction = Swap},
     };
-    
+
     {
       exec_went_fine(
         "instruction Compare: 3 > -2",
@@ -254,7 +259,7 @@ void test_exec() {
           EmptyStack()
         )
       );
-      
+
       exec_went_fine(
         "instruction Compare: 3 <= 2",
         MachineState(
@@ -268,7 +273,7 @@ void test_exec() {
           EmptyStack()
         )
       );
-      
+
       exec_went_fine(
         "instruction Compare: False > True",
         MachineState(
@@ -282,7 +287,7 @@ void test_exec() {
           EmptyStack()
         )
       );
-      
+
       exec_went_fine(
         "instruction Compare: False <= True",
         MachineState(
@@ -296,7 +301,7 @@ void test_exec() {
           EmptyStack()
         )
       );
-      
+
       exec_failed(
         "instruction Compare: False <= 2",
         MachineState(
@@ -306,7 +311,7 @@ void test_exec() {
         ),
         MatchFailure
       );
-      
+
       exec_failed(
         "instruction Compare: -2 <= True",
         MachineState(
@@ -316,7 +321,7 @@ void test_exec() {
         ),
         MatchFailure
       );
-      
+
       exec_failed(
         "instruction Compare: False 42 True",
         MachineState(
@@ -328,8 +333,8 @@ void test_exec() {
       );
     }
   }
-  
-  
+
+
   //| -------- testing Push
   //| (x, Push :: c, st) -> (x, c, Val(x) :: st)
   {
@@ -340,7 +345,7 @@ void test_exec() {
       ValueOnStack(IntValue(200L), EmptyStack())
     );
     enum Status status = exec(ms);
-    
+
     MachineStateT *expected = MachineState(
       PairValue(IntValue(3L), BoolValue(True)),
       program + 2,
@@ -359,7 +364,7 @@ void test_exec() {
       //| ^ not true anymore now we only copy values virtually
     );
   }
-  
+
   //| -------- testing Cons
   //| (x, Cons :: c, Val(y) :: st) -> (PairV(y, x), c, st)
   {
@@ -371,7 +376,7 @@ void test_exec() {
         ValueOnStack(IntValue(200L), EmptyStack())
       );
       enum Status status = exec(ms);
-      
+
       MachineStateT *expected = MachineState(
         PairValue(
           IntValue(200L),
@@ -397,7 +402,7 @@ void test_exec() {
       );
     }
   }
-  
+
   //| -------- testing QuoteBool, QuoteInt
   {
     CodeT program[] = {
@@ -411,7 +416,7 @@ void test_exec() {
       EmptyStack()
     );
     enum Status status = exec(ms);
-    
+
     MachineStateT *expected = MachineState(
       BoolValue(True),
       program + 3,
@@ -434,7 +439,7 @@ void test_exec() {
       EmptyStack()
     );
     enum Status status = exec(ms);
-    
+
     MachineStateT *expected = MachineState(
       IntValue(-123L),
       program + 3,
@@ -445,7 +450,7 @@ void test_exec() {
       && equal_states(expected, ms)
     );
   }
-  
+
   //| -------- testing Swap
   //| (x, Swap :: c, Val(y) :: st) -> (y, c, Val (x) :: st)
   {
@@ -456,7 +461,7 @@ void test_exec() {
       ValueOnStack(BoolValue(False), EmptyStack())
     );
     enum Status status = exec(ms);
-    
+
     MachineStateT *expected = MachineState(
       BoolValue(False),
       program + 2,
@@ -475,12 +480,12 @@ void test_exec() {
       CodeOnStack((CodeT *) 24L, ValueOnStack(BoolValue(False), EmptyStack()))
     );
     enum Status status = exec(ms);
-    
+
     assert("instruction Swap with code on stack",
       status == StackHeadIsNotValue
     );
   }
-  
+
   //| --------- testing Curry
   //| (x, Curry (closure_code) :: c, st) -> (ClosureV(closure_code, x), c, st)
   {
@@ -495,7 +500,7 @@ void test_exec() {
       NULL
     );
     enum Status status = exec(ms);
-    
+
     MachineStateT *expected = MachineState(
       ClosureValue((CodeT *)123456L, IntValue(-1L)),
       program + 3,
@@ -506,7 +511,7 @@ void test_exec() {
       && equal_states(ms, expected)
     );
   }
-  
+
   //| --------- testing Apply
   //| (PairV(ClosureV(new_code, y), z), Apply :: old_code, st)
   //| -> (PairV(y, z), new_code, Cod(old_code) :: st)
@@ -522,7 +527,7 @@ void test_exec() {
         EmptyStack()
       );
       enum Status status = exec(ms);
-      
+
       MachineStateT *expected = MachineState(
         PairValue(IntValue(-100), NullValue()),
         (CodeT *)456789L,
@@ -543,13 +548,13 @@ void test_exec() {
         EmptyStack()
       );
       enum Status status = exec(ms);
-      
+
       assert("instruction Apply with no closure",
         status == ValueIsNotClosure
       );
     }
   }
-  
+
   //| -------- testing Return
   //| (x, Return :: c, Cod(new_code) :: st) -> (x, new_code, st)
   {
@@ -580,7 +585,7 @@ void test_exec() {
       StackHeadIsNotCode
     );
   }
-  
+
   //| -------- testing Branch
   //| (BoolV(b), Branch (if_then, if_else) :: c, Val(x) :: st)
   //| -> (x, (if b then if_then else if_else), Cod(c) :: st)
@@ -592,7 +597,7 @@ void test_exec() {
         { .reference = CodeRef(321L) },
       { .data = -1L }
     };
-    
+
     {
       exec_went_fine(
         "instruction Branch(True)",
@@ -646,7 +651,7 @@ void test_exec() {
       );
     }
   }
-  
+
   //| -------- testing Call
   //| (x, Call(ref) :: c, st) -> (x, ref, Cod(c) :: st)
   {
@@ -654,7 +659,7 @@ void test_exec() {
       {.instruction = Call},{.reference = CodeRef(123456L)},
       {.instruction = Halt},
     };
-    
+
     {
       exec_went_fine(
         "instruction Call",
@@ -670,6 +675,148 @@ void test_exec() {
         )
       );
     }
+  }
+
+  //| -------- testing QuoteEmptyList
+  {
+    CodeT program[] = {
+      { .data = 43L },
+      { .instruction = QuoteEmptyList },
+      { .instruction = Halt }
+    };
+    exec_went_fine(
+      "instruction QuoteEmptyList",
+      MachineState(
+        NULL,
+        program + 1,
+        EmptyStack()
+      ),
+      MachineState(
+        EmptyListValue(),
+        program + 2,
+        EmptyStack()
+      )
+    );
+  }
+
+  //| -------- testing MakeList
+  {
+    CodeT program[] = {
+      { .data = 43L },
+      { .instruction = MakeList },
+      { .instruction = Halt }
+    };
+    exec_went_fine(
+      "instruction MakeList",
+      MachineState(
+        ListConsValue(IntValue(3), EmptyListValue()),
+        program + 1,
+        ValueOnStack(IntValue(4), EmptyStack())
+      ),
+      MachineState(
+        ListConsValue(IntValue(4), ListConsValue(IntValue(3), EmptyListValue())),
+        program + 2,
+        EmptyStack()
+      )
+    );
+    exec_failed(
+      "instruction MakeList, term not a list",
+      MachineState(
+        IntValue(3),
+        program + 1,
+        ValueOnStack(IntValue(4), EmptyStack())
+      ),
+      ValueIsNotAList
+    );
+    exec_failed(
+      "instruction MakeList, stack is empty",
+      MachineState(
+        ListConsValue(IntValue(3), EmptyListValue()),
+        program + 1,
+        EmptyStack()
+      ),
+      StackHeadIsNotValue
+    );
+  }
+
+  //| -------- testing Unary(Head/Tail)
+  {
+    CodeT program[] = {
+      { .data = 43L },
+      { .instruction = Unary },
+      { .operation = Head },
+      { .instruction = Halt }
+    };
+
+    exec_went_fine(
+      "instruction Unary(Head)",
+      MachineState(
+        ListConsValue(IntValue(3), ListConsValue(IntValue(4), EmptyListValue())),
+        program + 1,
+        EmptyStack()
+      ),
+      MachineState(
+        IntValue(3),
+        program + 3,
+        EmptyStack()
+      )
+    );
+    exec_failed(
+      "instruction Unary(Head), term not a list",
+      MachineState(
+        IntValue(3),
+        program + 1,
+        EmptyStack()
+      ),
+      ValueIsNotAList
+    );
+    exec_failed(
+      "instruction Unary(Head), term == []",
+      MachineState(
+        EmptyListValue(),
+        program + 1,
+        EmptyStack()
+      ),
+      ValueIsHeadless
+    );
+
+    CodeT program2[] = {
+      { .data = 43L },
+      { .instruction = Unary },
+      { .operation = Tail },
+      { .instruction = Halt }
+    };
+    exec_went_fine(
+      "instruction Unary(Tail)",
+      MachineState(
+        ListConsValue(IntValue(3), ListConsValue(IntValue(4), EmptyListValue())),
+        program2 + 1,
+        EmptyStack()
+      ),
+      MachineState(
+        ListConsValue(IntValue(4), EmptyListValue()),
+        program2 + 3,
+        EmptyStack()
+      )
+    );
+    exec_failed(
+      "instruction Unary(Tail), term not a list",
+      MachineState(
+        IntValue(3),
+        program2 + 1,
+        EmptyStack()
+      ),
+      ValueIsNotAList
+    );
+    exec_failed(
+      "instruction Unary(Tail), term == []",
+      MachineState(
+        EmptyListValue(),
+        program2 + 1,
+        EmptyStack()
+      ),
+      ValueIsHeadless
+    );
   }
 }
 

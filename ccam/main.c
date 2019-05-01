@@ -6,13 +6,13 @@
 
 void test_eval_primop() {
   int res; enum Status status = AllOk;
-  
+
   res = eval_binary_operation(Mul, 3, 7, &status);
   printf("xyz\n" "%d -- status = %d\n", res, status);
-  
+
   res = eval_binary_operation(Mod, 5, 0, &status);
   printf("xyz\n" "%d -- status = %d\n", res, status);
-  
+
   res = eval_binary_operation(4242, 3, 0, &status);
   printf("xyz\n" "%d -- status = %d\n", res, status);
 }
@@ -44,7 +44,7 @@ void test_mini_program() {
   printf("!! instruction: *(program[2]) = %d, Push = %d\n",
     program[2].reference[0].instruction, Push
   );
-  
+
   MachineStateT *ms = blank_state(program);
   enum Status status = run_machine(ms, info(verbosity -->) True);
   printf("final status: %d, Halt = %d; NotPair = %d, code = %ld" NL,
@@ -73,8 +73,8 @@ void test_local_vars()
 }
 
 int main () {
-  printf(" ( \\P\n"); 
-  printf(" ( //\n"); 
+  printf(" ( \\P\n");
+  printf(" ( //\n");
   test_eval_primop();
   ValueT t1, t2;
   t1.tag = ValueIsInt;
@@ -83,9 +83,9 @@ int main () {
   t2.as.boolean = 1;
   t1 = t2;
   printf("=> %d -- %d -- %ld" NL, t1.tag, ValueIsBool, t1.as.boolean);
-  
+
   test_mini_program();
-  
+
   test_unions();
   test_local_vars();
   printf("size of CodeT: %ld, of ptr: %ld" NL, sizeof(CodeT), sizeof(void *));
@@ -93,7 +93,7 @@ int main () {
     sizeof(struct { enum { Y } b; int *c; int *d; }));
   printf("size of new value: %ld" NL,
     sizeof(struct { int a; enum { X } b; int *c; int *d; }));
-  
+
 }
 
 CodeT if_branch0[3];

@@ -274,3 +274,8 @@ Also I added clearer "usage error" messages to /comp.ml.
 In the end, now, the ocaml simulator has support for let-rec
 bindings, and can also handle values of type lists and list operators
 (like head).
+
+# Add type List to ccam
+
+Including the unary operations head and tail. Lists are now
+completely supported by the miniml compiler/runtime machine.
