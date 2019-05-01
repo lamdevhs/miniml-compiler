@@ -8,6 +8,5 @@
 /*.cmi
 /*.cmo
 *~
-*.out
-generated.c
-generated.h
+/test-programs/*.out
+/test-programs/*.c

@@ -8,8 +8,6 @@ simple ones:
 ccam:
 - isolate enums into their own .c file
 - meliorate the error handling/messaging system
-- write script to generate normal and debug versions for each file in
-  test-programs
 
 caml compiler:
 - forbid having the same variable bound twice by the same let rec.
@@ -88,3 +86,5 @@ These are in chronological order, hopefully:
 - make so the final term value of ms is freed before we display memory trace
   also make the memory trace report clearer
 - rename virtual-machine to ccam.h
+- write script to generate normal and debug versions for each file in
+  test-programs

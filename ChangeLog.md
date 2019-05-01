@@ -301,3 +301,18 @@ Same for ccam/stuff.c actually.
 # Update todo.md
 
 # Delete generated-programs/
+
+# New file: /generate-all.sh
+
+Shell script that automatize the compilation of test programs.
+
+The script builds the caml compiler /comp with make, then uses it to
+generate a C file for each of the miniml programs in /test-programs/.
+Then, it builds a C program out of the CCAM and each of the generated
+C files. Actually, it builds two programs: a normal-flavored one that
+ends with `.out`, and one that ends with `.dbg.out` and which is
+compiled with all the debug and memory trace flags.
+The generated C and executable files are written to /test-programs/.
+
+If the script is called with the parameter "clean", it will instead
+delete all the files ending with .c or .out in /test-programs/.
