@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 ////
-#include "virtual-machine.h"
+#include "ccam.h"
 
 
 void test_eval_primop() {

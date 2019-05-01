@@ -1,6 +1,7 @@
-#include "virtual-machine.h"
+#include "ccam.h"
 
-int main () {
+int main ()
+{
   MachineStateT *ms = blank_state (get_main_code());
 
 #ifdef DEBUGMODE

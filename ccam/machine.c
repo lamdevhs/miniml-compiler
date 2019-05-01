@@ -1,6 +1,6 @@
 #include <stdlib.h>
 ///
-#include "virtual-machine.h"
+#include "ccam.h"
 
 
 MachineStateT *MachineState(ValueT *term, CodeT *code, StackT *stack) {

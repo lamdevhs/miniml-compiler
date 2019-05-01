@@ -288,3 +288,5 @@ Also fixed ccam/runtime.c so that we free the final term in the
 machine state before the memory usage report is printed. That way
 all the values allocated should be freed at the end if everything
 went fine.
+
+# ccam: Rename virtual-machine.h into ccam.h

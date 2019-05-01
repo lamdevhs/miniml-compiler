@@ -1,6 +1,6 @@
 #include <stdlib.h>
 ///
-#include "virtual-machine.h"
+#include "ccam.h"
 
 //| static, unique values:
 ValueT the_empty_list = { .copy_count = 0, .tag = ValueIsEmptyList } ;
@@ -304,7 +304,7 @@ void memory_value_report()
     "- mallocated values: %d " NL
     "- freed values: %d" NL
     "- reference counting prevented the allocation of" NL
-    "  %d unncecessary copies of values" NL,
+    "  %d unncecessary values" NL,
     mallocated_values_count,
     freed_values_real_count,
     freed_values_fake_count - freed_values_real_count

@@ -1,6 +1,6 @@
 #include <stdlib.h>
 ///
-#include "virtual-machine.h"
+#include "ccam.h"
 
 
 //| creation of stacks
@@ -44,7 +44,7 @@ ValueOnStackT match_stacktop_with_value(StackT *stack, enum Status *status) {
   }
   //| else:
   output = stack->as.with_value;
-  
+
   free(stack);
   return output;
 }
@@ -62,7 +62,7 @@ CodeOnStackT match_stacktop_with_code(StackT *stack, enum Status *status) {
   }
   //| else:
   output = stack->as.with_code;
-  
+
   free(stack);
   return output;
 }
@@ -118,7 +118,7 @@ void print_stack(StackT *stack)
           //| this code is not on the top of the stack
           //| so we just add 1 to the count
           __print_stack(stack->as.with_code.bottom, code_count + 1, False);
-        } 
+        }
       }
       else {
         __print_code_in_stack(code_count);
@@ -130,7 +130,7 @@ void print_stack(StackT *stack)
   {
     if (code_count != 0) printf("{Code x%d} :: ", code_count);
   }
-  
+
 void print_stacktop(StackT *stack)
 {
   if (stack == NULL) {
