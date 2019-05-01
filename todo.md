@@ -2,10 +2,11 @@
 
 simple ones:
 - fix comments in machine.c's exec_zzz functions based on the new simulator.ml
+- remove CodeRef(long); in machine.c?
 
 ccam:
-- isolate enums into their own .c file
 - meliorate the error handling/messaging system
+- simplify unit-tests.c
 
 caml compiler:
 - forbid having the same variable bound twice by the same let rec.
@@ -88,3 +89,4 @@ These are in chronological order, hopefully:
   test-programs
 - remove the info() macro from ccam/
 - check if we can remove `__print_stack_` stuff
+- isolate enums into their own .c file

@@ -14,7 +14,6 @@ void assert(char *str, int boolean) {
 #endif
 }
 
-
 void test_value() {
   enum Status status = AllOk;
 
@@ -81,6 +80,14 @@ void test_value() {
   }
 }
 
+//| this is meant to be temporary; I renamed exec into execute_next_instruction,
+//| and since i plan on making a lot of changes to this file, i thought simpler
+//| to set up this alias rather than search and replace all calls to exec()
+//| in this file.
+enum Status exec(MachineStateT *ms)
+{
+  return execute_next_instruction(ms);
+}
 
 void exec_went_fine(char *msg, MachineStateT *ms, MachineStateT *expected) {
   enum Status status = exec(ms);

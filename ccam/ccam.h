@@ -181,6 +181,14 @@ typedef struct MachineStateT {
 } MachineStateT;
 
 
+//| enums.c
+enum Status execute_next_instruction(MachineStateT *ms);
+long eval_binary_operation(int operation, long a, long b, enum Status *status);
+void print_instruction(CodeT *code);
+void print_operation(int operation);
+void print_unary(int unary_op);
+void print_status(enum Status status);
+
 //| value.c
 ValueT *PairValue(ValueT *first, ValueT *second);
 ValueT *ClosureValue(CodeT *code, ValueT *closure_value);
@@ -232,7 +240,6 @@ MachineStateT *MachineState(ValueT *term, CodeT *code, StackT *stack);
 MachineStateT *blank_state(CodeT *code);
 int equal_states(MachineStateT *a, MachineStateT *b);
 enum Status run_machine(MachineStateT *ms, int verbose);
-enum Status exec(MachineStateT *ms);
   ///
 enum Status exec_Halt(MachineStateT *ms);
   ///
@@ -256,12 +263,7 @@ enum Status exec_Call(MachineStateT *ms);
 enum Status exec_QuoteEmptyList(MachineStateT *ms);
 enum Status exec_MakeList(MachineStateT *ms);
   ///
-long eval_binary_operation(int operation, long a, long b, enum Status *status);
-void print_instruction(CodeT *code);
-void print_operation(int operation);
-void print_unary(int unary_op);
 void print_state(MachineStateT *ms);
-void print_status(enum Status status);
 CodeT *CodeRef(long x);
 
 //| runtime requirements:

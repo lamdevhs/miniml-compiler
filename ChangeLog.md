@@ -331,3 +331,11 @@ Since it concerns the whole project and not just the CCAM.
 - .gitignore /ccam/unit-tests.out
 - removed `print_stack()` and friends from stack.c (derelict)
 - moved `#include <stdio.h>` out of ccam.h
+
+# ccam: New file enums.c
+
+Regroups all the functions that deal heavily with enumerations:
+those almost entirely made of one big switch.
+The purpose of this separation is to make less likely the risk of
+not updating the corresponding code after having updated the
+definition of an enumeration. If only C was type safe...
