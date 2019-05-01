@@ -1,32 +1,43 @@
 # TODO
 
+simple ones:
+- remove the info() macro from ccam/
+- check if we can remove `__print_stack_` stuff
+- fix comments in machine.c's exec_zzz functions based on the new simulator.ml
+
+ccam:
+- isolate enums into their own .c file
+- meliorate the error handling/messaging system
 - write script to generate normal and debug versions for each file in
   test-programs
-- add type list, and equality operators on those?
+
+caml compiler:
+- forbid having the same variable bound twice by the same let rec.
+- add null value to parser
+- recognize badly formed programs (let rec etc)
+- prevent restricted tokens to be used for variables (e.g. head, let, etc)
+- rename instrs/compile to mlexp_to_code
+- replace write_instruction with string_of_instruction?
+
+global:
+- replace ListCons instr everywhere with MakeList
+- fix the built_in_test error: "(fst, snd);;"
+  idea: by defining top level global code snippets that can be used to handle
+  the built-in operators when they aren't immediately called
+- fix the shit regarding auto adding .c to generated files by compiler?
+
+READMEs:
+- write miniml's grammar, latex style
 
 # PITFALLS
-- /!\ when hitting an error, it may happen that some malloced stuff are in local
-  variables of the exec(); more worryingly, the current value of main_term may
-  very well have been freed (destructured or even just freed), so if we send it
-  back as return value, it can be NULL.
-- most of the exec_zzzz that can fail at some point, fail after destructuring some value,
-  often leaving the machine in an unsafe, partial state... we might want to fix that.
-- using value_one_stack on a NULL stack does not cause an error, and simply uses NULL as its
-  bottommost link... maybe we should just use NULL to symbolize the empty stack...?
+- warning: we must forbid | (x,x) -> patterns.
+  same for let rec f = 1 and f = 2 in 3;;
 
 # IDEAS
-- policy for memory leakage:
-  - if we hit an error, the vm contains bugs, so it will crash and end,
-    we therefore don't need to care about freeing all the memory we used,
-    as it'd be then just an additional bug.
-  - if we hit halt, we may imagine that the same process could go on doing other things
-    after the vm dies, so we should probably free the stack recursively
-    (as it's the only place where we put stuff that we don't return).
-  so, we would guarantee that, barring compiler bug, the vm doesn't have memory leakage,
-  and if the compiler does have a bug, the memory management all goes to shit...
-- we could have a status that is different for every single type of errors: 
-  one e.g. for "Fst(Bool)", Fst(Null), Fst(NULL), Plus(Bool, Int) etc... though meh
-- replace most status errors with "ValueMatchingFailure" and "StackMatchingFailure"
+- we could add a match before even adding custom constructors:
+  then it could be "manually" done by user e.g.:
+  match x with (0, val) -> ... | (1, val) -> ...
+- we'd still need "is_pair", "is_empty", "is_bool", "is_int", "is_null"...
 
 # BAD IDEAS
 - fuse Return and Halt, so that Return stops the vm if the stack is empty? or at least if
@@ -39,7 +50,6 @@
 
 Those are in no particular order due to me having been lazy with updating this file.
 There's also a bit of redundancy.
-
   - write match_xxx_with_xxx functions, and their corresponding output types
     e.g.: `match_stack_with_value : Stack* -> enum Err* -> {head : Value*, tail : Stack*}`
   - fix type Stack: inject StackItem directly into Stack
@@ -62,7 +72,7 @@ There's also a bit of redundancy.
     `{tag * (StackWithValue | StackWithCode)}`
   - use an `union { Bin *coderef, int data }` instead of long for Bin's def (if possible)
   - use PairValue/BoolValue/etc instead of value_Pair, etc, and use PairValueTag instead of PairValue,
-  
+
 These are in chronological order, hopefully:
 - rename App --> Apply, Cur --> Curry
 - change the C pretty printer of Values to be less verbose (no constructors)
@@ -70,10 +80,11 @@ These are in chronological order, hopefully:
 - meliorate the format of the generated code
 - add a function taking a CodeT* and pretty-printing the next instruction,
   use it to change print_state to sth more friendly
-
-///
 - only print the top of the stack when writing the exec state (or just the
   two topmost items maybe)
-
 - handle memory via refcounts:
   use wrappers around malloc and free to measure the gain
+- add type list
+- make so the final term value of ms is freed before we display memory trace
+  also make the memory trace report clearer
+- rename virtual-machine to ccam.h
