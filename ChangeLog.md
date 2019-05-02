@@ -341,3 +341,7 @@ not updating the corresponding code after having updated the
 definition of an enumeration. If only C was type safe...
 
 # Meliorate usage error message for /simu and /comp
+
+# ccam: New file dev.c
+
+Just for one-time tests and experiments.
