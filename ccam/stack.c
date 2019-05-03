@@ -32,40 +32,22 @@ StackT *CodeOnStack(CodeT *code, StackT *old_stack) {
 
 //| destructuration of stacks
 
-ValueOnStackT match_stacktop_with_value(StackT *stack, enum Status *status) {
-  ValueOnStackT output = {NULL, NULL};
-  if (stack == NULL) {
-    *status = MatchNULLStack;
-    return output;
-  }
-  //| else:
-  if (stack->tag != StackTopIsValue) {
-    *status = StackHeadIsNotValue;
-    return output;
-  }
-  //| else:
-  output = stack->as.with_value;
+enum result match_stacktop_with_value(StackT *stack, ValueOnStackT *output)
+{
+  if (stack == NULL || stack->tag != StackTopIsValue) return Failure;
 
+  *output = stack->as.with_value;
   free(stack);
-  return output;
+  return Success;
 }
 
-CodeOnStackT match_stacktop_with_code(StackT *stack, enum Status *status) {
-  CodeOnStackT output = {NULL, NULL};
-  if (stack == NULL) {
-    *status = MatchNULLStack;
-    return output;
-  }
-  //| else:
-  if (stack->tag != StackTopIsCode) {
-    *status = StackHeadIsNotCode;
-    return output;
-  }
-  //| else:
-  output = stack->as.with_code;
+enum result match_stacktop_with_code(StackT *stack, CodeOnStackT *output)
+{
+  if (stack == NULL || stack->tag != StackTopIsCode) return Failure;
 
+  *output = stack->as.with_code;
   free(stack);
-  return output;
+  return Success;
 }
 
 int equal_stacks(StackT *a, StackT *b) {

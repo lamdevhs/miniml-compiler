@@ -52,8 +52,8 @@ ValueT *ListConsValue(ValueT *head, ValueT *tail)
 {
   ValueT *value = malloc_value();
   value->tag = ValueIsListCons;
-  value->as.list.head = head;
-  value->as.list.tail = tail;
+  value->as.listcons.head = head;
+  value->as.listcons.tail = tail;
   return value;
 }
 
@@ -76,8 +76,8 @@ void deepincrement_copy_count(ValueT *value)
       deepincrement_copy_count(value->as.pair.second);
     }
     else if (tag == ValueIsListCons) {
-      deepincrement_copy_count(value->as.list.head);
-      deepincrement_copy_count(value->as.list.tail);
+      deepincrement_copy_count(value->as.listcons.head);
+      deepincrement_copy_count(value->as.listcons.tail);
     }
     else if (tag == ValueIsClosure) {
       deepincrement_copy_count(value->as.closure.value);
@@ -95,8 +95,8 @@ void deepfree_value(ValueT *value) {
       deepfree_value(value->as.pair.second);
     }
     if (tag == ValueIsListCons) {
-      deepfree_value(value->as.list.head);
-      deepfree_value(value->as.list.tail);
+      deepfree_value(value->as.listcons.head);
+      deepfree_value(value->as.listcons.tail);
     }
     else if (tag == ValueIsClosure) {
       deepfree_value(value->as.closure.value);
@@ -106,103 +106,49 @@ void deepfree_value(ValueT *value) {
   }
 }
 
-PairT match_value_with_pair(ValueT *value, enum Status *status) {
-  PairT output = {NULL, NULL};
-  if (value == NULL) {
-    *status = MatchNULLValue;
-    return output;
-  }
-  //| else:
-  if (value->tag != ValueIsPair) {
-    *status = ValueIsNotPair;
-    return output;
-  }
-  //| else:
-  output = value->as.pair;
-
-  free_value(value);
-  return output;
-}
-
-ClosureT match_value_with_closure(ValueT *value, enum Status *status) {
-  ClosureT output = {NULL, NULL};
-  if (value == NULL) {
-    *status = MatchNULLValue;
-    return output;
-  }
-  //| else:
-  if (value->tag != ValueIsClosure) {
-    *status = ValueIsNotClosure;
-    return output;
-  }
-  //| else:
-  output = value->as.closure;
-
-  free_value(value);
-  return output;
-}
-
-long match_value_with_boolean(ValueT *value, enum Status *status) {
-  if (value == NULL) {
-    *status = MatchNULLValue;
-    return 0;
-  }
-  //| else:
-  if (value->tag != ValueIsBool) {
-    *status = ValueIsNotBool;
-    return 0;
-  }
-  //| else:
-  long output = value->as.boolean;
-
-  free_value(value);
-  return output;
-}
-
-long match_value_with_integer(ValueT *value, enum Status *status) {
-  if (value == NULL) {
-    *status = MatchNULLValue;
-    return 0;
-  }
-  //| else:
-  if (value->tag != ValueIsInt) {
-    *status = ValueIsNotInt;
-    return 0;
-  }
-  //| else:
-  long output = value->as.integer;
-
-  free_value(value);
-  return output;
-}
-
-int value_is_list(ValueT *value)
+enum result match_value_with_pair(ValueT *value, PairT *output)
 {
-  if (value == NULL) return False;
-  enum ValueTag tag = value->tag;
-  return (tag == ValueIsEmptyList || tag == ValueIsListCons);
+  if (value == NULL || value->tag != ValueIsPair) return Failure;
+
+  *output = value->as.pair;
+  free_value(value);
+  return Success;
 }
 
-ListConsT match_value_with_list_cons(ValueT *value, enum Status *status)
+enum result match_value_with_closure(ValueT *value, ClosureT *output)
 {
-  ListConsT output = {NULL, NULL};
-  if (value == NULL) {
-    *status = MatchNULLValue;
-    return output;
-  }
-  if (!!! value_is_list(value)) {
-    *status = ValueIsNotAList;
-    return output;
-  }
-  if (value->tag == ValueIsEmptyList) {
-    *status = ValueIsHeadless;
-    return output;
-  }
-  //| else
-  output = value->as.list;
+  if (value == NULL || value->tag != ValueIsClosure) return Failure;
 
+  *output = value->as.closure;
   free_value(value);
-  return output;
+  return Success;
+}
+
+enum result match_value_with_boolean(ValueT *value, long *output)
+{
+  if (value == NULL || value->tag != ValueIsBool) return Failure;
+
+  *output = value->as.boolean;
+  free_value(value);
+  return Success;
+}
+
+enum result match_value_with_integer(ValueT *value, long *output)
+{
+  if (value == NULL || value->tag != ValueIsInt) return Failure;
+
+  *output = value->as.integer;
+  free_value(value);
+  return Success;
+}
+
+enum result match_value_with_listcons(ValueT *value, ListConsT *output)
+{
+  if (value == NULL || value->tag != ValueIsListCons) return Failure;
+
+  *output = value->as.listcons;
+  free_value(value);
+  return Success;
 }
 
 void print_value(ValueT *value) {
@@ -232,7 +178,7 @@ void print_value(ValueT *value) {
     }
     else if (tag == ValueIsListCons) {
       printf("[");
-      print_listcons(value->as.list.head, value->as.list.tail);
+      print_listcons(value->as.listcons.head, value->as.listcons.tail);
       printf("]");
     }
     else if (tag == ValueIsClosure) {
@@ -244,6 +190,13 @@ void print_value(ValueT *value) {
       printf("<ERROR Value>");
     }
   }
+}
+
+enum boole value_is_list(ValueT *value)
+{
+  if (value == NULL) return False;
+  enum ValueTag tag = value->tag;
+  return (tag == ValueIsEmptyList || tag == ValueIsListCons);
 }
 
 void print_listcons(ValueT* head, ValueT *tail)
@@ -258,7 +211,7 @@ void print_listcons(ValueT* head, ValueT *tail)
   if (tail->tag == ValueIsEmptyList) return; //| we printed the head, we're done
   else {
     printf("; ");
-    print_listcons(tail->as.list.head, tail->as.list.tail);
+    print_listcons(tail->as.listcons.head, tail->as.listcons.tail);
   }
 }
 
@@ -286,8 +239,8 @@ int equal_values(ValueT *a, ValueT *b) {
       && equal_values(a->as.closure.value, b->as.closure.value);
   }
   else if (tag == ValueIsListCons) {
-    return equal_values(a->as.list.head, b->as.list.head)
-      && equal_values(a->as.list.tail, b->as.list.tail);
+    return equal_values(a->as.listcons.head, b->as.listcons.head)
+      && equal_values(a->as.listcons.tail, b->as.listcons.tail);
   }
   else if (tag >= ValueTagIsInvalid) return False;
   else return True; //| tags are equal and valid and the value contains nothing

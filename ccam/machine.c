@@ -23,14 +23,15 @@ int equal_states(MachineStateT *a, MachineStateT *b) {
 }
 
 
-enum Status run_machine(MachineStateT *ms, int verbose) {
+enum Status run_machine(MachineStateT *ms, enum error_id *error, int verbose)
+{
   enum Status status = AllOk;
   while (status == AllOk) {
     if (verbose) {
       print_state(ms);
       printf("Next instruction: "); print_instruction(ms->code); printf(NL);
     }
-    status = execute_next_instruction(ms);
+    status = execute_next_instruction(ms, error);
   }
   return status;
 }
@@ -38,7 +39,7 @@ enum Status run_machine(MachineStateT *ms, int verbose) {
 
 //| code for each instruction:
 
-enum Status exec_Halt(MachineStateT *ms)
+enum Status exec_Halt(MachineStateT *ms, enum error_id *error)
 {
   //| ms->term unchanged
   ms->code += 1; //| arbitrary choice here to make
@@ -46,7 +47,7 @@ enum Status exec_Halt(MachineStateT *ms)
   return Halted; //| <-- <-- <-- !
 }
 
-enum Status exec_Unary(MachineStateT *ms)
+enum Status exec_Unary(MachineStateT *ms, enum error_id *error)
 {
   int operation = ms->code[1].operation;
 
@@ -58,9 +59,11 @@ enum Status exec_Unary(MachineStateT *ms)
       //| (PairV(x, y), PrimInstr (UnOp Snd) :: c, st) -> (y, c, st)
       ValueT *term = ms->term;
 
-      enum Status status = AllOk;
-      PairT pair = match_value_with_pair(term, &status);
-      if (status != AllOk) return status;
+      PairT pair;
+      if (match_value_with_pair(term, &pair) == Failure) {
+        *error = Err__NotAPair;
+        return Crashed;
+      }
       ValueT *x = pair.first;
       ValueT *y = pair.second;
 
@@ -78,7 +81,8 @@ enum Status exec_Unary(MachineStateT *ms)
       ms->code += 2;
       //| ms->stack unchanged
       return AllOk;
-    } break;
+    }
+    break;
 
     case Head:
     case Tail:
@@ -93,11 +97,13 @@ enum Status exec_Unary(MachineStateT *ms)
       //|     | ListV EmptyListV -> failwith "RuntimeError: can't take the tail of an empty list"
       //|     | ListV (ListConsV (h, t)) -> exec (ListV t, c, st, fds)
       //|     | otherwise -> failwith "TypeError: can't take the head: not a list"
-      ValueT *l = ms->term;
+      ValueT *term = ms->term;
 
-      enum Status status = AllOk;
-      ListConsT pattern = match_value_with_list_cons(l, &status);
-      if (status != AllOk) return status;
+      ListConsT pattern;
+      if (match_value_with_listcons(term, &pattern) == Failure) {
+        *error = Err__Headless;
+        return Crashed;
+      }
       ValueT *h = pattern.head;
       ValueT *t = pattern.tail;
 
@@ -117,38 +123,49 @@ enum Status exec_Unary(MachineStateT *ms)
       return AllOk;
     } break;
 
-    default: return UnknownUnary; break;
+    default:
+    {
+      *error = Err__Unary_Unknown;
+      return Crashed;
+    }
+    break;
   } //| end of switch
 }
 
-enum Status exec_Arith(MachineStateT *ms)
+enum Status exec_Arith(MachineStateT *ms, enum error_id *error)
 {
   //| (PairV(IntV x, IntV y), PrimInstr (BinOp (BArith op)) :: c, st)
   //| -> (IntV (eval_arith op x y), c, st)
   ValueT *term = ms->term;
 
   enum Status status = AllOk;
-  PairT pair = match_value_with_pair(term, &status);
-  if (status != AllOk) {
-    return status;
+  PairT pair;
+  if (match_value_with_pair(term, &pair) == Failure) {
+    *error = Err__Arith_TypeError;
+    return Crashed;
   }
-  long x = match_value_with_integer(pair.first, &status);
-  if (status != AllOk) {
+  long x;
+  if (match_value_with_integer(pair.first, &x) == Failure) {
     //| reset the machine state
     ms->term = PairValue(pair.first, pair.second);
-    return status;
+    *error = Err__Arith_TypeError;
+    return Crashed;
   }
-  long y = match_value_with_integer(pair.second, &status);
-  if (status != AllOk) {
+  long y;
+  if (match_value_with_integer(pair.second, &y) == Failure) {
     //| reset the machine state
     ms->term = PairValue(IntValue(x), pair.second);
-    return status;
+    *error = Err__Arith_TypeError;
+    return Crashed;
   }
   int operation = ms->code[1].operation;
-  long result = eval_binary_operation(operation, x, y, &status);
-  if (status != AllOk) {
+  long result;
+  enum op_report report = eval_arith(operation, x, y, &result);
+  if (report != OperationOk) {
     //| reset the machine state
     ms->term = PairValue(IntValue(x), IntValue(y));
+    *error = (report == InvalidOperands) ?
+      Err__Arith_DivByZero : Err__Arith_Unknown;
     return status;
   }
 
@@ -158,17 +175,19 @@ enum Status exec_Arith(MachineStateT *ms)
   return AllOk;
 }
 
-enum Status exec_Compare(MachineStateT *ms)
+enum Status exec_Compare(MachineStateT *ms, enum error_id *error)
 {
   //| (PairV(IntV x, IntV y), PrimInstr (BinOp (BCompar op)) :: c, st) ->
   //|  (BoolV (eval_compare op x y), c, st)
   //| (PairV(BoolV x, BoolV y), PrimInstr (BinOp (BCompar op)) :: c, st) ->
   //|  (BoolV (eval_compare op x y), c, st)
   ValueT *term = ms->term;
-  enum Status status = AllOk;
 
-  PairT pair = match_value_with_pair(term, &status);
-  if (status != AllOk) return status;
+  PairT pair;
+  if (match_value_with_pair(term, &pair) == Failure) {
+    *error = Err__Compare_TypeError;
+    return Crashed;
+  }
   enum ValueTag tag = pair.first->tag;
 
   long x, y;
@@ -185,14 +204,17 @@ enum Status exec_Compare(MachineStateT *ms)
   else { //| ... or, error
     //| reset the machine state
     ms->term = PairValue(pair.first, pair.second);
-    return MatchFailure;
+    *error = Err__Compare_TypeError;
+    return Crashed;
   }
   int operation = ms->code[1].operation;
-  long result = eval_binary_operation(operation, x, y, &status);
-  if (status != AllOk) {
+  long result;
+  enum op_report report = eval_comparison(operation, x, y, &result);
+  if (report != OperationOk) {
     //| reset the machine state
     ms->term = PairValue(pair.first, pair.second);
-    return UnknownBinary;
+    *error = Err__Compare_Unknown;
+    return Crashed;
   }
 
   //| memory management:
@@ -205,7 +227,7 @@ enum Status exec_Compare(MachineStateT *ms)
   return AllOk;
 }
 
-enum Status exec_Push(MachineStateT *ms)
+enum Status exec_Push(MachineStateT *ms, enum error_id *error)
 {
   //| (x, Push :: c, st) -> (x, c, Val(x) :: st)
   ValueT *x = ms->term;
@@ -218,14 +240,16 @@ enum Status exec_Push(MachineStateT *ms)
   return AllOk;
 }
 
-enum Status exec_Cons(MachineStateT *ms)
+enum Status exec_Cons(MachineStateT *ms, enum error_id *error)
 {
   //| (x, Cons :: c, Val(y) :: st) -> (PairV(y, x), c, st)
   StackT *stack = ms->stack;
 
-  enum Status status = AllOk;
-  ValueOnStackT pattern = match_stacktop_with_value(stack, &status);
-  if (status != AllOk) return status;
+  ValueOnStackT pattern;
+  if (match_stacktop_with_value(stack, &pattern) == Failure) {
+    *error = Err__Cons_NoValueOnStack;
+    return Crashed;
+  }
   ValueT *x = ms->term;
 
   ms->term = PairValue(pattern.top, x);
@@ -234,7 +258,7 @@ enum Status exec_Cons(MachineStateT *ms)
   return AllOk;
 }
 
-enum Status exec_QuoteBool(MachineStateT *ms)
+enum Status exec_QuoteBool(MachineStateT *ms, enum error_id *error)
 {
   //| (_, QuoteBool(v) :: c, st) -> (BoolV(v), c, st)
   deepfree_value(ms->term);
@@ -246,7 +270,7 @@ enum Status exec_QuoteBool(MachineStateT *ms)
   return AllOk;
 }
 
-enum Status exec_QuoteInt(MachineStateT *ms)
+enum Status exec_QuoteInt(MachineStateT *ms, enum error_id *error)
 {
   //| (_, QuoteInt(v) :: c, st) -> (IntV(v), c, st)
   deepfree_value(ms->term);
@@ -258,14 +282,16 @@ enum Status exec_QuoteInt(MachineStateT *ms)
   return AllOk;
 }
 
-enum Status exec_Swap(MachineStateT *ms)
+enum Status exec_Swap(MachineStateT *ms, enum error_id *error)
 {
   //| (x, Swap :: c, Val(y) :: st) -> (y, c, Val (x) :: st)
   StackT *stack = ms->stack;
 
-  enum Status status = AllOk;
-  ValueOnStackT pattern = match_stacktop_with_value(stack, &status);
-  if (status != AllOk) return status;
+  ValueOnStackT pattern;
+  if (match_stacktop_with_value(stack, &pattern) == Failure) {
+    *error = Err__Swap_NoValueOnStack;
+    return Crashed;
+  }
   ValueT *x = ms->term;
 
   ms->term = pattern.top;
@@ -274,7 +300,7 @@ enum Status exec_Swap(MachineStateT *ms)
   return AllOk;
 }
 
-enum Status exec_Curry(MachineStateT *ms)
+enum Status exec_Curry(MachineStateT *ms, enum error_id *error)
 {
   //| (x, Curry (closure_code) :: c, st) -> (ClosureV(closure_code, x), c, st)
   CodeT *closure_code = ms->code[1].reference;
@@ -286,19 +312,23 @@ enum Status exec_Curry(MachineStateT *ms)
   return AllOk;
 }
 
-enum Status exec_Apply(MachineStateT *ms) {
+enum Status exec_Apply(MachineStateT *ms, enum error_id *error)
+{
   //| (PairV(ClosureV(new_code, y), z), Apply :: old_code, st)
   //| -> (PairV(y, z), new_code, Cod(old_code) :: st)
   ValueT *term = ms->term;
 
-  enum Status status = AllOk;
-  PairT pair = match_value_with_pair(term, &status);
-  if (status != AllOk) return status;
-  ClosureT closure = match_value_with_closure(pair.first, &status);
-  if (status != AllOk) {
+  PairT pair;
+  if (match_value_with_pair(term, &pair) == Failure) {
+    *error = Err__CannotApply;
+    return Crashed;
+  }
+  ClosureT closure;
+  if (match_value_with_closure(pair.first, &closure) == Failure) {
     //| reset the machine state
     ms->term = PairValue(pair.first, pair.second);
-    return status;
+    *error = Err__CannotApply;
+    return Crashed;
   }
 
   ValueT *z = pair.second;
@@ -313,13 +343,16 @@ enum Status exec_Apply(MachineStateT *ms) {
   return AllOk;
 }
 
-enum Status exec_Return(MachineStateT *ms) {
+enum Status exec_Return(MachineStateT *ms, enum error_id *error)
+{
   //| (x, Return :: c, Cod(new_code) :: st) -> (x, new_code, st)
   StackT *stack = ms->stack;
 
-  enum Status status = AllOk;
-  CodeOnStackT pattern = match_stacktop_with_code(stack, &status);
-  if (status != AllOk) return status;
+  CodeOnStackT pattern;
+  if (match_stacktop_with_code(stack, &pattern) == Failure) {
+    *error = Err__CannotReturn;
+    return Crashed;
+  }
 
   // ms->term unchanged
   ms->code = pattern.top;
@@ -327,20 +360,24 @@ enum Status exec_Return(MachineStateT *ms) {
   return AllOk;
 }
 
-enum Status exec_Branch(MachineStateT *ms) {
+enum Status exec_Branch(MachineStateT *ms, enum error_id *error)
+{
   //| (BoolV(b), Branch (if_then, if_else) :: c, Val(x) :: st)
   //| -> (x, (if b then if_then else if_else), Cod(c) :: st)
   ValueT *term = ms->term;
   StackT *stack = ms->stack;
 
-  enum Status status = AllOk;
-  long b = match_value_with_boolean(term, &status);
-  if (status != AllOk) return status;
-  ValueOnStackT pattern = match_stacktop_with_value(stack, &status);
-  if (status != AllOk) {
+  long b;
+  if (match_value_with_boolean(term, &b) == Failure) {
+    *error = Err__Branch_NotABoolean;
+    return Crashed;
+  }
+  ValueOnStackT pattern;
+  if (match_stacktop_with_value(stack, &pattern) == Failure) {
     //| reset the machine state
     ms->term = BoolValue(b);
-    return status;
+    *error = Err__Branch_NoValueOnStack;
+    return Crashed;
   }
 
   CodeT *code = ms->code;
@@ -354,7 +391,7 @@ enum Status exec_Branch(MachineStateT *ms) {
   return AllOk;
 }
 
-enum Status exec_Call(MachineStateT *ms)
+enum Status exec_Call(MachineStateT *ms, enum error_id *error)
 {
   //| (x, Call(ref) :: c, st) -> (x, ref, Cod(c) :: st)
   CodeT *ref = ms->code[1].reference;
@@ -367,7 +404,7 @@ enum Status exec_Call(MachineStateT *ms)
   return AllOk;
 }
 
-enum Status exec_QuoteEmptyList(MachineStateT *ms)
+enum Status exec_QuoteEmptyList(MachineStateT *ms, enum error_id *error)
 {
   //| (_, QuoteEmptyList :: c, st) -> ([], c, st)
   deepfree_value(ms->term);
@@ -379,7 +416,7 @@ enum Status exec_QuoteEmptyList(MachineStateT *ms)
   return AllOk;
 }
 
-enum Status exec_MakeList(MachineStateT *ms)
+enum Status exec_MakeList(MachineStateT *ms, enum error_id *error)
 {
   //| (ListV (tail), MakeList :: c, Val(head) :: st, fds)
   //|   -> (ListV(ListConsV (head, tail)), c, st, fds)
@@ -391,12 +428,15 @@ enum Status exec_MakeList(MachineStateT *ms)
   ValueT *tail = ms->term;
 
   if (!!! value_is_list(tail)) {
-    return ValueIsNotAList;
+    *error = Err__MakeList_NotAList;
+    return Crashed;
   }
 
-  enum Status status = AllOk;
-  ValueOnStackT pattern = match_stacktop_with_value(stack, &status);
-  if (status != AllOk) return status;
+  ValueOnStackT pattern;
+  if (match_stacktop_with_value(stack, &pattern) == Failure) {
+    *error = Err__MakeList_NoValueOnStack;
+    return Crashed;
+  }
 
   ms->term = ListConsValue(pattern.top, tail);
   ms->code += 1;
