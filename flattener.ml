@@ -1,3 +1,4 @@
+(* flattener: code --> flat_code *)
 
 open Miniml;;
 open Encoder;;
@@ -130,5 +131,4 @@ let flatten_program : code -> (referenced_flat_code * flat_code) = fun code ->
   (refs, program)
 ;;
 
-type c_code_fragment = CCodeFragment of (string * int * flat_code);;
 

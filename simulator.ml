@@ -10,7 +10,7 @@ type value
   | ClosureV of code * value
 and value_list = EmptyListV | ListConsV of (value * value_list)
 
-(* pretty print value: *)
+(* pretty print value: at the end of the simulation, to print the result in a repl-caml-like way *)
 let pp_value : value -> string = fun v ->
   let rec go_value =
   (
@@ -145,7 +145,7 @@ let initial_cfg code = (NullV, code, [], []);;
 
 let simulate_execution infilename =
   let abstract_tree = Miniml.mlexp_of_prog (Interf.parse infilename) in
-  let code = Encoder.compile [] abstract_tree in
+  let code = Encoder.encode [] abstract_tree in
   let final_value = exec (initial_cfg code) in
   print_endline (pp_value final_value)
 ;;

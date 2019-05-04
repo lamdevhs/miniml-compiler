@@ -1,7 +1,17 @@
+(* flattener: flat_code --> .c file *)
 
 open Miniml;;
 open Flattener;;
 
+type c_code_fragment = CCodeFragment of (string * int * flat_code);;
+(* ^ a c_code_fragment represents an array of CodeT values (cf the CCAM).
+the string represents the name that will be given to the array,
+the int represents the size of the array
+and the flat_code is the code that will be stored inside the CodeT array. *)
+
+(* first step of code generation: determine the size of each code fragment based
+on how much space each flat instruction takes up when compiled to a C array of CodeT
+(c.f. CCAM) *)
 let flat_program_to_c_code_fragments
 : (referenced_flat_code * flat_code) -> c_code_fragment list =
   fun (refsCode, mainCode) ->
@@ -23,7 +33,7 @@ let flat_program_to_c_code_fragments
   List.map f allCode
 ;;
 
-let operation_of_unary = function
+let string_of_unary = function
   | Fst -> "Fst"
   | Snd -> "Snd"
   | Head -> "Head"
@@ -33,40 +43,41 @@ let operation_of_unary = function
 let lines_of_C_code : c_code_fragment list -> (string list * string list) =
   fun fragments ->
   let union_field field content = "{." ^field^ " = " ^content^ "}," in
-  let write_instruction content = union_field "instruction" content in
-  let write_operation content = union_field "operation" content in
-  let write_reference content = union_field "reference" content in
-  let write_data content = union_field "data" content in
+  let string_of_instruction content = union_field "instruction" content in
+  let string_of_operation content = union_field "operation" content in
+  let string_of_reference content = union_field "reference" content in
+  let string_of_data content = union_field "data" content in
   let string_of_flat_instr = (function
-    | FlatHalt -> write_instruction "Halt"
+    | FlatHalt -> string_of_instruction "Halt"
     | FlatUnary op ->
-        write_instruction "Unary" ^ write_operation (operation_of_unary op)
+        string_of_instruction "Unary" ^ string_of_operation (string_of_unary op)
     | FlatArith op ->
         let opstr = (match op with
           BAadd->"Plus" |BAsub->"Sub" |BAmul->"Mul" |BAdiv->"Div" |BAmod->"Mod") in
-        write_instruction "Arith" ^ write_operation opstr
+        string_of_instruction "Arith" ^ string_of_operation opstr
     | FlatCompare op ->
         let opstr = (match op with
           BCeq->"Eq" |BCge->"Ge" |BCgt->"Gt"
           |BCle->"Le" |BClt->"Lt" |BCne->"Neq") in
-        write_instruction "Compare" ^ write_operation opstr
-    | FlatCons -> write_instruction "Cons"
-    | FlatPush -> write_instruction "Push"
-    | FlatSwap -> write_instruction "Swap"
-    | FlatReturn -> write_instruction "Return"
-    | FlatQuoteB b -> write_instruction "QuoteBool" ^
-        write_data (if b then "True" else "False")
-    | FlatQuoteI i -> write_instruction "QuoteInt" ^
-        write_data (string_of_int i ^ "L")
-    | FlatQuoteEmptyList -> write_instruction "QuoteEmptyList"
-    | FlatMakeList -> write_instruction "MakeList"
-    | FlatCur ref -> write_instruction "Curry" ^ write_reference ref
-    | FlatApp -> write_instruction "Apply"
+        string_of_instruction "Compare" ^ string_of_operation opstr
+    | FlatCons -> string_of_instruction "Cons"
+    | FlatPush -> string_of_instruction "Push"
+    | FlatSwap -> string_of_instruction "Swap"
+    | FlatReturn -> string_of_instruction "Return"
+    | FlatQuoteB b -> string_of_instruction "QuoteBool" ^
+        string_of_data (if b then "True" else "False")
+    | FlatQuoteI i -> string_of_instruction "QuoteInt" ^
+        string_of_data (string_of_int i ^ "L")
+    | FlatQuoteEmptyList -> string_of_instruction "QuoteEmptyList"
+    | FlatMakeList -> string_of_instruction "MakeList"
+    | FlatCur ref -> string_of_instruction "Curry" ^ string_of_reference ref
+    | FlatApp -> string_of_instruction "Apply"
     | FlatBranch (ifref, elseref) ->
-        write_instruction "Branch" ^
-        write_reference ifref ^ write_reference elseref
-    | FlatCall ref -> write_instruction "Call" ^ write_reference ref
-  ) in
+        string_of_instruction "Branch" ^
+        string_of_reference ifref ^ string_of_reference elseref
+    | FlatCall ref -> string_of_instruction "Call" ^ string_of_reference ref
+  )
+  in
   let with_indent n lines =
     let indent = String.make n ' ' in
     List.map (fun line -> indent ^ line) lines in
@@ -81,6 +92,8 @@ let lines_of_C_code : c_code_fragment list -> (string list * string list) =
   (declarations, List.concat definitions)
 ;;
 
+(* like a normal fold_left but takes the first element of the list
+as initial value for the folding *)
 let fold_left_one : ('a -> 'a -> 'a) -> 'a -> 'a list -> 'a =
   fun f default_value -> function
   | [] -> default_value
@@ -95,8 +108,8 @@ let flat_program_to_C
 : (referenced_flat_code * flat_code) -> string = fun flat_program ->
   let (declarations, definitions) =
     lines_of_C_code (flat_program_to_c_code_fragments flat_program) in
-  let include_vm = "#include \"ccam.h\"" in
+  let include_ccam = "#include \"ccam.h\"" in
   let code_accessor = "CodeT *get_main_code()" :: "{" :: "    return main_code;" :: "}" :: [] in
-  let c_file = include_vm :: "" :: declarations @ ("" :: definitions @ ("" :: code_accessor)) in
+  let c_file = include_ccam :: "" :: declarations @ ("" :: definitions @ ("" :: code_accessor)) in
   (lines_to_string c_file ^ "\n")
 ;;

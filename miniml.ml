@@ -72,10 +72,10 @@ let rec pp_exp : mlexp -> string = function
   | Cond (i, t, e) -> "(if " ^ pp_exp i ^ " then " ^ pp_exp t ^ " else " ^ pp_exp e ^ ")"
   | Pair (x, y) -> "(" ^ pp_exp x ^ "," ^ pp_exp y ^ ")"
   | App (PrimOp op, Pair (x, y)) -> "(" ^ pp_exp x ^ " " ^ pp_primop op ^ " " ^ pp_exp y ^ ")"
-  | App (f, x) -> "[" ^ pp_exp f ^ " " ^ pp_exp x ^ "]"
+  | App (f, x) -> "(" ^ pp_exp f ^ " " ^ pp_exp x ^ ")"
   | Fn (v, b) -> "(fun " ^ v ^ " -> " ^ pp_exp b ^ ")"
   | Fix (d :: defs, exp) -> "let rec " ^ pp_def d ^ pp_defs defs ^ " in " ^ pp_exp exp
-  | Fix _ -> "(empty let rec ???)"
+  | Fix _ -> "(empty let rec ???!!!)"
   | ListCons (x, y) -> "(" ^ pp_exp x ^ " :: " ^ pp_exp y ^ ")"
   | EmptyList -> "[]"
 and pp_def : (var * mlexp) -> string = fun (name, value) ->
@@ -85,5 +85,8 @@ and pp_defs : (var * mlexp) list -> string = function
   | d :: ds -> " and " ^ pp_def d ^ pp_defs ds
 ;;
 
-(* pretty print a program *)
+(* pretty print a program;
+the result is in truth not really pretty due to an overdose of parentheses.
+the point is to get a (vaguely readable) idea of what the parser interpreted
+out of a miniml file.  *)
 let pp : prog -> string = fun x -> pp_exp (mlexp_of_prog x) ;;

@@ -1,6 +1,5 @@
 (* staple tools *)
 
-
 let rec zip : 'a list -> 'b list ->  ('a * 'b) list =
   fun xlist ylist -> match (xlist, ylist) with
   | ([], _) -> []
@@ -15,7 +14,6 @@ let rec unzip : ('a * 'b) list -> ('a list * 'b list) =
     let (xs, ys) = unzip tail in
     (x :: xs, y :: ys)
 ;;
-
 
 let rec several : int -> 'a -> 'a list = fun n x ->
   if (n <= 0) then [] else x :: several (n - 1) x
