@@ -49,7 +49,7 @@ start: prog { $1 }
 ;
 
 prog:
-  typedef main_exp end_marker_opt EOF
+  typedef let_rec_exp end_marker_opt EOF
   { Prog ($1, $2) }
 ;
 
@@ -68,12 +68,11 @@ typedef:
   {  Some ($2) }
 ;
 
-main_exp
-  : let_in_exp { $1 }
-  | FUN IDENTIFIER func_body { Fn($2, $3) }
-  | IF main_exp THEN main_exp ELSE main_exp { Cond($2, $4, $6) }
-  | LET REC let_rec_definitions IN main_exp { Fix ($3, $5) }
-  | pair_exp { $1 }
+/* LET REC is only allowed as the topmost level
+   expression of a program */
+let_rec_exp
+  : LET REC let_rec_definitions IN main_exp { Fix ($3, $5) }
+  | main_exp { $1 }
 ;
 
 let_rec_definitions
@@ -84,6 +83,15 @@ let_rec_definitions
 let_rec_binding
   : IDENTIFIER EQ main_exp { ($1, $3) }
 ;
+
+main_exp
+  : let_in_exp { $1 }
+  | FUN IDENTIFIER func_body { Fn($2, $3) }
+  | IF main_exp THEN main_exp ELSE main_exp { Cond($2, $4, $6) }
+  | pair_exp { $1 }
+;
+
+
 
 /* (let x = e in a) gets translated into ((fun x -> a) e) */
 let_in_exp
@@ -120,13 +128,13 @@ and_exp
 
 /* a == b == c is deemed invalid */
 compare_exp
-  : list_exp EQ list_exp { binary_exp $1 EQ $3 }
-  | list_exp GE list_exp { binary_exp $1 GE $3 }
-  | list_exp GT list_exp { binary_exp $1 GT $3 }
-  | list_exp LE list_exp { binary_exp $1 LE $3 }
-  | list_exp LT list_exp { binary_exp $1 LT $3 }
-  | list_exp NE list_exp { binary_exp $1 NE $3 }
+  : list_exp compare_op list_exp { binary_exp $1 $2 $3 }
   | list_exp { $1 }
+;
+
+compare_op
+  : EQ { EQ } | GE { GE } | GT { GT }
+  | LE { LE } | LT { LT } | NE { NE }
 ;
 
 /* e.g.: (1, 2) :: (5, 6) :: [] */

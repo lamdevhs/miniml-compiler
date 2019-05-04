@@ -28,6 +28,9 @@ global:
 READMEs:
 - write miniml's grammar, latex style
 
+final tasks:
+- clean up the test-programs list
+
 # PITFALLS
 - warning: we must forbid | (x,x) -> patterns.
   same for let rec f = 1 and f = 2 in 3;;
