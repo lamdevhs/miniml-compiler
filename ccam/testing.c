@@ -113,3 +113,10 @@ enum boole equal_values(ValueT *a, ValueT *b) {
   }
   return False; //| invalid tag...
 }
+
+
+
+CodeT *CodeRef(long x)
+{
+  return (CodeT *)x;
+}

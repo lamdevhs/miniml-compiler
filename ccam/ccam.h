@@ -295,7 +295,6 @@ enum Status exec_QuoteEmptyList(MachineStateT *ms, enum error_id *error);
 enum Status exec_MakeList(MachineStateT *ms, enum error_id *error);
   ///
 void print_state(MachineStateT *ms);
-CodeT *CodeRef(long x);
 
 //| runtime requirements:
 CodeT *get_main_code();

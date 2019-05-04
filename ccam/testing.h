@@ -17,4 +17,6 @@ enum boole equal_states(MachineStateT *a, MachineStateT *b);
 enum boole equal_stacks(StackT *a, StackT *b);
 enum boole equal_values(ValueT *a, ValueT *b);
 
+CodeT *CodeRef(long x);
+
 #endif ///---/// #ifndef CCAM_TESTING_HEADER

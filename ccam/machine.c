@@ -449,8 +449,3 @@ void print_state(MachineStateT *ms) {
     printf("# stacktop = "); print_stacktop(ms->stack); printf(NL);
   }
 }
-
-CodeT *CodeRef(long x)
-{
-  return (CodeT *)x;
-}
