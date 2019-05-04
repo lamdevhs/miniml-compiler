@@ -2,16 +2,14 @@
 
 simple ones:
 - fix comments in machine.c's exec_zzz functions based on the new simulator.ml
-- remove CodeRef(long); in machine.c?
-- separate equal_... from the runtime side of things
 - replace BoolValue() with Bool()/Boolean()?
 - test if the parser accepts the empty program
 - remove dev comments
-- fix generated-all.sh so that it copies the .c files instead
 
 ccam:
 
 caml compiler:
+- clean up the caml code
 - rename instrs/compile to mlexp_to_code
 - replace write_instruction with string_of_instruction?
 
@@ -25,7 +23,7 @@ parser:
   - fix the built_in_test error: "(fst, snd);;"
 
 global:
-?
+
 
 READMEs:
 - write miniml's grammar, latex style
@@ -97,6 +95,7 @@ These are in chronological order, hopefully:
 - remove the info() macro from ccam/
 - check if we can remove `__print_stack_` stuff
 - isolate enums into their own .c file
+- separate equal_... from the runtime side of things
 - simplify unit-tests.c
 - meliorate the error handling/messaging system
 - remove MEM=y from generate-all.sh
@@ -104,3 +103,4 @@ These are in chronological order, hopefully:
 - forbid having the same variable bound twice by the same let rec.
 - replace ListCons instr everywhere with MakeList
 - fix the shit regarding auto adding .c to generated files by compiler
+- fix generated-all.sh so that it copies the .c files instead

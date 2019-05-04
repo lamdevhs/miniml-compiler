@@ -36,6 +36,7 @@ type prog = Prog of typedef option * mlexp
 let mlexp_of_prog (Prog(t, e)) = e
 
 
+
 (* -------------------- pretty printer: ---------------- *)
 
 let pp_unop : unop ->  string = function
@@ -84,26 +85,5 @@ and pp_defs : (var * mlexp) list -> string = function
   | d :: ds -> " and " ^ pp_def d ^ pp_defs ds
 ;;
 
-let pp : prog -> string = function
-  Prog (_, exp) -> pp_exp exp
-;;
-
-(* todo list: fix the if-then-else in pair bug in the parser *)
-
-let test_pp =
-  let defs =
-    ("f", Cond (
-        Bool(true),
-        Fn ("x", Pair (Var "x", Int 3)),
-        Fn ("z", App(Var "g", Var "z"))
-      )
-    ) :: ("g", Fn("x", App(Var "f", Var "x"))) :: [("h", Bool(false))] in
-  Pair (Int 3, Fix(defs, App(Var "f", Var "h")))
-;;
-(* let v = (3,
-  let
-  rec f = (if true then (fun x -> (x,3)) else (fun z -> (g z)))
-  and g = (fun x -> (f x))
-  and h = false in (f h)
-);; *)
-let rec f = (fun z -> (3, g z)) and g = fun k -> k;;
+(* pretty print a program *)
+let pp : prog -> string = fun x -> pp_exp (mlexp_of_prog x) ;;

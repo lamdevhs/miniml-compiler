@@ -1,6 +1,5 @@
 open Miniml;;
-open Instrs;;
-open Interf;;
+open Encoder;;
 
 type value
   = NullV
@@ -11,6 +10,7 @@ type value
   | ClosureV of code * value
 and value_list = EmptyListV | ListConsV of (value * value_list)
 
+(* pretty print value: *)
 let pp_value : value -> string = fun v ->
   let rec go_value =
   (
@@ -145,7 +145,7 @@ let initial_cfg code = (NullV, code, [], []);;
 
 let simulate_execution infilename =
   let abstract_tree = Miniml.mlexp_of_prog (Interf.parse infilename) in
-  let code = Instrs.compile [] abstract_tree in
+  let code = Encoder.compile [] abstract_tree in
   let final_value = exec (initial_cfg code) in
   print_endline (pp_value final_value)
 ;;
