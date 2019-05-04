@@ -39,7 +39,7 @@ let access : string -> compilation_env -> code = fun x env ->
   go 0 env
 ;;
 
-let encode : compilation_env -> mlexp -> code = fun env x ->
+let encode : mlexp -> code =
   let rec encode_rec env x =
   (
     match x with
@@ -69,5 +69,10 @@ let encode : compilation_env -> mlexp -> code = fun env x ->
     Push :: encode_rec env head @ [Swap] @ encode_rec env tail @ [MakeList]
     | otherwise -> failwith "CompilerBug: mlexp expression unsupported!"
   ) in
-  encode_rec env x @ [Halt]
+  fun x -> encode_rec [] x @ [Halt]
 ;;
+
+let encode_program : prog -> code =
+  fun x -> encode (mlexp_of_prog x)
+;;
+  

@@ -1,34 +1,36 @@
+#load "tools.cmo";;
 #load "miniml.cmo";;
 #load "parser.cmo" ;;
 #load "lexer.cmo" ;;
-#load "instrs.cmo";;
 #load "interf.cmo";;
+#load "encoder.cmo";;
+#load "flattener.cmo";;
+#load "codeGenerator.cmo";;
+#load "simulator.cmo";;
 open Miniml ;;
 open Interf ;;
-open Instrs ;;
+open Encoder ;;
+open Flattener ;;
+open CodeGenerator ;;
+open Simulator ;;
 
 (* For using the parser:
 
 - Evaluate this file (use.ml)
-- parse "Tests/test.ml" ;;
+- parse "foo/bar.ml" ;;
 
 * For code generation:
+- encode_program (parse "foo/bar.ml") ;;
 
-- compile_prog (parse "Tests/test.ml") ;;
-
-* For execution:
-
-- run (initial_cfg (compile_prog (parse "Tests/test.ml"))) ;;
+* For simulated execution:
+- run_simulation "foo/bar.ml" ;;
 
 *)
 
-let do_compilation filename =
-  let parsed = parse filename in print_endline (pp parsed);
-  let Prog (_, instrs) = parsed in
-  compile [] instrs ;;
+let test_file = "test-programs/factorial.ml";;
 
-let full_test filename =
-  let compiled = do_compilation filename in
-  eval_prog compiled ;;
+let get_prog () = parse test_file;;
 
-let tfss = "Tests/test.ml" ;;
+let get_code () = encode_program (get_prog ());;
+
+let run_sim () = run_simulation (get_code ());;

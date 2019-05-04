@@ -89,4 +89,4 @@ and pp_defs : (var * mlexp) list -> string = function
 the result is in truth not really pretty due to an overdose of parentheses.
 the point is to get a (vaguely readable) idea of what the parser interpreted
 out of a miniml file.  *)
-let pp : prog -> string = fun x -> pp_exp (mlexp_of_prog x) ;;
+let pp_prog : prog -> string = fun x -> pp_exp (mlexp_of_prog x) ;;

@@ -9,7 +9,7 @@ let generate infilename outfilename =
   output_string outf str ; flush outf;
   *)
   let abstract_tree = Miniml.mlexp_of_prog (Interf.parse infilename) in
-  let code = Encoder.encode [] abstract_tree in
+  let code = Encoder.encode abstract_tree in
   let flat_code = Flattener.flatten_program code in
   let c_file = CodeGenerator.flat_program_to_C flat_code in
   let outf_c_file = open_out outfilename in

@@ -143,17 +143,16 @@ let rec exec : (value * code * stack * defstack) -> value = function
 
 let initial_cfg code = (NullV, code, [], []);;
 
-let simulate_execution infilename =
-  let abstract_tree = Miniml.mlexp_of_prog (Interf.parse infilename) in
-  let code = Encoder.encode [] abstract_tree in
-  let final_value = exec (initial_cfg code) in
-  print_endline (pp_value final_value)
-;;
+let run_simulation code = exec (initial_cfg code);;
 
 let main () =
   if Array.length Sys.argv != 2
   then (print_endline "usage error: expected exactly one argument (an input filename)")
-  else (simulate_execution Sys.argv.(1))
+  else
+    let prog = Interf.parse Sys.argv.(1) in
+    let code = Encoder.encode_program prog in
+    let final_value = run_simulation code in
+    print_endline (pp_value final_value)
 ;;
 
 main ();;
