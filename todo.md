@@ -11,19 +11,19 @@ simple ones:
 ccam:
 
 caml compiler:
-- add null value to parser
 - rename instrs/compile to mlexp_to_code
 - replace write_instruction with string_of_instruction?
 
 parser:
-- prevent restricted tokens to be used for variables (e.g. head, let, etc)
-optional stuff:
-- recognize negative numbers (no real need we can always write (0-42))
-- allow underscores and dashes and maybe
-  even dots in variable names
+  optional stuff:
+  - prevent restricted tokens to be used for variables (e.g. head, let, etc)
+  - add null value to parser
+  - recognize negative numbers (no real need we can always write (0-42))
+  - allow underscores and dashes and maybe
+    even dots in variable names
 
 global:
-- replace ListCons instr everywhere with MakeList
+
 - fix the built_in_test error: "(fst, snd);;"
   idea: by defining top level global code snippets that can be used to handle
   the built-in operators when they aren't immediately called
@@ -104,3 +104,4 @@ These are in chronological order, hopefully:
 - remove MEM=y from generate-all.sh
 - recognize badly formed programs (let rec etc)
 - forbid having the same variable bound twice by the same let rec.
+- replace ListCons instr everywhere with MakeList

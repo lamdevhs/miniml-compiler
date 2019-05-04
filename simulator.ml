@@ -111,11 +111,11 @@ let rec exec : (value * code * stack * defstack) -> value = function
   | (x, RmDefs :: c, st, head :: fds) -> exec (x, c, st, fds)
   | (x, RmDefs :: c, st, _) -> failwith "CompilerBug: can't remove definition, defstack is empty"
   (* -------- lists -------- *)
-  | (ListV (tail), ListCons :: c, Val(head) :: st, fds)
+  | (ListV (tail), MakeList :: c, Val(head) :: st, fds)
     -> exec (ListV(ListConsV (head, tail)), c, st, fds)
-  | (_, ListCons :: c, Val(head) :: st, fds)
+  | (_, MakeList :: c, Val(head) :: st, fds)
     -> failwith "CompilerBug: can't construct list: tail is not a list"
-  | (_, ListCons :: c, st, fds)
+  | (_, MakeList :: c, st, fds)
     -> failwith "CompilerBug: can't construct list: stacktop is not a value"
   | (_, QuoteEmptyList :: c, st, fds) -> exec (ListV(EmptyListV), c, st, fds)
   | (l, PrimInstr (UnOp Head) :: c, st, fds) ->

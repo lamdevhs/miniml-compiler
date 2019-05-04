@@ -37,7 +37,7 @@ type instr
   | AddDefs of (var * code) list
   | RmDefs
   (* new for lists *)
-  | ListCons
+  | MakeList
   | QuoteEmptyList
 and code = instr list
 
@@ -117,7 +117,7 @@ let compile : compilation_env -> mlexp -> code = fun env x ->
     [AddDefs dc] @ ec @ [RmDefs]
     | EmptyList -> [QuoteEmptyList]
     | ListCons(head, tail) ->
-    Push :: compile_rec env head @ [Swap] @ compile_rec env tail @ [ListCons]
+    Push :: compile_rec env head @ [Swap] @ compile_rec env tail @ [MakeList]
     | otherwise -> failwith "CompilerBug: mlexp expression unsupported!"
   ) in
   compile_rec env x @ [Halt]
@@ -141,7 +141,7 @@ type flat_instr
   | FlatCall of string
   (* new for lists *)
   | FlatQuoteEmptyList
-  | FlatListCons
+  | FlatMakeList
 and flat_code = flat_instr list;;
 
 type referenced_flat_code = (string * flat_code) list;;
@@ -194,7 +194,7 @@ let rec flatten_code
     | QuoteB(b) -> (n, defsDict, refCode, mainCode @ [FlatQuoteB(b)])
     | QuoteI(i) -> (n, defsDict, refCode, mainCode @ [FlatQuoteI(i)])
     | QuoteEmptyList -> (n, defsDict, refCode, mainCode @ [FlatQuoteEmptyList])
-    | ListCons -> (n, defsDict, refCode, mainCode @ [FlatListCons])
+    | MakeList -> (n, defsDict, refCode, mainCode @ [FlatMakeList])
     | Cur(curCode) ->
       let (curN, curRefCode, curFlatCode) = flatten_code n defsDict curCode in
       let (curName, nextN) = code_namer "lambda" curN in
@@ -338,7 +338,7 @@ let lines_of_C_code : c_code_fragment list -> (string list * string list) =
     | FlatQuoteI i -> write_instruction "QuoteInt" ^
         write_data (string_of_int i ^ "L")
     | FlatQuoteEmptyList -> write_instruction "QuoteEmptyList"
-    | FlatListCons -> write_instruction "MakeList"
+    | FlatMakeList -> write_instruction "MakeList"
     | FlatCur ref -> write_instruction "Curry" ^ write_reference ref
     | FlatApp -> write_instruction "Apply"
     | FlatBranch (ifref, elseref) ->

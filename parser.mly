@@ -93,9 +93,6 @@ main_exp
   | FUN IDENTIFIER func_body { Fn($2, $3) }
   | IF main_exp THEN main_exp ELSE main_exp { Cond($2, $4, $6) }
   | pair_exp { $1 }
-  | LET REC let_rec_definitions IN main_exp
-    { (failwith ("Let-rec constructs not allowed inside other expressions:"
-        ^ " only valid as toplevel expression.")) }
 ;
 
 
