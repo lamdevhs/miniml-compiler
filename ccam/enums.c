@@ -178,9 +178,9 @@ char *error_message(enum error_id error)
     return "MachineFailure: unknown instruction"; break;
     case Err__Unary_Unknown:
     return "MachineFailure: unknown unary operator"; break;
-    case Err__NotAPair:
+    case Err__Unary_NotAPair:
     return "TypeError: can't get first/second: not a pair"; break;
-    case Err__Headless:
+    case Err__Unary_Headless:
     return "TypeError: can't get head/tail: empty list or not a list"; break;
     case Err__Cons_NoValueOnStack:
     return "MachineFailure: can't build pair: no value on stack"; break;

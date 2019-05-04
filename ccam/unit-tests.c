@@ -285,12 +285,12 @@ void test_exec() {
         "instruction Compare: False > True",
         MachineState(
           PairValue(BoolValue(False), BoolValue(True)),
-          program2 + 1,
+          program1 + 1,
           EmptyStack()
         ),
         MachineState(
-          BoolValue(True),
-          program2 + 3,
+          BoolValue(False),
+          program1 + 3,
           EmptyStack()
         )
       );

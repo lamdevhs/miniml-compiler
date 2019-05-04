@@ -3,6 +3,7 @@
 simple ones:
 - fix comments in machine.c's exec_zzz functions based on the new simulator.ml
 - remove CodeRef(long); in machine.c?
+- separate equal_... from the runtime side of things
 
 ccam:
 - meliorate the error handling/messaging system

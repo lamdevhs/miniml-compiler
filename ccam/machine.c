@@ -15,8 +15,9 @@ MachineStateT *blank_state(CodeT *code) {
   return MachineState(NullValue(), code, EmptyStack());
 }
 
-int equal_states(MachineStateT *a, MachineStateT *b) {
+enum boole equal_states(MachineStateT *a, MachineStateT *b) {
   if (a == NULL) return b == NULL;
+  if (b == NULL) return False;
   if (a->code != b->code) return False;
   if (!!! equal_values(a->term, b->term)) return False;
   return equal_stacks(a->stack, b->stack);
@@ -61,7 +62,7 @@ enum Status exec_Unary(MachineStateT *ms, enum error_id *error)
 
       PairT pair;
       if (match_value_with_pair(term, &pair) == Failure) {
-        *error = Err__NotAPair;
+        *error = Err__Unary_NotAPair;
         return Crashed;
       }
       ValueT *x = pair.first;
@@ -101,7 +102,7 @@ enum Status exec_Unary(MachineStateT *ms, enum error_id *error)
 
       ListConsT pattern;
       if (match_value_with_listcons(term, &pattern) == Failure) {
-        *error = Err__Headless;
+        *error = Err__Unary_Headless;
         return Crashed;
       }
       ValueT *h = pattern.head;
@@ -138,7 +139,6 @@ enum Status exec_Arith(MachineStateT *ms, enum error_id *error)
   //| -> (IntV (eval_arith op x y), c, st)
   ValueT *term = ms->term;
 
-  enum Status status = AllOk;
   PairT pair;
   if (match_value_with_pair(term, &pair) == Failure) {
     *error = Err__Arith_TypeError;
@@ -166,7 +166,7 @@ enum Status exec_Arith(MachineStateT *ms, enum error_id *error)
     ms->term = PairValue(IntValue(x), IntValue(y));
     *error = (report == InvalidOperands) ?
       Err__Arith_DivByZero : Err__Arith_Unknown;
-    return status;
+    return Crashed;
   }
 
   ms->term = IntValue(result);

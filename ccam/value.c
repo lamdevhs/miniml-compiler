@@ -153,12 +153,12 @@ enum result match_value_with_listcons(ValueT *value, ListConsT *output)
 
 void print_value(ValueT *value) {
   if (value == NULL) {
-    printf("<NULL Value>");
+    printf("<NULL ptr>");
   }
   else {
     enum ValueTag tag = value->tag;
     if (tag == ValueIsNull) {
-      printf("Null");
+      printf("()");
     }
     else if (tag == ValueIsEmptyList) {
       printf("[]");
@@ -215,11 +215,10 @@ void print_listcons(ValueT* head, ValueT *tail)
   }
 }
 
-int equal_values(ValueT *a, ValueT *b) {
-  if (a == NULL) {
-    return b == NULL;
-  }
-  // else:
+enum boole equal_values(ValueT *a, ValueT *b) {
+  if (a == NULL) return b == NULL;
+  if (b == NULL) return False;
+
   enum ValueTag tag = a->tag;
   if (tag != b->tag) {
     return False;

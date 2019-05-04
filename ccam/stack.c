@@ -50,9 +50,10 @@ enum result match_stacktop_with_code(StackT *stack, CodeOnStackT *output)
   return Success;
 }
 
-int equal_stacks(StackT *a, StackT *b) {
+enum boole equal_stacks(StackT *a, StackT *b) {
   if (a == NULL) return b == NULL;
-  // else:
+  if (b == NULL) return False;
+
   enum StackTag tag = a->tag;
   if (tag != b->tag) return False;
   if (tag == StackTopIsValue) {

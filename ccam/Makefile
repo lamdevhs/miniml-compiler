@@ -17,7 +17,7 @@ run: build
 # launch the unit tests for the CCAM. usage:
 # (silent)  $ make tests
 # (verbose) $ make tests V=y
-tests: unit-tests.c $(SOURCES)
+tests: utests.c testing.c testing.h $(SOURCES)
 	gcc -Wall $(if $(V),-DVERBOSE,) -o unit-tests.out $^ \
 	 && read PRESS_ENTER_TO_CONTINUE \
 	 && ./unit-tests.out

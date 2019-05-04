@@ -59,7 +59,8 @@ enum error_id {
   NoError,
   Err__UnknownInstruction,
   Err__Unary_Unknown,
-  Err__NotAPair,
+  Err__Unary_NotAPair,
+  Err__Unary_Headless,
   Err__Cons_NoValueOnStack,
   Err__Swap_NoValueOnStack,
   Err__CannotApply,
@@ -73,7 +74,6 @@ enum error_id {
   Err__Branch_NoValueOnStack,
   Err__MakeList_NotAList,
   Err__MakeList_NoValueOnStack,
-  Err__Headless,
 };
 
 enum Status {
@@ -247,7 +247,7 @@ enum boole value_is_list(ValueT *value);
   ///
 void print_value(ValueT *value);
 void print_listcons(ValueT* head, ValueT *tail);
-int equal_values(ValueT *a, ValueT *b);
+enum boole equal_values(ValueT *a, ValueT *b);
   ///
 #ifdef TRACE_MEMORY
 int mallocated_values_count;
@@ -267,14 +267,14 @@ StackT *CodeOnStack(CodeT *code, StackT *old_stack);
 enum result match_stacktop_with_value(StackT *stack, ValueOnStackT *output);
 enum result match_stacktop_with_code(StackT *stack, CodeOnStackT *output);
   ///
-int equal_stacks(StackT *a, StackT *b);
+enum boole equal_stacks(StackT *a, StackT *b);
 void print_stacktop(StackT *stack);
 
 
 //| machine.c
 MachineStateT *MachineState(ValueT *term, CodeT *code, StackT *stack);
 MachineStateT *blank_state(CodeT *code);
-int equal_states(MachineStateT *a, MachineStateT *b);
+enum boole equal_states(MachineStateT *a, MachineStateT *b);
 enum Status run_machine(MachineStateT *ms, enum error_id *error, int verbose);
   ///
 enum Status exec_Halt(MachineStateT *ms, enum error_id *error);
