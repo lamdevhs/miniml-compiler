@@ -2,6 +2,7 @@
 #include <stdlib.h>
 ////
 #include "ccam.h"
+#include "testing.h"
 
 void assert(char *description, int success)
 {
@@ -60,4 +61,61 @@ void assert_execution_crashed
     printf("code shift: %ld" NL, ms->code - starting_point);
   }
   assert(description, success);
+}
+
+
+
+enum boole equal_states(MachineStateT *a, MachineStateT *b) {
+  if (a == NULL) return b == NULL;
+  if (b == NULL) return False;
+  if (a->code != b->code) return False;
+  if (!!! equal_values(a->term, b->term)) return False;
+  return equal_stacks(a->stack, b->stack);
+}
+
+enum boole equal_stacks(StackT *a, StackT *b) {
+  if (a == NULL) return b == NULL;
+  if (b == NULL) return False;
+
+  enum StackTag tag = a->tag;
+  if (tag != b->tag) return False;
+  if (tag == StackTopIsValue) {
+    return equal_values(a->as.with_value.top, b->as.with_value.top)
+      && equal_stacks(a->as.with_value.bottom, b->as.with_value.bottom);
+  }
+  if (tag == StackTopIsCode) {
+    return a->as.with_code.top == b->as.with_code.top
+      && equal_stacks(a->as.with_value.bottom, b->as.with_value.bottom);
+  }
+  else return True; //| StackIsEmpty, or maybe an invalid tag...
+}
+
+enum boole equal_values(ValueT *a, ValueT *b) {
+  if (a == NULL) return b == NULL;
+  if (b == NULL) return False;
+
+  enum ValueTag tag = a->tag;
+  if (tag != b->tag) {
+    return False;
+  }
+  else if (tag == ValueIsInt) {
+    return a->as.integer == b->as.integer;
+  }
+  else if (tag == ValueIsBool) {
+    return !! (a->as.boolean) == !! (b->as.boolean);
+  }
+  else if (tag == ValueIsPair) {
+    return equal_values(a->as.pair.first, b->as.pair.first)
+      && equal_values(a->as.pair.second, b->as.pair.second);
+  }
+  else if (tag == ValueIsClosure) {
+    return a->as.closure.code == b->as.closure.code
+      && equal_values(a->as.closure.value, b->as.closure.value);
+  }
+  else if (tag == ValueIsListCons) {
+    return equal_values(a->as.listcons.head, b->as.listcons.head)
+      && equal_values(a->as.listcons.tail, b->as.listcons.tail);
+  }
+  else if (tag >= ValueTagIsInvalid) return False;
+  else return True; //| tags are equal and valid and the value contains nothing
 }

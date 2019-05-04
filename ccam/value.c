@@ -215,36 +215,6 @@ void print_listcons(ValueT* head, ValueT *tail)
   }
 }
 
-enum boole equal_values(ValueT *a, ValueT *b) {
-  if (a == NULL) return b == NULL;
-  if (b == NULL) return False;
-
-  enum ValueTag tag = a->tag;
-  if (tag != b->tag) {
-    return False;
-  }
-  else if (tag == ValueIsInt) {
-    return a->as.integer == b->as.integer;
-  }
-  else if (tag == ValueIsBool) {
-    return !! (a->as.boolean) == !! (b->as.boolean);
-  }
-  else if (tag == ValueIsPair) {
-    return equal_values(a->as.pair.first, b->as.pair.first)
-      && equal_values(a->as.pair.second, b->as.pair.second);
-  }
-  else if (tag == ValueIsClosure) {
-    return a->as.closure.code == b->as.closure.code
-      && equal_values(a->as.closure.value, b->as.closure.value);
-  }
-  else if (tag == ValueIsListCons) {
-    return equal_values(a->as.listcons.head, b->as.listcons.head)
-      && equal_values(a->as.listcons.tail, b->as.listcons.tail);
-  }
-  else if (tag >= ValueTagIsInvalid) return False;
-  else return True; //| tags are equal and valid and the value contains nothing
-}
-
 #ifdef TRACE_MEMORY
   int mallocated_values_count = 0;
   int freed_values_fake_count = 0;

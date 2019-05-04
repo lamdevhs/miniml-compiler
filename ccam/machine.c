@@ -15,15 +15,6 @@ MachineStateT *blank_state(CodeT *code) {
   return MachineState(NullValue(), code, EmptyStack());
 }
 
-enum boole equal_states(MachineStateT *a, MachineStateT *b) {
-  if (a == NULL) return b == NULL;
-  if (b == NULL) return False;
-  if (a->code != b->code) return False;
-  if (!!! equal_values(a->term, b->term)) return False;
-  return equal_stacks(a->stack, b->stack);
-}
-
-
 enum Status run_machine(MachineStateT *ms, enum error_id *error, int verbose)
 {
   enum Status status = AllOk;

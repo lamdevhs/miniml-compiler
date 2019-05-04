@@ -247,7 +247,6 @@ enum boole value_is_list(ValueT *value);
   ///
 void print_value(ValueT *value);
 void print_listcons(ValueT* head, ValueT *tail);
-enum boole equal_values(ValueT *a, ValueT *b);
   ///
 #ifdef TRACE_MEMORY
 int mallocated_values_count;
@@ -267,14 +266,12 @@ StackT *CodeOnStack(CodeT *code, StackT *old_stack);
 enum result match_stacktop_with_value(StackT *stack, ValueOnStackT *output);
 enum result match_stacktop_with_code(StackT *stack, CodeOnStackT *output);
   ///
-enum boole equal_stacks(StackT *a, StackT *b);
 void print_stacktop(StackT *stack);
 
 
 //| machine.c
 MachineStateT *MachineState(ValueT *term, CodeT *code, StackT *stack);
 MachineStateT *blank_state(CodeT *code);
-enum boole equal_states(MachineStateT *a, MachineStateT *b);
 enum Status run_machine(MachineStateT *ms, enum error_id *error, int verbose);
   ///
 enum Status exec_Halt(MachineStateT *ms, enum error_id *error);

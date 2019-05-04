@@ -50,23 +50,6 @@ enum result match_stacktop_with_code(StackT *stack, CodeOnStackT *output)
   return Success;
 }
 
-enum boole equal_stacks(StackT *a, StackT *b) {
-  if (a == NULL) return b == NULL;
-  if (b == NULL) return False;
-
-  enum StackTag tag = a->tag;
-  if (tag != b->tag) return False;
-  if (tag == StackTopIsValue) {
-    return equal_values(a->as.with_value.top, b->as.with_value.top)
-      && equal_stacks(a->as.with_value.bottom, b->as.with_value.bottom);
-  }
-  if (tag == StackTopIsCode) {
-    return a->as.with_code.top == b->as.with_code.top
-      && equal_stacks(a->as.with_value.bottom, b->as.with_value.bottom);
-  }
-  else return True; //| StackIsEmpty, or maybe an invalid tag...
-}
-
 void print_stacktop(StackT *stack)
 {
   if (stack == NULL) {
