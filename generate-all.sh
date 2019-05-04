@@ -30,12 +30,14 @@ fi
 make all || Crash "could not build ./comp"
 cd ./ccam || Crash "could not find ./ccam/ folder"
 for path in .$folder/*.ml ; do
-  filename=$(basename "$path")
-  ../comp "$path" "$filename" && \
-    make build name="$filename" && \
-    mv "$filename".out "$path".out && \
-    make build name="$filename" DBG=y && \
-    mv "$filename".out "$path".dbg.out && \
-    mv "$filename".c "$path".c
+  filename="$(basename "$path")"
+  shortname="${filename%.ml}"
+  ../comp "$path" "$shortname.c" && \
+    make build file="$shortname.c" out="$shortname.out" && \
+    mv "$shortname.out" ".$folder/$shortname.out" && \
+    make build file="$shortname.c" out="$shortname.out" DBG=y && \
+    mv "$shortname.out" ".$folder/$shortname.dbg.out" && \
+    mv "$shortname.c" ".$folder/$shortname.c"
 done
+
 Done

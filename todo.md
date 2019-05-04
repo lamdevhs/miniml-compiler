@@ -7,6 +7,7 @@ simple ones:
 - replace BoolValue() with Bool()/Boolean()?
 - test if the parser accepts the empty program
 - remove dev comments
+- fix generated-all.sh so that it copies the .c files instead
 
 ccam:
 
@@ -21,12 +22,9 @@ parser:
   - recognize negative numbers (no real need we can always write (0-42))
   - allow underscores and dashes and maybe
     even dots in variable names
+  - fix the built_in_test error: "(fst, snd);;"
 
 global:
-
-- fix the built_in_test error: "(fst, snd);;"
-  idea: by defining top level global code snippets that can be used to handle
-  the built-in operators when they aren't immediately called
 - fix the shit regarding auto adding .c to generated files by compiler?
 
 READMEs:
