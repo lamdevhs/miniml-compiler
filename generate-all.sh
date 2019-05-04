@@ -34,7 +34,7 @@ for path in .$folder/*.ml ; do
   ../comp "$path" "$filename" && \
     make build name="$filename" && \
     mv "$filename".out "$path".out && \
-    make build name="$filename" MEM=y DBG=y && \
+    make build name="$filename" DBG=y && \
     mv "$filename".out "$path".dbg.out && \
     mv "$filename".c "$path".c
 done

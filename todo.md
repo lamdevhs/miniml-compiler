@@ -6,11 +6,9 @@ simple ones:
 - separate equal_... from the runtime side of things
 - replace BoolValue() with Bool()/Boolean()?
 - test if the parser accepts the empty program
-- remove MEM=y from generate-all.sh
 - remove dev comments
 
 ccam:
-- meliorate the error handling/messaging system
 
 caml compiler:
 - forbid having the same variable bound twice by the same let rec.
@@ -95,3 +93,5 @@ These are in chronological order, hopefully:
 - check if we can remove `__print_stack_` stuff
 - isolate enums into their own .c file
 - simplify unit-tests.c
+- meliorate the error handling/messaging system
+- remove MEM=y from generate-all.sh
