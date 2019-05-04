@@ -25,7 +25,7 @@ parser:
   - fix the built_in_test error: "(fst, snd);;"
 
 global:
-- fix the shit regarding auto adding .c to generated files by compiler?
+?
 
 READMEs:
 - write miniml's grammar, latex style
@@ -103,3 +103,4 @@ These are in chronological order, hopefully:
 - recognize badly formed programs (let rec etc)
 - forbid having the same variable bound twice by the same let rec.
 - replace ListCons instr everywhere with MakeList
+- fix the shit regarding auto adding .c to generated files by compiler
