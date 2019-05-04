@@ -76,7 +76,6 @@ enum boole equal_states(MachineStateT *a, MachineStateT *b) {
 enum boole equal_stacks(StackT *a, StackT *b) {
   if (a == NULL) return b == NULL;
   if (b == NULL) return False;
-
   enum StackTag tag = a->tag;
   if (tag != b->tag) return False;
   if (tag == StackTopIsValue) {
@@ -87,35 +86,30 @@ enum boole equal_stacks(StackT *a, StackT *b) {
     return a->as.with_code.top == b->as.with_code.top
       && equal_stacks(a->as.with_value.bottom, b->as.with_value.bottom);
   }
-  else return True; //| StackIsEmpty, or maybe an invalid tag...
+  if (tag == StackIsEmpty) return True;
+  return False; //| invalid tag...
 }
 
 enum boole equal_values(ValueT *a, ValueT *b) {
   if (a == NULL) return b == NULL;
   if (b == NULL) return False;
-
   enum ValueTag tag = a->tag;
-  if (tag != b->tag) {
-    return False;
-  }
-  else if (tag == ValueIsInt) {
-    return a->as.integer == b->as.integer;
-  }
-  else if (tag == ValueIsBool) {
-    return !! (a->as.boolean) == !! (b->as.boolean);
-  }
-  else if (tag == ValueIsPair) {
+  if (tag != b->tag) return False;
+  if (tag == ValueIsInt) return a->as.integer == b->as.integer;
+  if (tag == ValueIsBool) return (! a->as.boolean) == (! b->as.boolean);
+  if (tag == ValueIsEmptyList) return True;
+  if (tag == ValueIsNull) return True;
+  if (tag == ValueIsPair) {
     return equal_values(a->as.pair.first, b->as.pair.first)
       && equal_values(a->as.pair.second, b->as.pair.second);
   }
-  else if (tag == ValueIsClosure) {
+  if (tag == ValueIsClosure) {
     return a->as.closure.code == b->as.closure.code
       && equal_values(a->as.closure.value, b->as.closure.value);
   }
-  else if (tag == ValueIsListCons) {
+  if (tag == ValueIsListCons) {
     return equal_values(a->as.listcons.head, b->as.listcons.head)
       && equal_values(a->as.listcons.tail, b->as.listcons.tail);
   }
-  else if (tag >= ValueTagIsInvalid) return False;
-  else return True; //| tags are equal and valid and the value contains nothing
+  return False; //| invalid tag...
 }

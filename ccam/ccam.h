@@ -130,8 +130,6 @@ enum ValueTag {
   ValueIsNull,
   ValueIsListCons,
   ValueIsEmptyList,
-  //| upper bound for the the enum:
-  ValueTagIsInvalid,
 };
 
 struct ValueT; //| recursive definitions
