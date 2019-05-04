@@ -16,6 +16,12 @@ let primop_of_token = (function
   | _ -> failwith "in primop_of_token: unknown token")
 
 let binary_exp e1 oper e2 = App(PrimOp (primop_of_token oper), Pair(e1, e2))
+
+let rec has_item x = function
+  | [] -> false
+  | y :: ys -> (x = y) || has_item x ys
+;;
+
 %}
 
 %token <string> IDENTIFIER
@@ -38,12 +44,6 @@ let binary_exp e1 oper e2 = App(PrimOp (primop_of_token oper), Pair(e1, e2))
 %type <Miniml.prog> start
 
 %%
-/*
-todoes:
-  - recognize negative numbers
-  - allow underscores and dashes and maybe
-    even dots in variable names
-*/
 
 start: prog { $1 }
 ;
@@ -77,7 +77,11 @@ let_rec_exp
 
 let_rec_definitions
   : let_rec_binding { [$1] }
-  | let_rec_binding AND let_rec_definitions { $1 :: $3 }
+  | let_rec_binding AND let_rec_definitions
+    { let x = fst $1 in
+      if (has_item x (List.map fst $3))
+      then (failwith ("Variable " ^ x ^ " bound twice in the same let-rec construct."))
+      else ($1 :: $3) }
 ;
 
 let_rec_binding
@@ -89,6 +93,9 @@ main_exp
   | FUN IDENTIFIER func_body { Fn($2, $3) }
   | IF main_exp THEN main_exp ELSE main_exp { Cond($2, $4, $6) }
   | pair_exp { $1 }
+  | LET REC let_rec_definitions IN main_exp
+    { (failwith ("Let-rec constructs not allowed inside other expressions:"
+        ^ " only valid as toplevel expression.")) }
 ;
 
 

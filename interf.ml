@@ -29,7 +29,7 @@ let parse infile =
   try parse_file infile
   with ParseLexError (e, r) ->
     print_parse_error r;
-    failwith "Stopped execution."
+    raise e (* <-- throw back the original error to get the original error message *)
 ;;
 
 

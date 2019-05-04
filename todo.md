@@ -11,12 +11,16 @@ simple ones:
 ccam:
 
 caml compiler:
-- forbid having the same variable bound twice by the same let rec.
 - add null value to parser
-- recognize badly formed programs (let rec etc)
-- prevent restricted tokens to be used for variables (e.g. head, let, etc)
 - rename instrs/compile to mlexp_to_code
 - replace write_instruction with string_of_instruction?
+
+parser:
+- prevent restricted tokens to be used for variables (e.g. head, let, etc)
+- forbid having the same variable bound twice by the same let rec.
+- recognize negative numbers
+- allow underscores and dashes and maybe
+  even dots in variable names
 
 global:
 - replace ListCons instr everywhere with MakeList
@@ -98,3 +102,4 @@ These are in chronological order, hopefully:
 - simplify unit-tests.c
 - meliorate the error handling/messaging system
 - remove MEM=y from generate-all.sh
+- recognize badly formed programs (let rec etc)

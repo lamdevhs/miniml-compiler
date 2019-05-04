@@ -138,7 +138,7 @@ let rec exec : (value * code * stack * defstack) -> value = function
     (if not allok then print_endline "CompilerWarning: CAM terminated with weird final state" else ());
     final_value
   | (_, [], _, fds) -> failwith "CompilerBug: code list empty"
-  | otherwise -> failwith "CompilerBug: undefined instruction"
+  (* | otherwise -> failwith "CompilerBug: undefined instruction" *)
 ;;
 
 let initial_cfg code = (NullV, code, [], []);;
