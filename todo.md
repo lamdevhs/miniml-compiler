@@ -17,8 +17,8 @@ caml compiler:
 
 parser:
 - prevent restricted tokens to be used for variables (e.g. head, let, etc)
-- forbid having the same variable bound twice by the same let rec.
-- recognize negative numbers
+optional stuff:
+- recognize negative numbers (no real need we can always write (0-42))
 - allow underscores and dashes and maybe
   even dots in variable names
 
@@ -103,3 +103,4 @@ These are in chronological order, hopefully:
 - meliorate the error handling/messaging system
 - remove MEM=y from generate-all.sh
 - recognize badly formed programs (let rec etc)
+- forbid having the same variable bound twice by the same let rec.

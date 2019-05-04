@@ -57,7 +57,7 @@ void print_stacktop(StackT *stack)
   }
   else {
     if (stack->tag == StackIsEmpty) {
-      printf("[]");
+      printf("<stack is empty>");
     }
     else if (stack->tag == StackTopIsValue) {
       print_value(stack->as.with_value.top);
