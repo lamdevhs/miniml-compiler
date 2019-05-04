@@ -111,7 +111,7 @@ void test_Unary()
         program,
         EmptyStack()
       ),
-      Err__Unary_NotAPair
+      Crashed_Unary_NotAPair
     );
     assert_execution_crashed(
       "instruction Unary(Fst), term = <NULL>",
@@ -120,7 +120,7 @@ void test_Unary()
         program,
         EmptyStack()
       ),
-      Err__Unary_NotAPair
+      Crashed_Unary_NotAPair
     );
   }
   {
@@ -174,7 +174,7 @@ void test_Unary()
         program,
         NULL
       ),
-      Err__Unary_Headless
+      Crashed_Unary_Headless
     );
     assert_execution_crashed(
       "instruction Unary(Head), term = ()",
@@ -183,7 +183,7 @@ void test_Unary()
         program,
         NULL
       ),
-      Err__Unary_Headless
+      Crashed_Unary_Headless
     );
     assert_execution_crashed(
       "instruction Unary(Head), term = <NULL>",
@@ -192,7 +192,7 @@ void test_Unary()
         program,
         NULL
       ),
-      Err__Unary_Headless
+      Crashed_Unary_Headless
     );
   }
   {
@@ -243,7 +243,7 @@ void test_Unary()
         program,
         NULL
       ),
-      Err__Unary_Headless
+      Crashed_Unary_Headless
     );
     assert_execution_crashed(
       "instruction Unary(Tail), term = 3",
@@ -252,7 +252,7 @@ void test_Unary()
         program,
         NULL
       ),
-      Err__Unary_Headless
+      Crashed_Unary_Headless
     );
     assert_execution_crashed(
       "instruction Unary(Tail), term = <NULL>",
@@ -261,7 +261,7 @@ void test_Unary()
         program,
         NULL
       ),
-      Err__Unary_Headless
+      Crashed_Unary_Headless
     );
   }
   {
@@ -273,7 +273,7 @@ void test_Unary()
         program,
         EmptyStack()
       ),
-      Err__Unary_Unknown
+      Crashed_Unary_Unknown
     );
   }
 }
@@ -302,7 +302,7 @@ void test_Arith()
         program,
         EmptyStack()
       ),
-      Err__Arith_DivByZero
+      Crashed_Arith_DivByZero
     );
   }
   {
@@ -314,7 +314,7 @@ void test_Arith()
         program,
         EmptyStack()
       ),
-      Err__Arith_DivByZero
+      Crashed_Arith_DivByZero
     );
   }
   {
@@ -326,7 +326,7 @@ void test_Arith()
         program,
         EmptyStack()
       ),
-      Err__Arith_TypeError
+      Crashed_Arith_TypeError
     );
   }
   {
@@ -338,7 +338,7 @@ void test_Arith()
         program,
         EmptyStack()
       ),
-      Err__Arith_Unknown
+      Crashed_Arith_Unknown
     );
   }
 }
@@ -399,7 +399,7 @@ void test_Compare()
         program,
         EmptyStack()
       ),
-      Err__Compare_TypeError
+      Crashed_Compare_TypeError
     );
     assert_execution_crashed(
       "instruction Compare(Neq), term = (42, ())",
@@ -408,7 +408,7 @@ void test_Compare()
         program,
         EmptyStack()
       ),
-      Err__Compare_TypeError
+      Crashed_Compare_TypeError
     );
   }
   {
@@ -420,7 +420,7 @@ void test_Compare()
         program,
         EmptyStack()
       ),
-      Err__Compare_Unknown
+      Crashed_Compare_Unknown
     );
   }
 }
@@ -477,7 +477,7 @@ void test_Cons()
       program,
       CodeOnStack(CodeRef(42L), EmptyStack())
     ),
-    Err__Cons_NoValueOnStack
+    Crashed_Cons_NoValueOnStack
   );
 }
 
@@ -540,7 +540,7 @@ void test_Swap()
       program,
       CodeOnStack(CodeRef(42L), EmptyStack())
     ),
-    Err__Swap_NoValueOnStack
+    Crashed_Swap_NoValueOnStack
   );
   assert_execution_crashed(
     "instruction Swap, stack is <NULL>",
@@ -549,7 +549,7 @@ void test_Swap()
       program,
       NULL
     ),
-    Err__Swap_NoValueOnStack
+    Crashed_Swap_NoValueOnStack
   );
 }
 
@@ -636,7 +636,7 @@ void test_Apply()
       program,
       NULL
     ),
-    Err__CannotApply
+    Crashed_CannotApply
   );
   assert_execution_crashed(
     "instruction Apply, term = (True, ())",
@@ -645,7 +645,7 @@ void test_Apply()
       program,
       NULL
     ),
-    Err__CannotApply
+    Crashed_CannotApply
   );
   assert_execution_crashed(
     "instruction Apply, term = True",
@@ -654,7 +654,7 @@ void test_Apply()
       program,
       NULL
     ),
-    Err__CannotApply
+    Crashed_CannotApply
   );
 }
 
@@ -694,7 +694,7 @@ void test_Return()
       program,
       NULL
     ),
-    Err__CannotReturn
+    Crashed_CannotReturn
   );
   assert_execution_crashed(
     "instruction Return, no code on stack",
@@ -703,7 +703,7 @@ void test_Return()
       program,
       ValueOnStack(IntValue(1L), NULL)
     ),
-    Err__CannotReturn
+    Crashed_CannotReturn
   );
 }
 
@@ -747,7 +747,7 @@ void test_Branch()
       program,
       ValueOnStack(IntValue(3L), ValueOnStack(IntValue(4L), NULL))
     ),
-    Err__Branch_NotABoolean
+    Crashed_Branch_NotABoolean
   );
   assert_execution_crashed(
     "instruction Branch, term = <NULL>",
@@ -756,7 +756,7 @@ void test_Branch()
       program,
       ValueOnStack(IntValue(3L), ValueOnStack(IntValue(4L), NULL))
     ),
-    Err__Branch_NotABoolean
+    Crashed_Branch_NotABoolean
   );
   assert_execution_crashed(
     "instruction Branch, no value on stack",
@@ -765,7 +765,7 @@ void test_Branch()
       program,
       CodeOnStack(NULL, NULL)
     ),
-    Err__Branch_NoValueOnStack
+    Crashed_Branch_NoValueOnStack
   );
   assert_execution_crashed(
     "instruction Branch, stack = <NULL>",
@@ -774,7 +774,7 @@ void test_Branch()
       program,
       NULL
     ),
-    Err__Branch_NoValueOnStack
+    Crashed_Branch_NoValueOnStack
   );
 }
 
@@ -878,7 +878,7 @@ void test_MakeList()
       program,
       ValueOnStack(IntValue(3L), NULL)
     ),
-    Err__MakeList_NotAList
+    Crashed_MakeList_NotAList
   );
   assert_execution_crashed(
     "instruction MakeList, term = <NULL>",
@@ -887,7 +887,7 @@ void test_MakeList()
       program,
       ValueOnStack(IntValue(3L), NULL)
     ),
-    Err__MakeList_NotAList
+    Crashed_MakeList_NotAList
   );
   assert_execution_crashed(
     "instruction MakeList, no value on stack",
@@ -896,7 +896,7 @@ void test_MakeList()
       program,
       CodeOnStack(CodeRef(3L), NULL)
     ),
-    Err__MakeList_NoValueOnStack
+    Crashed_MakeList_NoValueOnStack
   );
   assert_execution_crashed(
     "instruction MakeList, stack = <NULL>",
@@ -905,7 +905,7 @@ void test_MakeList()
       program,
       NULL
     ),
-    Err__MakeList_NoValueOnStack
+    Crashed_MakeList_NoValueOnStack
   );
 }
 

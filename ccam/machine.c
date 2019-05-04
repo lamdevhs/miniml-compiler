@@ -53,7 +53,7 @@ enum Status exec_Unary(MachineStateT *ms)
 
       PairT pair;
       if (match_value_with_pair(term, &pair) == Failure) {
-        return Err__Unary_NotAPair;
+        return Crashed_Unary_NotAPair;
       }
       ValueT *x = pair.first;
       ValueT *y = pair.second;
@@ -92,7 +92,7 @@ enum Status exec_Unary(MachineStateT *ms)
 
       ListConsT pattern;
       if (match_value_with_listcons(term, &pattern) == Failure) {
-        return Err__Unary_Headless;
+        return Crashed_Unary_Headless;
       }
       ValueT *h = pattern.head;
       ValueT *t = pattern.tail;
@@ -113,10 +113,7 @@ enum Status exec_Unary(MachineStateT *ms)
       return AllOk;
     } break;
 
-    default:
-    {
-      return Err__Unary_Unknown;
-    }
+    default: return Crashed_Unary_Unknown;
     break;
   } //| end of switch
 }
@@ -129,19 +126,19 @@ enum Status exec_Arith(MachineStateT *ms)
 
   PairT pair;
   if (match_value_with_pair(term, &pair) == Failure) {
-    return Err__Arith_TypeError;
+    return Crashed_Arith_TypeError;
   }
   long x;
   if (match_value_with_integer(pair.first, &x) == Failure) {
     //| reset the machine state
     ms->term = PairValue(pair.first, pair.second);
-    return Err__Arith_TypeError;
+    return Crashed_Arith_TypeError;
   }
   long y;
   if (match_value_with_integer(pair.second, &y) == Failure) {
     //| reset the machine state
     ms->term = PairValue(IntValue(x), pair.second);
-    return Err__Arith_TypeError;
+    return Crashed_Arith_TypeError;
   }
   int operation = ms->code[1].operation;
   long result;
@@ -150,7 +147,7 @@ enum Status exec_Arith(MachineStateT *ms)
     //| reset the machine state
     ms->term = PairValue(IntValue(x), IntValue(y));
     return (report == InvalidOperands)
-      ? Err__Arith_DivByZero : Err__Arith_Unknown;
+      ? Crashed_Arith_DivByZero : Crashed_Arith_Unknown;
   }
 
   ms->term = IntValue(result);
@@ -169,7 +166,7 @@ enum Status exec_Compare(MachineStateT *ms)
 
   PairT pair;
   if (match_value_with_pair(term, &pair) == Failure) {
-    return Err__Compare_TypeError;
+    return Crashed_Compare_TypeError;
   }
   enum ValueTag tag = pair.first->tag;
 
@@ -187,7 +184,7 @@ enum Status exec_Compare(MachineStateT *ms)
   else { //| ... or, error
     //| reset the machine state
     ms->term = PairValue(pair.first, pair.second);
-    return Err__Compare_TypeError;
+    return Crashed_Compare_TypeError;
   }
   int operation = ms->code[1].operation;
   long result;
@@ -195,7 +192,7 @@ enum Status exec_Compare(MachineStateT *ms)
   if (report != OperationOk) {
     //| reset the machine state
     ms->term = PairValue(pair.first, pair.second);
-    return Err__Compare_Unknown;
+    return Crashed_Compare_Unknown;
   }
 
   //| memory management:
@@ -228,7 +225,7 @@ enum Status exec_Cons(MachineStateT *ms)
 
   ValueOnStackT pattern;
   if (match_stacktop_with_value(stack, &pattern) == Failure) {
-    return Err__Cons_NoValueOnStack;
+    return Crashed_Cons_NoValueOnStack;
   }
   ValueT *x = ms->term;
 
@@ -269,7 +266,7 @@ enum Status exec_Swap(MachineStateT *ms)
 
   ValueOnStackT pattern;
   if (match_stacktop_with_value(stack, &pattern) == Failure) {
-    return Err__Swap_NoValueOnStack;
+    return Crashed_Swap_NoValueOnStack;
   }
   ValueT *x = ms->term;
 
@@ -299,13 +296,13 @@ enum Status exec_Apply(MachineStateT *ms)
 
   PairT pair;
   if (match_value_with_pair(term, &pair) == Failure) {
-    return Err__CannotApply;
+    return Crashed_CannotApply;
   }
   ClosureT closure;
   if (match_value_with_closure(pair.first, &closure) == Failure) {
     //| reset the machine state
     ms->term = PairValue(pair.first, pair.second);
-    return Err__CannotApply;
+    return Crashed_CannotApply;
   }
 
   ValueT *z = pair.second;
@@ -327,7 +324,7 @@ enum Status exec_Return(MachineStateT *ms)
 
   CodeOnStackT pattern;
   if (match_stacktop_with_code(stack, &pattern) == Failure) {
-    return Err__CannotReturn;
+    return Crashed_CannotReturn;
   }
 
   // ms->term unchanged
@@ -345,13 +342,13 @@ enum Status exec_Branch(MachineStateT *ms)
 
   long b;
   if (match_value_with_boolean(term, &b) == Failure) {
-    return Err__Branch_NotABoolean;
+    return Crashed_Branch_NotABoolean;
   }
   ValueOnStackT pattern;
   if (match_stacktop_with_value(stack, &pattern) == Failure) {
     //| reset the machine state
     ms->term = BoolValue(b);
-    return Err__Branch_NoValueOnStack;
+    return Crashed_Branch_NoValueOnStack;
   }
 
   CodeT *code = ms->code;
@@ -401,13 +398,11 @@ enum Status exec_MakeList(MachineStateT *ms)
   StackT *stack = ms->stack;
   ValueT *tail = ms->term;
 
-  if (!!! value_is_list(tail)) {
-    return Err__MakeList_NotAList;
-  }
+  if (!!! value_is_list(tail)) return Crashed_MakeList_NotAList;
 
   ValueOnStackT pattern;
   if (match_stacktop_with_value(stack, &pattern) == Failure) {
-    return Err__MakeList_NoValueOnStack;
+    return Crashed_MakeList_NoValueOnStack;
   }
 
   ms->term = ListConsValue(pattern.top, tail);

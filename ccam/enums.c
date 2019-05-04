@@ -26,7 +26,7 @@ enum Status execute_next_instruction(MachineStateT *ms)
     case MakeList: status = exec_MakeList(ms); break;
     default:
     {
-      status = Err__UnknownInstruction;
+      status = Crashed_UnknownInstruction;
     } break;
   }
   return status;
@@ -153,41 +153,41 @@ char *status_message(enum Status status)
     return "AllOk, no errors to report"; break;
     case Halted:
     return "halted, no errors to report"; break;
-    case Err__UnknownInstruction:
+    case Crashed_UnknownInstruction:
     return "MachineFailure: unknown instruction"; break;
-    case Err__Unary_Unknown:
+    case Crashed_Unary_Unknown:
     return "MachineFailure: unknown unary operator"; break;
-    case Err__Unary_NotAPair:
+    case Crashed_Unary_NotAPair:
     return "TypeError: can't get first/second: not a pair"; break;
-    case Err__Unary_Headless:
+    case Crashed_Unary_Headless:
     return "TypeError: can't get head/tail: empty list or not a list"; break;
-    case Err__Cons_NoValueOnStack:
+    case Crashed_Cons_NoValueOnStack:
     return "MachineFailure: can't build pair: no value on stack"; break;
-    case Err__Swap_NoValueOnStack:
+    case Crashed_Swap_NoValueOnStack:
     return "MachineFailure: can't swap: no value on stack"; break;
-    case Err__CannotApply:
+    case Crashed_CannotApply:
     return "MachineFailure: can't apply: invalid term"; break;
-    case Err__CannotReturn:
+    case Crashed_CannotReturn:
     return "MachineFailure: can't return: no code reference on stack"; break;
-    case Err__Arith_TypeError:
+    case Crashed_Arith_TypeError:
     return "TypeError: can't do arithmetic operation: "
            "operands missing or not integers"; break;
-    case Err__Arith_Unknown:
+    case Crashed_Arith_Unknown:
     return "MachineFailure: unknown arithmetic operation"; break;
-    case Err__Arith_DivByZero:
+    case Crashed_Arith_DivByZero:
     return "RuntimeException: division by zero"; break;
-    case Err__Compare_TypeError:
+    case Crashed_Compare_TypeError:
     return "TypeError: can't compare: operands either missing "
            "or neither two integers nor two booleans"; break;
-    case Err__Compare_Unknown:
+    case Crashed_Compare_Unknown:
     return "MatchFailure: unknown comparison operation"; break;
-    case Err__Branch_NotABoolean:
+    case Crashed_Branch_NotABoolean:
     return "TypeError: in conditional branch: condition is not a boolean"; break;
-    case Err__Branch_NoValueOnStack:
+    case Crashed_Branch_NoValueOnStack:
     return "MachineFailure: in conditional branch: no value on stack"; break;
-    case Err__MakeList_NotAList:
+    case Crashed_MakeList_NotAList:
     return "TypeError: can't build list: tail is not a list"; break;
-    case Err__MakeList_NoValueOnStack:
+    case Crashed_MakeList_NoValueOnStack:
     return "MachineFailure: can't build list: no value on stack"; break;
 
     default: return "<unknown error id>"; break;
