@@ -3,31 +3,30 @@
   ///
 #include "ccam.h"
 
-enum Status execute_next_instruction(MachineStateT *ms, enum error_id *error)
+enum Status execute_next_instruction(MachineStateT *ms)
 {
   int instruction = ms->code[0].instruction;
   enum Status status = AllOk;
   switch (instruction) {
-    case Halt: status = exec_Halt(ms, error); break;
-    case Unary: status = exec_Unary(ms, error); break;
-    case Arith: status = exec_Arith(ms, error); break;
-    case Compare: status = exec_Compare(ms, error); break;
-    case Cons: status = exec_Cons(ms, error); break;
-    case Push: status = exec_Push(ms, error); break;
-    case Swap: status = exec_Swap(ms, error); break;
-    case Apply: status = exec_Apply(ms, error); break;
-    case Return: status = exec_Return(ms, error); break;
-    case QuoteInt: status = exec_QuoteInt(ms, error); break;
-    case QuoteBool: status = exec_QuoteBool(ms, error); break;
-    case Curry: status = exec_Curry(ms, error); break;
-    case Branch: status = exec_Branch(ms, error); break;
-    case Call: status = exec_Call(ms, error); break;
-    case QuoteEmptyList: status = exec_QuoteEmptyList(ms, error); break;
-    case MakeList: status = exec_MakeList(ms, error); break;
+    case Halt: status = exec_Halt(ms); break;
+    case Unary: status = exec_Unary(ms); break;
+    case Arith: status = exec_Arith(ms); break;
+    case Compare: status = exec_Compare(ms); break;
+    case Cons: status = exec_Cons(ms); break;
+    case Push: status = exec_Push(ms); break;
+    case Swap: status = exec_Swap(ms); break;
+    case Apply: status = exec_Apply(ms); break;
+    case Return: status = exec_Return(ms); break;
+    case QuoteInt: status = exec_QuoteInt(ms); break;
+    case QuoteBool: status = exec_QuoteBool(ms); break;
+    case Curry: status = exec_Curry(ms); break;
+    case Branch: status = exec_Branch(ms); break;
+    case Call: status = exec_Call(ms); break;
+    case QuoteEmptyList: status = exec_QuoteEmptyList(ms); break;
+    case MakeList: status = exec_MakeList(ms); break;
     default:
     {
-      status = Crashed;
-      *error = Err__UnknownInstruction;
+      status = Err__UnknownInstruction;
     } break;
   }
   return status;
@@ -142,38 +141,18 @@ void print_comparison_operation(int operation)
   }
 }
 
-void print_status(enum Status status) {
+void print_status(enum Status status)
+{
+  printf("%s", status_message(status));
+}
+
+char *status_message(enum Status status)
+{
   switch (status) {
-    case AllOk: printf("AllOk"); break;
-    case Halted: printf("Halted"); break;
-    // case DivZero: printf("DivZero"); break;
-    // case UnknownInstruction: printf("UnknownInstruction"); break;
-    // case UnknownUnary: printf("UnknownUnary"); break;
-    // case UnknownBinary: printf("UnknownBinary"); break;
-    case Crashed: printf("Crashed"); break;
-    // case MatchNULLStack: printf("MatchNULLStack"); break;
-    // case StackHeadIsNotValue: printf("StackHeadIsNotValue"); break;
-    // case StackHeadIsNotCode: printf("StackHeadIsNotCode"); break;
-    // case MatchNULLValue: printf("MatchNULLValue"); break;
-    // case ValueIsNotPair: printf("ValueIsNotPair"); break;
-    // case ValueIsNotClosure: printf("ValueIsNotClosure"); break;
-    // case ValueIsNotBool: printf("ValueIsNotBool"); break;
-    // case ValueIsNotInt: printf("ValueIsNotInt"); break;
-    // case ValueIsNotAList: printf("ValueIsNotAList"); break;
-    default: printf("<Unknown>");
-  }
-}
-
-void print_error(enum error_id error)
-{
-  printf("%s", error_message(error));
-}
-
-char *error_message(enum error_id error)
-{
-  switch (error) {
-    case NoError:
-    return "no error encountered"; break;
+    case AllOk:
+    return "AllOk, no errors to report"; break;
+    case Halted:
+    return "halted, no errors to report"; break;
     case Err__UnknownInstruction:
     return "MachineFailure: unknown instruction"; break;
     case Err__Unary_Unknown:

@@ -934,5 +934,6 @@ int main()
   test_Call();
   test_QuoteEmptyList();
   test_MakeList();
+  printf("All tests passed." NL);
   return 0;
 }

@@ -4,8 +4,7 @@
 
 int main ()
 {
-  MachineStateT *ms = blank_state (get_main_code());
-  enum error_id error = NoError;
+  MachineStateT *ms = blank_state(get_main_code());
   int exit_value;
 
   #ifdef DEBUGMODE
@@ -14,7 +13,7 @@ int main ()
     int verbosity = False;
   #endif
 
-  enum Status status = run_machine (ms, &error, verbosity);
+  enum Status status = run_machine(ms, verbosity);
   if (status == Halted) {
     exit_value = 0;
 
@@ -27,6 +26,7 @@ int main ()
     print_value(ms->term); printf(NL);
   }
   else {
+    //| something went wrong, the CAM crashed.
     exit_value = 1;
 
     #ifdef DEBUGMODE
@@ -37,7 +37,7 @@ int main ()
       printf("--------------------"NL);
     #endif
 
-    print_error(error); printf(NL);
+    print_status(status); printf(NL); //| print error message
   }
 
   #ifdef TRACE_MEMORY

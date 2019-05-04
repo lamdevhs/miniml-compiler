@@ -6,6 +6,8 @@ simple ones:
 - separate equal_... from the runtime side of things
 - replace BoolValue() with Bool()/Boolean()?
 - test if the parser accepts the empty program
+- remove MEM=y from generate-all.sh
+- remove dev comments
 
 ccam:
 - meliorate the error handling/messaging system

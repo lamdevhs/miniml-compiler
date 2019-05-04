@@ -55,8 +55,9 @@ enum op_report {
   UnknownOp,
 };
 
-enum error_id {
-  NoError,
+enum Status {
+  AllOk,
+  Halted,
   Err__UnknownInstruction,
   Err__Unary_Unknown,
   Err__Unary_NotAPair,
@@ -74,30 +75,6 @@ enum error_id {
   Err__Branch_NoValueOnStack,
   Err__MakeList_NotAList,
   Err__MakeList_NoValueOnStack,
-};
-
-enum Status {
-  AllOk,
-  Halted,
-  Crashed,
-  // DivZero,
-  // UnknownInstruction,
-  // UnknownUnary,
-  // UnknownBinary,
-
-  //| pattern-matching errors:
-    // MatchFailure,
-    // MatchNULLStack,
-    // StackHeadIsNotValue,
-    // StackHeadIsNotCode,
-    //
-    // MatchNULLValue,
-    // ValueIsNotPair,
-    // ValueIsNotClosure,
-    // ValueIsNotBool,
-    // ValueIsNotInt,
-    // ValueIsNotAList,
-    // ValueIsHeadless,
 };
 
 
@@ -212,7 +189,7 @@ typedef struct MachineStateT {
 
 
 //| enums.c
-enum Status execute_next_instruction(MachineStateT *ms, enum error_id *error);
+enum Status execute_next_instruction(MachineStateT *ms);
 enum op_report eval_arith(int op, long a, long b, long *result);
 enum op_report eval_comparison(int op, long a, long b, long *result);
 void print_instruction(CodeT *code);
@@ -220,8 +197,7 @@ void print_arith_operation(int operation);
 void print_comparison_operation(int operation);
 void print_unary(int unary_op);
 void print_status(enum Status status);
-void print_error(enum error_id error);
-char *error_message(enum error_id error);
+char *status_message(enum Status status);
 
 //| value.c
 ValueT *PairValue(ValueT *first, ValueT *second);
@@ -270,29 +246,29 @@ void print_stacktop(StackT *stack);
 //| machine.c
 MachineStateT *MachineState(ValueT *term, CodeT *code, StackT *stack);
 MachineStateT *blank_state(CodeT *code);
-enum Status run_machine(MachineStateT *ms, enum error_id *error, int verbose);
+enum Status run_machine(MachineStateT *ms, int verbose);
   ///
-enum Status exec_Halt(MachineStateT *ms, enum error_id *error);
+enum Status exec_Halt(MachineStateT *ms);
   ///
-enum Status exec_Unary(MachineStateT *ms, enum error_id *error);
-enum Status exec_Arith(MachineStateT *ms, enum error_id *error);
-enum Status exec_Compare(MachineStateT *ms, enum error_id *error);
+enum Status exec_Unary(MachineStateT *ms);
+enum Status exec_Arith(MachineStateT *ms);
+enum Status exec_Compare(MachineStateT *ms);
   ///
-enum Status exec_Push(MachineStateT *ms, enum error_id *error);
-enum Status exec_Cons(MachineStateT *ms, enum error_id *error);
+enum Status exec_Push(MachineStateT *ms);
+enum Status exec_Cons(MachineStateT *ms);
   ///
-enum Status exec_QuoteBool(MachineStateT *ms, enum error_id *error);
-enum Status exec_QuoteInt(MachineStateT *ms, enum error_id *error);
+enum Status exec_QuoteBool(MachineStateT *ms);
+enum Status exec_QuoteInt(MachineStateT *ms);
   ///
-enum Status exec_Swap(MachineStateT *ms, enum error_id *error);
-enum Status exec_Curry(MachineStateT *ms, enum error_id *error);
-enum Status exec_Apply(MachineStateT *ms, enum error_id *error);
-enum Status exec_Return(MachineStateT *ms, enum error_id *error);
-enum Status exec_Branch(MachineStateT *ms, enum error_id *error);
-enum Status exec_Call(MachineStateT *ms, enum error_id *error);
+enum Status exec_Swap(MachineStateT *ms);
+enum Status exec_Curry(MachineStateT *ms);
+enum Status exec_Apply(MachineStateT *ms);
+enum Status exec_Return(MachineStateT *ms);
+enum Status exec_Branch(MachineStateT *ms);
+enum Status exec_Call(MachineStateT *ms);
   ///
-enum Status exec_QuoteEmptyList(MachineStateT *ms, enum error_id *error);
-enum Status exec_MakeList(MachineStateT *ms, enum error_id *error);
+enum Status exec_QuoteEmptyList(MachineStateT *ms);
+enum Status exec_MakeList(MachineStateT *ms);
   ///
 void print_state(MachineStateT *ms);
 
