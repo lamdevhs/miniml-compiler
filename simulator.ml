@@ -10,37 +10,28 @@ type value
   | ClosureV of code * value
 and value_list = EmptyListV | ListConsV of (value * value_list)
 
-(* pretty print value: at the end of the simulation, to print the result in a repl-caml-like way *)
+(* pretty print value: at the end of the simulation *)
 let pp_value : value -> string = fun v ->
-  let rec go_value =
-  (
-    function
-      | NullV -> ("unit", "()")
-      | IntV i -> ("int", string_of_int i)
-      | BoolV b -> ("bool", string_of_bool b)
-      | PairV (x, y) ->
-        let (type_x, value_x) = go_value x in
-        let (type_y, value_y) = go_value y in
-        let type_pair = "(" ^ type_x ^ " * " ^ type_y ^ ")" in
-        let value_pair = "(" ^ value_x ^ ", " ^ value_y ^ ")" in
-        (type_pair, value_pair)
-      | ListV l -> ("list", "[" ^ go_value_list l ^ "]")
-      | ClosureV (code, x) ->
-        let (_, value_x) = go_value x in
-        ("closure", "Closure(" ^ value_x ^ ", <code>)")
-  )
-  and go_value_list =
-  (
-    function
-      | EmptyListV -> ""
-      | ListConsV (x, tail) ->
-        let (_, value_x) = go_value x in
-        if tail = EmptyListV then value_x else
-        let value_tail = go_value_list tail in
-        value_x ^ "; " ^ value_tail
-  ) in
-  let (type_, value_) = go_value v in
-  ("- : " ^ type_ ^ " = " ^ value_)
+  let rec go_value = function
+    | NullV -> "()"
+    | IntV i -> string_of_int i
+    | BoolV b -> string_of_bool b
+    | PairV (x, y) ->
+      let value_x = go_value x in
+      let value_y = go_value y in
+      "(" ^ value_x ^ ", " ^ value_y ^ ")"
+    | ListV l -> "[" ^ go_value_list l ^ "]"
+    | ClosureV (code, x) ->
+      let value_x = go_value x in
+      "Closure(" ^ value_x ^ ", <code>)"
+  and go_value_list = function
+    | EmptyListV -> ""
+    | ListConsV (x, tail) ->
+      let value_x = go_value x in
+      if tail = EmptyListV then value_x else
+      let value_tail = go_value_list tail in
+      value_x ^ "; " ^ value_tail
+  in go_value v
 ;;
 
 type stackelem = Val of value | Cod of code ;;
