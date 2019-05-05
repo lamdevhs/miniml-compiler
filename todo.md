@@ -7,11 +7,11 @@ simple ones:
 - remove dev comments
 
 ccam:
+- incremental execution?
 
 caml compiler:
 - clean up the caml code
 - add back the parameter to RmDefs so we don't have to explain why it isn't here
-
 
 parser:
   optional stuff:
@@ -25,6 +25,9 @@ parser:
 
 global:
 - move all the ml code into a subfolder of the project
+
+simu:
+- add an option to trace the execution?
 
 READMEs:
 - write miniml's grammar, latex style
