@@ -12,6 +12,8 @@ caml compiler:
 - clean up the caml code
 - rename instrs/compile to mlexp_to_code
 - replace write_instruction with string_of_instruction?
+- remove size of arrays in code generation if apparently it doesn't matter
+anymore?
 
 parser:
   optional stuff:
@@ -23,6 +25,7 @@ parser:
   - fix the built_in_test error: "(fst, snd);;"
 
 global:
+- add operator `not`
 
 
 READMEs:

@@ -12,8 +12,8 @@ type flat_instr
   | FlatPush
   | FlatSwap
   | FlatReturn
-  | FlatQuoteB of bool
-  | FlatQuoteI of int
+  | FlatQuoteBool of bool
+  | FlatQuoteInt of int
   | FlatCur of string
   | FlatApp
   | FlatBranch of string * string
@@ -71,8 +71,8 @@ let rec flatten_code
     | Push -> (n, defsDict, refCode, mainCode @ [FlatPush])
     | Swap -> (n, defsDict, refCode, mainCode @ [FlatSwap])
     | Return -> (n, defsDict, refCode, mainCode @ [FlatReturn])
-    | QuoteB(b) -> (n, defsDict, refCode, mainCode @ [FlatQuoteB(b)])
-    | QuoteI(i) -> (n, defsDict, refCode, mainCode @ [FlatQuoteI(i)])
+    | QuoteBool(b) -> (n, defsDict, refCode, mainCode @ [FlatQuoteBool(b)])
+    | QuoteInt(i) -> (n, defsDict, refCode, mainCode @ [FlatQuoteInt(i)])
     | QuoteEmptyList -> (n, defsDict, refCode, mainCode @ [FlatQuoteEmptyList])
     | MakeList -> (n, defsDict, refCode, mainCode @ [FlatMakeList])
     | Cur(curCode) ->

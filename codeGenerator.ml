@@ -20,8 +20,8 @@ let flat_program_to_c_code_fragments
     | FlatUnary _ -> 2
     | FlatArith _ -> 2
     | FlatCompare _ -> 2
-    | FlatQuoteB _ -> 2
-    | FlatQuoteI _ -> 2
+    | FlatQuoteBool _ -> 2
+    | FlatQuoteInt _ -> 2
     | FlatCur _ -> 2
     | FlatBranch (_, _) -> 3
     | FlatCall _ -> 2
@@ -64,9 +64,9 @@ let lines_of_C_code : c_code_fragment list -> (string list * string list) =
     | FlatPush -> string_of_instruction "Push"
     | FlatSwap -> string_of_instruction "Swap"
     | FlatReturn -> string_of_instruction "Return"
-    | FlatQuoteB b -> string_of_instruction "QuoteBool" ^
+    | FlatQuoteBool b -> string_of_instruction "QuoteBool" ^
         string_of_data (if b then "True" else "False")
-    | FlatQuoteI i -> string_of_instruction "QuoteInt" ^
+    | FlatQuoteInt i -> string_of_instruction "QuoteInt" ^
         string_of_data (string_of_int i ^ "L")
     | FlatQuoteEmptyList -> string_of_instruction "QuoteEmptyList"
     | FlatMakeList -> string_of_instruction "MakeList"

@@ -65,8 +65,8 @@ let eval_compar : bcompar -> 'a -> 'a -> bool = function
 ;;
 
 let rec exec : (value * code * stack * defstack) -> value = function
-  | (_, QuoteB(x) :: c, st, fds) -> exec (BoolV(x), c, st, fds)
-  | (_, QuoteI(x) :: c, st, fds) -> exec (IntV(x), c, st, fds)
+  | (_, QuoteBool(x) :: c, st, fds) -> exec (BoolV(x), c, st, fds)
+  | (_, QuoteInt(x) :: c, st, fds) -> exec (IntV(x), c, st, fds)
   (* --------- pairs --------- *)
   | (x, Cons :: c, Val(y) :: st, fds) -> exec (PairV(y, x), c, st, fds)
   | (_, Cons :: c, _, fds) -> failwith "CompilerBug: can't construct pair: stacktop is not a value"

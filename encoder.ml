@@ -8,8 +8,8 @@ type instr
   | Push
   | Swap
   | Return
-  | QuoteB of bool
-  | QuoteI of int
+  | QuoteBool of bool
+  | QuoteInt of int
   | Cur of code
   | App
   | Branch of code * code
@@ -34,7 +34,7 @@ let access : string -> compilation_env -> code = fun x env ->
   let rec go n = (function
     | EDef ds :: tail -> if (has x) ds then [Call x] else go n tail
     | EVar a :: tail -> if a = x then Tools.several n instr_Fst @ [instr_Snd] else go (n + 1) tail
-    | [] -> failwith ("this compiler is somehow buggy - var = " ^ x)
+    | [] -> failwith ("the encoding process failed: undefined variable: " ^ x)
   ) in
   go 0 env
 ;;
@@ -44,8 +44,8 @@ let encode : mlexp -> code =
   (
     match x with
     | Var v -> access v env
-    | Bool x -> [QuoteB x]
-    | Int x -> [QuoteI x]
+    | Bool x -> [QuoteBool x]
+    | Int x -> [QuoteInt x]
     | Pair(a, b)
       -> Push :: encode_rec env a @ [Swap] @ encode_rec env b @ [Cons]
     | App(PrimOp op, e) -> encode_rec env e @ [PrimInstr op]
@@ -67,7 +67,7 @@ let encode : mlexp -> code =
     | EmptyList -> [QuoteEmptyList]
     | ListCons(head, tail) ->
     Push :: encode_rec env head @ [Swap] @ encode_rec env tail @ [MakeList]
-    | otherwise -> failwith "CompilerBug: mlexp expression unsupported!"
+    | otherwise -> failwith "the encoding process failed: expression unsupported!"
   ) in
   fun x -> encode_rec [] x @ [Halt]
 ;;
@@ -75,4 +75,3 @@ let encode : mlexp -> code =
 let encode_program : prog -> code =
   fun x -> encode (mlexp_of_prog x)
 ;;
-  
