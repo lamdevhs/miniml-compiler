@@ -7,13 +7,13 @@
 ## Organisation globale du Projet
 
 Le projet est divisé en deux grosses parties :
--   **Partie OCaml** : le compilateur code _mini-ML_ --> code C
+- **Partie OCaml** : le compilateur code _mini-ML_ --> code C
 
-    Fichiers : tous les fichiers .ml qui se trouvent à la racine du dossier du projet
+  Fichiers : tous les fichiers .ml qui se trouvent à la racine du dossier du projet
 
--   **Partie C** : la machine virtuelle **CCAM**, qui prend le code C généré par la partie OCaml et produit un exécutable que l'on peut directement lancer
+- **Partie C** : la machine virtuelle **CCAM**, qui prend le code C généré par la partie OCaml et produit un exécutable que l'on peut directement lancer
 
-    Fichiers : les fichiers .c et .h qui se trouvent dans le dossier ccam/
+  Fichiers : les fichiers .c et .h qui se trouvent dans le dossier ccam/
 
 ## Partie OCaml
 
@@ -35,17 +35,17 @@ Tout cela a par ailleurs nécessité un petit peu de changement dans le `Makefil
   $ make    # <- pour générer les deux
   ```
 
-- Pour compiler un fichier `mini-ML` vers source `C` :
+- Pour compiler un fichier `mini-ML` vers source `C` (à destination de la **CCAM**) :
 
-```sh
-$ ./comp input-file.ml output-file.c
-```
+  ```sh
+  $ ./comp input-file.ml output-file.c
+  ```
 
 - Pour lancer la simulation d'exécution OCaml sur un fichier `mini-ML` :
 
-```
-$ ./simu input-file.ml
-```
+  ```
+  $ ./simu input-file.ml
+  ```
 
 ### Lexer/Parser
 
@@ -58,9 +58,14 @@ Les éléments suivants ont été implémentés :
 - opérations booléennes `&&` et `||`, qui se traduisent en branchements `if..then..else` pour obtenir l'effet de court-circuit attendu
 - let-rec bindings `let rec ... and ... in ...`
 
-  Pour éviter les bugs causés par la limitation de cette implémentation de la récursivité, j'ai fait en sorte que le parser refuse tout programme contenant un let-rec inclus comme sous-expression d'une autre expression plus grande. Ainsi l'unique manière autorisée d'utiliser un let-rec dans ce langage _mini-ML_ est de le mettre en expression principale, au plus haut de la hiérarchie du programme
+  Pour éviter les bugs causés par la limitation de cette implémentation de la récursivité, j'ai fait en sorte que le parser refuse tout programme contenant un let-rec inclus comme sous-expression d'une autre expression plus grande. Ainsi l'unique manière autorisée d'utiliser un let-rec dans ce langage _mini-ML_ est de le mettre en expression principale, au plus haut de la hiérarchie du programme.
 
-- valeurs de type `list` ; la syntaxe est la même qu'en ocaml, soit `[]`, `2 :: [1]`, `[3;4;]` (trailing semicolon allowed) ; les deux opérateurs élémentaires `head` et `tail` ont aussi été rajoutés, dans la même veine que `fst` et `snd`
+- _syntactic sugar_ :
+
+  - `fun x y z ->` qui devient `fun x -> fun y -> fun z ->`
+  - `let x y = ... in ... ` qui devient `let x = fun y -> ... in ...` ; idem pour les _let-rec bindings_
+
+- valeurs de type `list` ; la syntaxe est la même qu'en ocaml, c'est-à-dire, `[]`, `2 :: [1]`, `[3;4;]` (trailing semicolon allowed) ; les deux opérateurs élémentaires `head` et `tail` ont aussi été rajoutés, dans la même veine que `fst` et `snd`
 
 ### Processus de compilation
 

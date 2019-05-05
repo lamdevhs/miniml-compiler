@@ -26,12 +26,12 @@ parser:
 global:
 - move all the ml code into a subfolder of the project
 
-
 READMEs:
 - write miniml's grammar, latex style
 
 final tasks:
 - clean up the test-programs list
+- read the makefiles to make sure there aren't any mistakes
 
 # PITFALLS
 - warning: we must forbid | (x,x) -> patterns.

@@ -151,6 +151,13 @@ enum result match_value_with_listcons(ValueT *value, ListConsT *output)
   return Success;
 }
 
+enum boole value_is_list(ValueT *value)
+{
+  if (value == NULL) return False;
+  enum ValueTag tag = value->tag;
+  return (tag == ValueIsEmptyList || tag == ValueIsListCons);
+}
+
 void print_value(ValueT *value) {
   if (value == NULL) {
     printf("<NULL ptr>");
@@ -164,7 +171,7 @@ void print_value(ValueT *value) {
       printf("[]");
     }
     else if (tag == ValueIsBool) {
-      printf("%s", value->as.boolean ? "True" : "False");
+      printf("%s", value->as.boolean ? "true" : "false");
     }
     else if (tag == ValueIsInt) {
       printf("%ld", value->as.integer);
@@ -190,13 +197,6 @@ void print_value(ValueT *value) {
       printf("<ERROR Value>");
     }
   }
-}
-
-enum boole value_is_list(ValueT *value)
-{
-  if (value == NULL) return False;
-  enum ValueTag tag = value->tag;
-  return (tag == ValueIsEmptyList || tag == ValueIsListCons);
 }
 
 void print_listcons(ValueT* head, ValueT *tail)
