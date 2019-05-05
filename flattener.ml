@@ -24,13 +24,10 @@ type flat_instr
   | FlatMakeList
 and flat_code = flat_instr list;;
 
-type referenced_flat_code = (string * flat_code) list;;
-type defs = (var * code) list;;
+type fragment = string * flat_code ;; (* <-- named flat code *)
 type defs_dict = (var * string) list;;
-type flatdefs = (var * string) list;;
 
 let code_namer str n = (str ^ string_of_int n, n + 1);;
-
 
 let rename_defs : int -> var list -> (int * string list) =
   fun seedN oldNameList ->
@@ -58,7 +55,7 @@ references from one piece of code to another. It fits the C model (with
 pointers to code fragments, etc) that `flat_code` will get compiled to
 eventually. *)
 let rec flatten_code
-: int -> defs_dict list -> code -> (int * referenced_flat_code * flat_code) =
+: int -> defs_dict list -> code -> (int * fragment list * flat_code) =
   fun seedN seedDefsDict code ->
   let folder (n, defsDict, refCode, mainCode) = (function
     | PrimInstr(UnOp op) ->
@@ -101,7 +98,8 @@ let rec flatten_code
       let nextDefsDict = defsTranslator :: defsDict in
       let (nextN, defsRefCode, defsFlatCode) =
             flatten_defs newN nextDefsDict defsCode in
-      let nextRefCode = refCode @ defsRefCode @ (Tools.zip defsNewNames defsFlatCode) in
+      let nextRefCode =
+        refCode @ defsRefCode @ (Tools.zip defsNewNames defsFlatCode) in
       (nextN, nextDefsDict, nextRefCode, mainCode)
     | Call(var) ->
       let nameToCall = find_def var defsDict in
@@ -116,19 +114,18 @@ let rec flatten_code
   (outN, outRefCode, outMainCode)
 (* end of flatten_code *)
 and flatten_defs
-: int -> defs_dict list -> code list -> (int * referenced_flat_code * flat_code list) =
+: int -> defs_dict list -> code list -> (int * fragment list * flat_code list) =
   fun seedN defsDict codeList ->
   let folder (n, refs, flatCodeList) code =
     let (newN, newRefs, flatCode) = flatten_code n defsDict code in
     (newN, refs @ newRefs, (flatCode @ [FlatReturn]) :: flatCodeList) in
   let seed = (seedN, [], []) in
-  let (outN, outRefs, outFlatCodeList) = List.fold_left folder seed codeList in
+  let (outN, outRefs, outFlatCodeList) =
+    List.fold_left folder seed codeList in
   (outN, outRefs, List.rev outFlatCodeList)
 ;;
 
-let flatten_program : code -> (referenced_flat_code * flat_code) = fun code ->
-  let (_, refs, program) = flatten_code 0 [] code in
-  (refs, program)
+let flatten_program : code -> fragment list = fun code ->
+  let (_, refs, mainCode) = flatten_code 0 [] code in
+  refs @ [("main_code" , mainCode)]
 ;;
-
-

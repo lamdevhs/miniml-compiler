@@ -40,8 +40,15 @@ Fichiers : encoder.ml, flattener.ml, codeGenerator.ml
 
 J'ai remplacé le fichier instrs.ml par ces trois fichiers, qui réalisent dans chacun et dans cet ordre, une partie du processus de compilation :
 - encoder.ml : prend une expression de type `mlexp` et produit du `code`, qui peut ensuite ou bien être passé au simulateur Ocaml (c.f. plus bas), ou bien passé à l'étape suivante de la compilation
-- flattener.ml : prend du `code` en entrée, et retourne du `flat_code`. L'idée est que pour compiler les instructions en C, on doit se débarrasser de la récursion du type `code` : les instructions `Branch` et `AddDefs` contiennent eux-même du `code`. On fait donc en sorte d'obtenir une liste de code non-récursif (`flat_code`) qui se font référence les uns aux autres, ce qui se traduit en C par des pointeurs d'instructions vers d'autre morceaux de code.
-- codeGenerator.ml : prend le `flat_code` et le transforme en code source C sous la forme d'une chaine de caractère
+- flattener.ml : prend du `code` en entrée, et retourne du `flat_code`.
+
+  L'idée est que pour compiler les instructions en C, on doit se débarrasser de la récursion du type `code` : les instructions `Branch` et `AddDefs` contiennent eux-même du `code`.
+
+  On fait donc en sorte d'obtenir du code non-récursif (`flat_code`) sous forme de fragments isolés et nommés (`fragment`) qui se font référence les uns aux autres, ce qui se traduit en C par des pointeurs de morceaux de code vers d'autre morceaux de code.
+
+  Le gros du travail est effectué par flatten_code, qui est un  très gros fold_left, avec récursion interne (en plus du folding) et mutuelle avec flatten_defs dont le rôle est d'aplatir les let-rec bindings... Autant dire que c'est assez tentaculaire. Ce qui complique les choses tout particulièrement c'est qu'on a besoin de garder un compteur (de type `int`) que l'on incrémente tout au long du processus, afin de pouvoir créer des noms de fragments uniques.
+
+- codeGenerator.ml : génère du code source C (sous la forme d'une chaine de caractère) à partir de ce que renvoie l'étape précédente. Plus précisément, prend les fragments nommés de `flat_code` (une liste associative de `string` et de `flat_code`) et les transforme chacun en tableau de CodeT. Les tableaux se font mutuellement référence, donc on a besoin de tous les déclarer tout au début du fichier généré avant d'écrire leurs définitions.
 
 #### Encoder
 

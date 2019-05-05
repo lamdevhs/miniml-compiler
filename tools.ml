@@ -22,3 +22,24 @@ let rec several : int -> 'a -> 'a list = fun n x ->
 let sum : int list -> int = fun xs ->
   List.fold_left (+) 0 xs
 ;;
+
+(* like a normal fold_left but takes the first element of the list
+as initial value for the folding *)
+let fold_left_one : ('a -> 'a -> 'a) -> 'a -> 'a list -> 'a =
+  fun f default_value -> function
+  | [] -> default_value
+  | x :: xs -> List.fold_left f x xs
+;;
+
+(* takes a list of strings and treat them as lines in a multilined string,
+adding newlines in-between each line appropriately *)
+let lines_to_string : string list -> string = fun xs ->
+  fold_left_one (fun acc line -> acc ^ "\n" ^ line) "" xs
+;;
+
+(* append `n` spaces at the beginning of each string in `lines`,
+aka indent the `lines` with `n` spaces *)
+let with_indent n lines =
+  let indent = String.make n ' ' in
+  List.map (fun line -> indent ^ line) lines
+;;
