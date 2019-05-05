@@ -10,10 +10,8 @@ ccam:
 
 caml compiler:
 - clean up the caml code
-- rename instrs/compile to mlexp_to_code
-- replace write_instruction with string_of_instruction?
-- remove size of arrays in code generation if apparently it doesn't matter
-anymore?
+- add back the parameter to RmDefs so we don't have to explain why it isn't here
+
 
 parser:
   optional stuff:
@@ -23,9 +21,10 @@ parser:
   - allow underscores and dashes and maybe
     even dots in variable names
   - fix the built_in_test error: "(fst, snd);;"
+  - add operator `not`
 
 global:
-- add operator `not`
+- move all the ml code into a subfolder of the project
 
 
 READMEs:
@@ -107,3 +106,5 @@ These are in chronological order, hopefully:
 - replace ListCons instr everywhere with MakeList
 - fix the shit regarding auto adding .c to generated files by compiler
 - fix generated-all.sh so that it copies the .c files instead
+- remove size of arrays in code generation if apparently it doesn't matter
+anymore
