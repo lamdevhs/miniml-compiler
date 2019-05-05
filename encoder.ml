@@ -17,7 +17,7 @@ type instr
   (* new for recursive calls *)
   | Call of var
   | AddDefs of (var * code) list
-  | RmDefs
+  | RmDefs of int
   (* new for lists *)
   | MakeList
   | QuoteEmptyList
@@ -63,7 +63,7 @@ let encode : mlexp -> code =
     let defs_code = List.map (encode_rec new_env) defs_mlexps in
     let dc = Tools.zip defs_names defs_code in
     let ec = encode_rec new_env exp in
-    [AddDefs dc] @ ec @ [RmDefs]
+    [AddDefs dc] @ ec @ [RmDefs (List.length dc)]
     | EmptyList -> [QuoteEmptyList]
     | ListCons(head, tail) ->
     Push :: encode_rec env head @ [Swap] @ encode_rec env tail @ [MakeList]

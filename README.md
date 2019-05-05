@@ -29,9 +29,11 @@ Tout cela a par ailleurs nécessité un petit peu de changement dans le `Makefil
 
 - Pour générer les exécutables **comp** et **simu** :
 
-```sh
-$ make
-```
+  ```sh
+  $ make comp
+  $ make simu
+  $ make    # <- pour générer les deux
+  ```
 
 - Pour compiler un fichier `mini-ML` vers source `C` :
 
@@ -57,6 +59,7 @@ Les éléments suivants ont été implémentés :
 - let-rec bindings `let rec ... and ... in ...`
 
   Pour éviter les bugs causés par la limitation de cette implémentation de la récursivité, j'ai fait en sorte que le parser refuse tout programme contenant un let-rec inclus comme sous-expression d'une autre expression plus grande. Ainsi l'unique manière autorisée d'utiliser un let-rec dans ce langage _mini-ML_ est de le mettre en expression principale, au plus haut de la hiérarchie du programme
+
 - valeurs de type `list` ; la syntaxe est la même qu'en ocaml, soit `[]`, `2 :: [1]`, `[3;4;]` (trailing semicolon allowed) ; les deux opérateurs élémentaires `head` et `tail` ont aussi été rajoutés, dans la même veine que `fst` et `snd`
 
 ### Processus de compilation
@@ -85,16 +88,15 @@ Ce fichier contient la fonction `encode`, qui prend une expression de type `mlex
 
 Le type `instr` a été augmenté des instructions suivantes :
 - `Halt` : pour indiquer explicitement à la machine virtuelle qu'elle doit s'arrêter, en fin de programme.
-- `QuoteBool`, `QuoteInt` : le constructeur d'origine (`Quote of value`) n'était pas assez `type-safe` pour la suite de la compilation.
-- `QuoteEmptyList` : pour implémenter la valeur `[]`, _i.e._ la liste vide.
+- `QuoteBool`, `QuoteInt` : le constructeur d'origine (`Quote of value`) n'était pas assez _type-safe_ pour la suite de la compilation.
 - `Call`, `AddDefs`, `RmDefs` : tout ce qu'il faut pour exécuter des expressions récursives.
-
-  À noter que `RmDefs` ne prend aucun nombre en paramètre : dans le simulateur OCaml d'exécution de `code`, et à la différence du modèle présenté dans les transparents de cours, les définitions des let-rec bindings ne sont pas toutes stockées dans une même liste (le quatrième champ du quadruplet de la configuration, appelé **fds**), mais sont au contraire conservées séparées dans une liste de listes de définitions, et il suffit alors le moment venu de retirer la tête de cette liste de liste sans avoir besoin de conserver comme paramètre pour `RmDefs` le nombre de définitions ajoutées précédemment.
-
+- `QuoteEmptyList` : pour implémenter la valeur `[]`, _i.e._ la liste vide.
 - `MakeList` : joue le rôle de l'opérateur `::` dans la construction de listes. Calqué sur le modèle de l'instruction `Cons` qui elle construit des paires à partir du **terme** et de l'élément de tête de la **pile**.
 
 ### Simulator
 
 Fichier : **simulateur.ml**, **simu**
 
-Ce fichier ne fait pas partie à proprement parler du processus de compilation mais il est logique de le mettre juste après la section concernant l'encoder.
+Contient le code qui permet de simuler l'exécution de la CAM en OCaml, selon le modèle vu dans les transparents du cours. La seule différence notable est l'existence de l'instruction `Halt`, qui arrête explicitement la simulation et affiche en sortie standard la dernière valeur prise par le **terme**.
+
+###

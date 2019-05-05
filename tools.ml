@@ -43,3 +43,9 @@ let with_indent n lines =
   let indent = String.make n ' ' in
   List.map (fun line -> indent ^ line) lines
 ;;
+
+let rec chop n xs = if n <= 0 then xs else
+  match xs with
+  | [] -> []
+  | _ :: tail -> chop (n - 1) tail
+;;

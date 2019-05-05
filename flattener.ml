@@ -97,14 +97,14 @@ let rec flatten_code
       let defsTranslator = Tools.zip defsOldNames defsNewNames in
       let nextDefsDict = defsTranslator :: defsDict in
       let (nextN, defsRefCode, defsFlatCode) =
-            flatten_defs newN nextDefsDict defsCode in
+        flatten_defs newN nextDefsDict defsCode in
       let nextRefCode =
         refCode @ defsRefCode @ (Tools.zip defsNewNames defsFlatCode) in
       (nextN, nextDefsDict, nextRefCode, mainCode)
     | Call(var) ->
       let nameToCall = find_def var defsDict in
       (n, defsDict, refCode, mainCode @ [FlatCall(nameToCall)])
-    | RmDefs -> (match defsDict with
+    | RmDefs (_) -> (match defsDict with
       | [] -> failwith "flatten_code says: compiler bug! near RmDefs"
       | (d :: ds) -> (n, ds, refCode, mainCode))
     | Halt -> (n, defsDict, refCode, mainCode @ [FlatHalt])
