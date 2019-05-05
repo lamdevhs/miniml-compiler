@@ -35,6 +35,7 @@ READMEs:
 final tasks:
 - clean up the test-programs list
 - read the makefiles to make sure there aren't any mistakes
+- delete dev.c, ideas.txt, cours.pdf
 
 # PITFALLS
 - warning: we must forbid | (x,x) -> patterns.
