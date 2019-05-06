@@ -10,7 +10,25 @@ type value
   | ClosureV of code * value
 and value_list = EmptyListV | ListConsV of (value * value_list)
 
-(* pretty print value: at the end of the simulation *)
+type stackelem = Val of value | Cod of code
+and stack = stackelem list ;;
+
+type rec_binding = (var * code)
+and defstack = rec_binding list;;
+
+type machine_state = (value * code * stack * defstack);;
+
+type status
+  = AllOk of machine_state
+  | Stopped of final_status
+and final_status
+  = Halted of value
+  | Crashed of string
+;;
+
+
+
+(* pretty print value: used at the end of the simulation *)
 let pp_value : value -> string = fun v ->
   let rec go_value = function
     | NullV -> "()"
@@ -34,11 +52,6 @@ let pp_value : value -> string = fun v ->
   in go_value v
 ;;
 
-type stackelem = Val of value | Cod of code ;;
-type stack = stackelem list ;;
-type rec_binding = (var * code)
-and defstack = rec_binding list;;
-
 let eval_arith : barith -> int -> int -> int = function
   | BAadd -> (+)
   | BAsub -> (-)
@@ -56,97 +69,107 @@ let eval_compar : bcompar -> 'a -> 'a -> bool = function
   | BCne -> (<>)
 ;;
 
-let rec exec : (value * code * stack * defstack) -> value = function
-  | (_, QuoteBool(x) :: c, st, fds) -> exec (BoolV(x), c, st, fds)
-  | (_, QuoteInt(x) :: c, st, fds) -> exec (IntV(x), c, st, fds)
+let execute_next_instruction : machine_state -> status =
+  let crashed msg = Stopped (Crashed msg) in
+  function
+  | (_, QuoteBool(x) :: c, st, fds) -> AllOk (BoolV(x), c, st, fds)
+  | (_, QuoteInt(x) :: c, st, fds) -> AllOk (IntV(x), c, st, fds)
   (* --------- pairs --------- *)
-  | (x, Cons :: c, Val(y) :: st, fds) -> exec (PairV(y, x), c, st, fds)
-  | (_, Cons :: c, _, fds)
-    -> failwith "CompilerBug: can't construct pair: stacktop is not a value"
-  | (x, Push :: c, st, fds) -> exec (x, c, Val x :: st, fds)
-  | (x, Swap :: c, Val(y) :: st, fds) -> exec (y, c, Val (x) :: st, fds)
-  | (_, Swap :: c, _, fds)
-    -> failwith "CompilerBug: can't swap: stacktop is not a value"
+  | (x, Cons :: c, Val(y) :: st, fds) -> AllOk (PairV(y, x), c, st, fds)
+  | (_, Cons :: c, _, fds) -> crashed
+      "MachineFailure: can't construct pair: stacktop is not a value"
+  | (x, Push :: c, st, fds) -> AllOk (x, c, Val x :: st, fds)
+  | (x, Swap :: c, Val(y) :: st, fds) -> AllOk (y, c, Val (x) :: st, fds)
+  | (_, Swap :: c, _, fds) -> crashed
+      "MachineFailure: can't swap: stacktop is not a value"
   (* --------- closures --------- *)
-  | (x, Cur (c1) :: c, st, fds) -> exec (ClosureV(c1, x), c, st, fds)
-  | (PairV(ClosureV(cd, y), z), App :: c, st, fds)
-    -> exec (PairV(y, z), cd, Cod(c) :: st, fds)
-  | (_, App :: c, _, fds) -> failwith "CompilerBug: can't apply: invalid term"
-  | (x, Return :: c, Cod(c1) :: st, fds) -> exec (x, c1, st, fds)
-  | (_, Return :: c, _, fds)
-    -> failwith "CompilerBug: can't return: stacktop is not code"
+  | (x, Cur (c1) :: c, st, fds) -> AllOk (ClosureV(c1, x), c, st, fds)
+  | (PairV(ClosureV(cd, y), z), App :: c, st, fds) -> AllOk
+      (PairV(y, z), cd, Cod(c) :: st, fds)
+  | (_, App :: c, _, fds) -> crashed
+      "MachineFailure: can't apply: invalid term"
+  | (x, Return :: c, Cod(c1) :: st, fds) -> AllOk (x, c1, st, fds)
+  | (_, Return :: c, _, fds) -> crashed
+      "MachineFailure: can't return: stacktop is not code"
   (* --------- primInstr --------- *)
-  | (PairV(x, y), PrimInstr (UnOp Fst) :: c, st, fds) -> exec (x, c, st, fds)
-  | (_, PrimInstr (UnOp Fst) :: c, _, fds)
-    -> failwith "TypeError: can't get first: not a pair"
-  | (PairV(x, y), PrimInstr (UnOp Snd) :: c, st, fds) -> exec (y, c, st, fds)
-  | (_, PrimInstr (UnOp Snd) :: c, _, fds)
-    -> failwith "TypeError: can't get second: not a pair"
-  | (PairV(IntV x, IntV y), PrimInstr (BinOp (BArith op)) :: c, st, fds)
-    -> exec (IntV (eval_arith op x y), c, st, fds)
-  | (_, PrimInstr (BinOp (BArith op)) :: c, _, fds)
-    -> failwith "TypeError: can't operate: operands are not integers"
-  | (PairV(IntV x, IntV y), PrimInstr (BinOp (BCompar op)) :: c, st, fds)
-    -> exec (BoolV (eval_compar op x y), c, st, fds)
-  | (PairV(BoolV x, BoolV y), PrimInstr (BinOp (BCompar op)) :: c, st, fds)
-    -> exec (BoolV (eval_compar op x y), c, st, fds)
-  | (_, PrimInstr (BinOp (BCompar op)) :: c, _, fds)
-    -> failwith ("TypeError: can't compare: operands are neither "
-    ^ "two integers nor two booleans")
+  | (PairV(x, y), PrimInstr (UnOp Fst) :: c, st, fds) -> AllOk (x, c, st, fds)
+  | (_, PrimInstr (UnOp Fst) :: c, _, fds) -> crashed
+      "TypeError: can't get first: not a pair"
+  | (PairV(x, y), PrimInstr (UnOp Snd) :: c, st, fds) -> AllOk (y, c, st, fds)
+  | (_, PrimInstr (UnOp Snd) :: c, _, fds) -> crashed
+      "TypeError: can't get second: not a pair"
+  | (PairV(IntV x, IntV y), PrimInstr (BinOp (BArith op)) :: c, st, fds) ->
+      AllOk (IntV (eval_arith op x y), c, st, fds)
+  | (_, PrimInstr (BinOp (BArith op)) :: c, _, fds) -> crashed
+      "TypeError: can't operate: operands are not integers"
+  | (PairV(IntV x, IntV y), PrimInstr (BinOp (BCompar op)) :: c, st, fds) ->
+      AllOk (BoolV (eval_compar op x y), c, st, fds)
+  | (PairV(BoolV x, BoolV y), PrimInstr (BinOp (BCompar op)) :: c, st, fds) ->
+      AllOk (BoolV (eval_compar op x y), c, st, fds)
+  | (_, PrimInstr (BinOp (BCompar op)) :: c, _, fds) -> crashed
+      ("TypeError: can't compare: operands are neither "
+      ^ "two integers nor two booleans")
   (* --------- Branch --------- *)
-  | (BoolV(b), Branch (if_then, if_else) :: c, Val(x) :: st, fds)
-    -> exec (x, (if b then if_then else if_else), Cod(c) :: st, fds)
-  | (_, Branch (_,_) :: c, Val(x) :: st, fds)
-    -> failwith "TypeError: in conditional branch: condition is not a boolean"
-  | (_, Branch (_,_) :: c, _, fds)
-    -> failwith "CompilerBug: in conditional branch: stacktop is not a value"
+  | (BoolV(b), Branch (if_then, if_else) :: c, Val(x) :: st, fds) -> AllOk
+      (x, (if b then if_then else if_else), Cod(c) :: st, fds)
+  | (_, Branch (_,_) :: c, Val(x) :: st, fds) -> crashed
+      "TypeError: in conditional branch: condition is not a boolean"
+  | (_, Branch (_,_) :: c, _, fds) -> crashed
+      "MachineFailure: in conditional branch: stacktop is not a value"
   (* --------- let rec --------- *)
   | (x, Call to_call :: c, st, fds)
     -> (
       match Tools.assoc_opt to_call fds with
-      | Some called_code -> exec (x, called_code @ c, st, fds)
-      | None -> failwith "CompilerBug: can't Call, definition not found"
+      | Some called_code -> AllOk (x, called_code @ c, st, fds)
+      | None -> crashed "MachineFailure: can't Call, definition not found"
     )
-  | (x, AddDefs defs :: c, st, fds) -> exec (x, c, st, defs @ fds)
-  | (x, RmDefs(n) :: c, st, fds)
-    -> exec (x, c, st, Tools.chop n fds)
+  | (x, AddDefs defs :: c, st, fds) -> AllOk (x, c, st, defs @ fds)
+  | (x, RmDefs(n) :: c, st, fds) -> AllOk (x, c, st, Tools.chop n fds)
   (* -------- lists -------- *)
-  | (ListV (tail), MakeList :: c, Val(head) :: st, fds)
-    -> exec (ListV(ListConsV (head, tail)), c, st, fds)
-  | (_, MakeList :: c, Val(head) :: st, fds)
-    -> failwith "CompilerBug: can't construct list: tail is not a list"
-  | (_, MakeList :: c, st, fds)
-    -> failwith "CompilerBug: can't construct list: stacktop is not a value"
-  | (_, QuoteEmptyList :: c, st, fds) -> exec (ListV(EmptyListV), c, st, fds)
+  | (ListV (tail), MakeList :: c, Val(head) :: st, fds) -> AllOk
+      (ListV(ListConsV (head, tail)), c, st, fds)
+  | (_, MakeList :: c, Val(head) :: st, fds) -> crashed
+      "MachineFailure: can't construct list: tail is not a list"
+  | (_, MakeList :: c, st, fds) -> crashed
+      "MachineFailure: can't construct list: stacktop is not a value"
+  | (_, QuoteEmptyList :: c, st, fds) -> AllOk (ListV(EmptyListV), c, st, fds)
   | (l, PrimInstr (UnOp Head) :: c, st, fds)
     -> (
       match l with
-      | ListV EmptyListV
-        -> failwith "RuntimeError: can't take the head of an empty list"
-      | ListV (ListConsV (h, t)) -> exec (h, c, st, fds)
-      | otherwise -> failwith "TypeError: can't take the head: not a list"
+      | ListV EmptyListV -> crashed
+          "RuntimeError: can't take the head of an empty list"
+      | ListV (ListConsV (h, t)) -> AllOk (h, c, st, fds)
+      | otherwise -> crashed "TypeError: can't take the head: not a list"
     )
   | (l, PrimInstr (UnOp Tail) :: c, st, fds) ->
     (
       match l with
-      | ListV EmptyListV
-        -> failwith "RuntimeError: can't take the tail of an empty list"
-      | ListV (ListConsV (h, t)) -> exec (ListV t, c, st, fds)
-      | otherwise -> failwith "TypeError: can't take the head: not a list"
+      | ListV EmptyListV -> crashed
+          "RuntimeError: can't take the tail of an empty list"
+      | ListV (ListConsV (h, t)) -> AllOk (ListV t, c, st, fds)
+      | otherwise -> crashed "TypeError: can't take the head: not a list"
     )
   (* -------- the end -------- *)
   | (final_value, Halt :: c, stack, fds) ->
-    let allok = stack = [] && fds = [] in
-    (if not allok then
-      print_endline "CompilerWarning: CAM terminated with weird final state"
+    let final_state_ok = (stack = [] && fds = []) in
+    (if not final_state_ok then
+      print_endline "Warning: CAM terminated with weird final state"
       else ());
-    final_value
-  | (_, [], _, fds) -> failwith "CompilerBug: code list empty"
+    Stopped (Halted final_value)
+  | (_, [], _, fds) -> crashed "MachineFailure: code list empty"
 ;;
 
-let initial_cfg code = (NullV, code, [], []);;
+let rec run_machine : machine_state -> final_status = function ms ->
+  match execute_next_instruction ms with
+  | AllOk new_ms -> run_machine new_ms
+  | Stopped final_status -> final_status
+;;
 
-let run_simulation code = exec (initial_cfg code);;
+let blank_state : code -> machine_state =
+  fun code -> (NullV, code, [], [])
+;;
+
+let run_simulation code = run_machine (blank_state code);;
 
 let main () =
   if Array.length Sys.argv != 2
@@ -155,8 +178,9 @@ let main () =
   else
     let prog = Interf.parse Sys.argv.(1) in
     let code = Encoder.encode_program prog in
-    let final_value = run_simulation code in
-    print_endline (pp_value final_value)
+    match run_simulation code with
+    | Halted final_value -> print_endline (pp_value final_value)
+    | Crashed msg -> print_endline msg
 ;;
 
 main ();;
