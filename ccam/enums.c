@@ -12,6 +12,7 @@ enum Status execute_next_instruction(MachineStateT *ms)
     case Unary: status = exec_Unary(ms); break;
     case Arith: status = exec_Arith(ms); break;
     case Compare: status = exec_Compare(ms); break;
+    case Test: status = exec_Test(ms); break;
     case Cons: status = exec_Cons(ms); break;
     case Push: status = exec_Push(ms); break;
     case Swap: status = exec_Swap(ms); break;
@@ -99,6 +100,13 @@ void print_instruction(CodeT *code)
       printf("Branch(%p,%p)", code[1].reference, code[2].reference);
       break;
     case Call: printf("Call(%p)", code[1].reference); break;
+    case MakeList: printf("MakeList"); break;
+    case QuoteEmptyList: printf("QuoteEmptyList"); break;
+    case Test:
+      printf("Test(");
+      print_test_operation(code[1].operation);
+      printf(")");
+      break;
     default: printf("<Unknown Instruction>"); break;
   }
 }
@@ -138,6 +146,15 @@ void print_comparison_operation(int operation)
     case Le: printf("Le"); break;
     case Lt: printf("Lt"); break;
     default: printf("<Unknown Comparison Operation>"); break;
+  }
+}
+
+void print_test_operation(int operation)
+{
+  switch (operation)
+  {
+    case TestIsEmpty: printf("TestIsEmpty"); break;
+    default: printf("<Unknown Test Operation>"); break;
   }
 }
 
@@ -189,6 +206,8 @@ char *status_message(enum Status status)
     return "TypeError: can't build list: tail is not a list"; break;
     case Crashed_MakeList_NoValueOnStack:
     return "MachineFailure: can't build list: no value on stack"; break;
+    case Crashed_Test_Unknown:
+    return "MachineFailure: unknown test operation"; break;
 
     default: return "<unknown error id>"; break;
   }

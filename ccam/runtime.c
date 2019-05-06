@@ -18,8 +18,6 @@ int main ()
     exit_value = 0;
 
     #ifdef DEBUGMODE
-      printf(NL "[DEBUG] Final state: " NL);
-      print_state(ms);
       printf("--------------------"NL);
     #endif
 

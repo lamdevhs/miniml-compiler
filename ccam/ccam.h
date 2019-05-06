@@ -18,6 +18,7 @@ enum instructions {
   Unary,
   Arith,
   Compare,
+  Test,
   Cons,
   Push,
   Swap,
@@ -37,6 +38,10 @@ enum instructions {
 enum unary_operations {
   Fst, Snd,
   Head, Tail,
+};
+
+enum test_operations {
+  TestIsEmpty,
 };
 
 enum arithmetic_operations {
@@ -75,6 +80,7 @@ enum Status {
   Crashed_Branch_NoValueOnStack,
   Crashed_MakeList_NotAList,
   Crashed_MakeList_NoValueOnStack,
+  Crashed_Test_Unknown,
 };
 
 
@@ -193,9 +199,10 @@ enum Status execute_next_instruction(MachineStateT *ms);
 enum op_report eval_arith(int op, long a, long b, long *result);
 enum op_report eval_comparison(int op, long a, long b, long *result);
 void print_instruction(CodeT *code);
+void print_unary(int unary_op);
 void print_arith_operation(int operation);
 void print_comparison_operation(int operation);
-void print_unary(int unary_op);
+void print_test_operation(int operation);
 void print_status(enum Status status);
 char *status_message(enum Status status);
 
@@ -217,6 +224,7 @@ enum result match_value_with_closure(ValueT *value, ClosureT *output);
 enum result match_value_with_boolean(ValueT *value, long *output);
 enum result match_value_with_integer(ValueT *value, long *output);
 enum result match_value_with_listcons(ValueT *value, ListConsT *output);
+enum result match_value_with_empty_list(ValueT *value);
 enum boole value_is_list(ValueT *value);
   ///
 void print_value(ValueT *value);
@@ -269,6 +277,8 @@ enum Status exec_Call(MachineStateT *ms);
   ///
 enum Status exec_QuoteEmptyList(MachineStateT *ms);
 enum Status exec_MakeList(MachineStateT *ms);
+  ///
+enum Status exec_Test(MachineStateT *ms);
   ///
 void print_state(MachineStateT *ms);
 

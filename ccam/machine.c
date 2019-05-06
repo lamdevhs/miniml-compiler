@@ -113,8 +113,7 @@ enum Status exec_Unary(MachineStateT *ms)
       return AllOk;
     } break;
 
-    default: return Crashed_Unary_Unknown;
-    break;
+    default: return Crashed_Unary_Unknown; break;
   } //| end of switch
 }
 
@@ -411,11 +410,37 @@ enum Status exec_MakeList(MachineStateT *ms)
   return AllOk;
 }
 
+enum Status exec_Test(MachineStateT *ms)
+{
+  int operation = ms->code[1].operation;
+
+  switch (operation) {
+    case TestIsEmpty:
+    {
+      //| new_term = (term == [])
+      ValueT *term = ms->term;
+      enum boole is_empty = (match_value_with_empty_list(term) == Success)
+        ? True : False;
+
+      if (!!! is_empty) free_value(term);
+      //| ^ because the matching does not free term when it fails
+
+      ms->term = BoolValue(is_empty);
+      ms->code += 2;
+      //| ms->stack unchanged
+      return AllOk;
+    }
+    break;
+
+    default: return Crashed_Test_Unknown; break;
+  } //| end of switch
+}
 
 
 //| utilitary functions:
 
-void print_state(MachineStateT *ms) {
+void print_state(MachineStateT *ms)
+{
   if (ms == NULL) {
     printf("<NULL MachineState>" NL);
   }

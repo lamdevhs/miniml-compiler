@@ -151,6 +151,17 @@ enum result match_value_with_listcons(ValueT *value, ListConsT *output)
   return Success;
 }
 
+enum result match_value_with_empty_list(ValueT *value)
+//| ^ no `output` parameter because if `value` is an empty list, then it
+//| contains nothing. put another way, the pattern `[] ->` does not bind any
+//| new variable in case of success, by contrast with a pattern like `(x,y) ->`
+{
+  if (value == NULL || value->tag != ValueIsEmptyList) return Failure;
+
+  free_value(value);
+  return Success;
+}
+
 enum boole value_is_list(ValueT *value)
 {
   if (value == NULL) return False;
@@ -247,6 +258,8 @@ ValueT *malloc_value()
 
 void free_value(ValueT *value)
 {
+  if (value == NULL) return; //| nothing to free
+
   value->copy_count -= 1;
   if (value == &the_empty_list || value == &the_null_value) {
     //| if `value` points at one of the two static, unique values

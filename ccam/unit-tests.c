@@ -909,6 +909,65 @@ void test_MakeList()
   );
 }
 
+//| unit tests for the instruction Test
+void test_Test()
+{
+  {
+    CodeT program[] = {{.instruction = Test},{.operation = TestIsEmpty}};
+    assert_execution_went_aok(
+      "instruction Test(TestIsEmpty), term = []",
+      MachineState(
+        EmptyListValue(),
+        program,
+        NULL
+      ),
+      MachineState(
+        BoolValue(True),
+        program + 2,
+        NULL
+      )
+    );
+    assert_execution_went_aok(
+      "instruction Test(TestIsEmpty), term = ()",
+      MachineState(
+        NullValue(),
+        program,
+        ValueOnStack(IntValue(3L), NULL)
+      ),
+      MachineState(
+        BoolValue(False),
+        program + 2,
+        ValueOnStack(IntValue(3L), NULL)
+      )
+    );
+    assert_execution_went_aok(
+      "instruction Test(TestIsEmpty), term = <NULL>",
+      MachineState(
+        NULL,
+        program,
+        ValueOnStack(IntValue(3L), NULL)
+      ),
+      MachineState(
+        BoolValue(False),
+        program + 2,
+        ValueOnStack(IntValue(3L), NULL)
+      )
+    );
+  }
+  {
+    CodeT program[] = {{.instruction = Test},{.operation = 42}};
+    assert_execution_crashed(
+      "instruction Test(42)",
+      MachineState(
+        EmptyListValue(),
+        program,
+        NULL
+      ),
+      Crashed_Test_Unknown
+    );
+  }
+}
+
 int main()
 {
   test_BoolValue();
@@ -934,6 +993,7 @@ int main()
   test_Call();
   test_QuoteEmptyList();
   test_MakeList();
+  test_Test();
   printf("All tests passed." NL);
   return 0;
 }
