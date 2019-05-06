@@ -15,6 +15,8 @@ Le projet est divisé en deux grosses parties :
 
   Fichiers : les fichiers .c et .h qui se trouvent dans le dossier ccam/
 
+- **generate-all.sh**: ............... ................ ...........
+
 ## Partie C
 
 Dossier: **ccam/**
@@ -33,11 +35,11 @@ Implémentation de la CAM en C. Fichiers dans ce sous-projets:
 
 ### Usage de **ccam/Makefile**
 
-En supposant que vous avez compilé un fichier _mini-ML_ en fichier source C à l'aide du compilateur OCaml **comp**, et que le fichier généré s'appelle **generated.c** :
+En supposant que vous avez compilé un fichier _mini-ML_ en fichier source C à l'aide du compilateur OCaml **comp**, et que le fichier généré s'appelle **generated.c**, la commande :
 ```sh
 $ make build in=generated.c out=generated.out
 ```
-permet de générer l'exécutable **generated.out**. Si vous ne renseignez pas les deux paramètres :
+permet de générer l'exécutable **generated.out**. Si vous ne renseignez pas les deux paramètres, la commande :
 ```sh
 $ make build
 ```
@@ -64,7 +66,7 @@ Affiche "All tests passed." si tout s'est bien passé. Mode verbeux :
 ```sh
 $ make tests V=y
 ```
-Affiche une ligne commençant par `[ok]` pour chaque test vérifié avec la description accompagnant le test.
+Affiche une ligne commençant par `[ok]` pour chaque test vérifié avec la description du test en question.
 
 ### Encodage des instructions dans la **CCAM**
 
@@ -117,21 +119,22 @@ L'instruction `Branch` est encodée avec 3 cellules, une première pour l'instru
 La fonction `main()` se trouve dans **runtime.c**.
 Le pointeur vers le code principal généré par le compilateur OCaml est récupéré grâce à `get_main_code()` (contenue dans le code généré).
 
-À partir de ce pointeur, un état vierge pour la machine virtuelle est créé (**machine.c**: `MachineStateT *blank_state()`). Puis la fonction `run_machine()` est lancée.
+À partir de ce pointeur, un état initial pour la machine virtuelle est créé (**machine.c**: `MachineStateT *blank_state()`). Puis la fonction `run_machine()` est lancée.
 
 Cette fonction se trouve dans **machine.c**. Elle réalise une boucle `while` qui ne prend fin que lorsqu'une erreur est observée par le status de la `CCAM`, ou bien lorsque l'instruction `Halt` est atteinte, après quoi ledit status passe de `AllOk` à `Halted`.
 
-Dans le corps de cette boucle, la fonction `execut_next_instruction(ms)` est appelée. Elle se trouve dans **enum.c**. Elle lit la prochaine cellule de code enregistrée dans l'état (`ms`) de la machine virtuelle. Cette cellule (`ms->code[0]`), de type `CodeT`, doit normalement contenir une des constantes du type `enum instruction`. Un `switch` réalise le choix de la bonne fonction d'exécution à appeler. Par exemple si `ms->code[0] == Apply`, alors c'est `exec_Apply(ms)` qui sera appelé.
+Dans le corps de cette boucle, la fonction `execute_next_instruction(ms)` est appelée. Elle est définie dans **enum.c**. Elle lit la prochaine cellule de code enregistrée dans l'état (`ms`) de la machine virtuelle. Cette cellule (`ms->code[0]`), de type `CodeT`, doit normalement contenir une des constantes du type `enum instruction`. Un `switch` réalise le choix de la bonne fonction d'exécution à appeler. Par exemple si `ms->code[0] == Apply`, alors c'est `exec_Apply(ms)` qui sera appelée. Toutes les fonctions de la forme `exec_...` se trouvent dans **machine.c**.
 
-La fonction d'exécution modifie alors l'état de la machine virtuelle d'une certaine manière. Elle peut :
-- modifier le **terme** (`ms->term`)
-- modifier le **code** (`ms->code`)
-- modifier la **pile** (`ms->stack`)
+La fonction d'exécution choisie modifie alors l'état de la machine virtuelle de la manière attendue pour l'instruction en question. Elle peut :
+- modifier le **terme** (`ms->term`), de type `ValueT *`
+- modifier le pointeur **code** (`ms->code`), de type `CodeT *`
+- modifier la **pile** (`ms->stack`), de type `StackT *`
+
 Par exemple :
-- l'instruction `Push` copie le **terme** et l'ajoute à la **pile**, et avance le pointeur vers code de 1 (car cette instruction est encodée avec une seule cellule de type `CodeT`).
-- L'instruction `Branch` vérifie que le **terme** est un booléen, ajoute à la **pile** le pointeur vers la prochaine instruction (il faut incrémenter `ms->code` de 3 car l'instruction `Branch` est encodée avec trois cellules de type `CodeT`), et remplace le **code** par la cellule `ms->code[1]` si le **terme** vaut `true`, et `ms->code[2]` si le **terme** vaut `false`.
+- l'instruction `Push` copie le **terme** et l'ajoute à la **pile**, et incrémente le pointeur **code** de 1 (car l'instruction `Push` est encodée avec une seule cellule de type `CodeT`).
+- L'instruction `Branch` vérifie que le **terme** est un booléen, ajoute à la **pile** le pointeur vers la prochaine instruction (qui correspond à `ms->code + 3` car l'instruction `Branch` est encodée sur trois cellules de type `CodeT`), et remplace le pointeur **code** par la cellule `ms->code[1]` si le **terme** vaut `true`, et `ms->code[2]` si le **terme** vaut `false`.
 
-Et ainsi de suite pour chaque instruction.
+Et ainsi de suite pour toutes les autres instruction.
 
 ### Pattern-matching
 

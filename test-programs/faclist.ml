@@ -1,6 +1,6 @@
-let rec factolist =
-  fun n -> if n = 0 then [1] else
-  let xs = factolist (n - 1) in
+let rec faclist n =
+  if n = 0 then [1] else
+  let xs = faclist (n - 1) in
   (n * head xs) :: xs
-in factolist 15
+in faclist 15
 ;;

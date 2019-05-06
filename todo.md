@@ -14,6 +14,7 @@ caml compiler:
 - add back the parameter to RmDefs so we don't have to explain why it isn't here
 
 parser:
+- sugar: let (rec) f x y = ...
   optional stuff:
   - prevent restricted tokens to be used for variables (e.g. head, let, etc)
   - add null value to parser
@@ -30,7 +31,10 @@ simu:
 - add an option to trace the execution?
 
 READMEs:
-- write miniml's grammar, latex style
+- mention versions, etc
+- read what the specifications of the projects are about what to put in the README
+- write Usage.md
+
 
 final tasks:
 - clean up the test-programs list
@@ -46,6 +50,14 @@ final tasks:
   then it could be "manually" done by user e.g.:
   match x with (0, val) -> ... | (1, val) -> ...
 - we'd still need "is_pair", "is_empty", "is_bool", "is_int", "is_null"...
+
+README:
+- Part -1: Usage, versions of software (mention of List.assoc_opt and read)
+- Part 0: overview of all the files
+- Part 1: parser, encoder, simulator
+- Part 2: code generation and execution model for CCAM, based on an example:
+  if true then 3 else fst 4 ;;
+- Part 3: Implementation details of CCAM
 
 # BAD IDEAS
 - fuse Return and Halt, so that Return stops the vm if the stack is empty? or at least if

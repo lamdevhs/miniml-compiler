@@ -76,16 +76,21 @@ let_rec_exp
 ;
 
 let_rec_definitions
-  : let_rec_binding { [$1] }
-  | let_rec_binding AND let_rec_definitions
+  : let_binding { [$1] }
+  | let_binding AND let_rec_definitions
     { let x = fst $1 in
       if (has_item x (List.map fst $3))
       then (failwith ("Variable " ^ x ^ " bound twice in the same let-rec construct."))
       else ($1 :: $3) }
 ;
 
-let_rec_binding
+/* used both by let-rec bindings and normal let bindings: */
+let_binding
   : IDENTIFIER EQ main_exp { ($1, $3) }
+  | IDENTIFIER let_binding
+    /* to handle the syntactic sugar
+       let f x y = e ---> let f = fun x -> fun y -> e */
+    { let (v, body) = $2 in ($1, Fn(v, body)) }
 ;
 
 main_exp
@@ -96,10 +101,10 @@ main_exp
 ;
 
 
-
 /* (let x = e in a) gets translated into ((fun x -> a) e) */
 let_in_exp
-  : LET IDENTIFIER EQ main_exp IN main_exp { App(Fn($2, $6), $4) }
+  : LET let_binding IN main_exp
+  { let (x, e) = $2 in App(Fn(x, $4), e) }
 ;
 
 /* allows the syntax fun x y z -> e */

@@ -28,6 +28,7 @@ if [ "$1" = "clean" ] ; then
 fi
 
 make all || Crash "could not build ./comp"
+echo
 [ -d ./ccam ] || Crash "could not find folder ./ccam"
 [ -d ./$folder ] || Crash "could not find folder ./$folder"
 ! [ -e ./tmp_ccam ] || Crash "could not create temporary folder ./tmp_ccam"
@@ -36,13 +37,16 @@ cd ./tmp_ccam
 for path in ../$folder/*.ml ; do
   filename="$(basename "$path")"
   shortname="${filename%.ml}"
+  echo "### compiling $filename"
   ../comp "$path" "$shortname.c" && \
-    make build file="$shortname.c" out="$shortname.out" && \
+    make build in="$shortname.c" out="$shortname.out" && \
     mv "$shortname.out" "../$folder/$shortname.out" && \
-    make build file="$shortname.c" out="$shortname.out" DBG=y && \
+    make build in="$shortname.c" out="$shortname.out" DBG=y && \
     mv "$shortname.out" "../$folder/$shortname.dbg.out" && \
     mv "$shortname.c" "../$folder/$shortname.c"
+  echo
 done
+
 cd ../
 rm -r ./tmp_ccam || Msg "warning: could not erase temporary folder ./tmp_ccam"
 Done
