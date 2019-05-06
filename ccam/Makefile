@@ -1,5 +1,5 @@
 SOURCES = stack.c machine.c value.c enums.c ccam.h
-PAUSE = read -n 1 -s -p "make: Compiled. Press any key to run." && echo
+PAUSE = bash ./pause.sh
 # default values:
 in = gen.c
 out = gen.out
