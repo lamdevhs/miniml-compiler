@@ -103,7 +103,7 @@ let rec exec : (value * code * stack * defstack) -> value = function
   (* --------- let rec --------- *)
   | (x, Call to_call :: c, st, fds)
     -> (
-      match List.assoc_opt to_call fds with
+      match Tools.assoc_opt to_call fds with
       | Some called_code -> exec (x, called_code @ c, st, fds)
       | None -> failwith "CompilerBug: can't Call, definition not found"
     )

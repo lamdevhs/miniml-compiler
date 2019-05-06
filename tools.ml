@@ -49,3 +49,9 @@ let rec chop n xs = if n <= 0 then xs else
   | [] -> []
   | _ :: tail -> chop (n - 1) tail
 ;;
+
+let rec assoc_opt : 'a -> ('a * 'b) list -> 'b option = fun to_find ->
+  function
+  | [] -> None
+  | (x, y) :: zs -> if x = to_find then Some y else assoc_opt to_find zs
+;;
