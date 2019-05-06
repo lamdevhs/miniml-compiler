@@ -14,16 +14,17 @@ open Flattener ;;
 open CodeGenerator ;;
 open Simulator ;;
 
-(* For using the parser:
-
-- Evaluate this file (use.ml)
+(* To use the parser:
 - parse "foo/bar.ml" ;;
 
 * For code generation:
 - encode_program (parse "foo/bar.ml") ;;
 
-* For simulated execution:
-- run_simulation "foo/bar.ml" ;;
+* For simulated execution, with trace:
+- run_simulation (encode_program (parse "foo/bar.ml")) true ;;
+
+* and without trace:
+- run_simulation (encode_program (parse "foo/bar.ml")) false ;;
 
 *)
 
@@ -33,4 +34,4 @@ let get_prog () = parse test_file;;
 
 let get_code () = encode_program (get_prog ());;
 
-let run_sim () = run_simulation (get_code ());;
+let run_sim verbose = run_simulation (get_code ()) verbose;;

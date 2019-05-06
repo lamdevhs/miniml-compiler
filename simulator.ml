@@ -52,6 +52,65 @@ let pp_value : value -> string = fun v ->
   in go_value v
 ;;
 
+let pp_stacktop : stack -> string = function
+  | [] -> "<stack is empty>"
+  | Cod _ :: _ -> "<code>"
+  | Val v :: _ -> pp_value v
+;;
+
+let pp_unary = function
+  | Fst -> "Fst"
+  | Snd -> "Snd"
+  | Head -> "Head"
+  | Tail -> "Tail"
+;;
+
+let pp_arith = function
+  | BAadd -> "Plus"
+  | BAsub -> "Sub"
+  | BAmul -> "Mul"
+  | BAdiv -> "Div"
+  | BAmod -> "Mod"
+;;
+
+let pp_compare = function
+  | BCeq -> "Eq"
+  | BCge -> "Ge"
+  | BCgt -> "Gt"
+  | BCle -> "Le"
+  | BClt -> "Lt"
+  | BCne -> "Neq"
+;;
+
+let pp_code : code -> string =
+  let parens x = "(" ^ x ^ ")" in
+  function
+  | [] -> "<code list is empty>"
+  | head :: _ ->
+  match head with
+  | PrimInstr (UnOp op) -> "Unary" ^ parens (pp_unary op)
+  | PrimInstr (BinOp (BArith op)) -> "Arith" ^ parens (pp_arith op)
+  | PrimInstr (BinOp (BCompar op)) -> "Compare" ^ parens (pp_compare op)
+  | Cons -> "Cons"
+  | Push -> "Push"
+  | Swap -> "Swap"
+  | Return -> "Return"
+  | QuoteBool b -> "QuoteBool" ^ parens (string_of_bool b)
+  | QuoteInt i -> "QuoteInt" ^ parens (string_of_int i)
+  | Cur c -> "Curry" ^ parens "<code>"
+  | App -> "Apply"
+  | Branch _ -> "Branch" ^ parens "<code>,<code>"
+  | Halt -> "Halt"
+  (* new for recursive calls *)
+  | Call v -> "Call" ^ parens v
+  | AddDefs xs -> "AddDefs"
+      ^ parens ("<" ^ string_of_int (List.length xs) ^ "defs>")
+  | RmDefs n -> "Rmdefs" ^ parens (string_of_int n)
+  (* new for lists *)
+  | MakeList -> "MakeList"
+  | QuoteEmptyList -> "QuoteEmptyList"
+;;
+
 let eval_arith : barith -> int -> int -> int = function
   | BAadd -> (+)
   | BAsub -> (-)
@@ -159,9 +218,17 @@ let execute_next_instruction : machine_state -> status =
   | (_, [], _, fds) -> crashed "MachineFailure: code list empty"
 ;;
 
-let rec run_machine : machine_state -> final_status = function ms ->
+let print_trace : machine_state -> unit = fun (term, code, stack, _) ->
+  print_endline ("# term = " ^ pp_value term);
+  print_endline ("# stacktop = " ^ pp_stacktop stack);
+  print_endline ("# next instruction = " ^ pp_code code);
+  print_endline "---";
+;;
+
+let rec run_machine : machine_state -> bool -> final_status = fun ms verbose ->
+  if verbose then (print_trace ms) else ();
   match execute_next_instruction ms with
-  | AllOk new_ms -> run_machine new_ms
+  | AllOk new_ms -> run_machine new_ms verbose
   | Stopped final_status -> final_status
 ;;
 
@@ -169,18 +236,23 @@ let blank_state : code -> machine_state =
   fun code -> (NullV, code, [], [])
 ;;
 
-let run_simulation code = run_machine (blank_state code);;
+let run_simulation code verbose =
+  match run_machine (blank_state code) verbose with
+  | Halted final_value -> print_endline (pp_value final_value)
+  | Crashed msg -> print_endline msg
+;;
 
 let main () =
-  if Array.length Sys.argv != 2
-  then print_endline ("usage error: expected exactly one argument: "
-    ^ "an input filename")
+  let len = Array.length Sys.argv in
+  let valid_usage =
+    len = 2 || (len = 3 && Sys.argv.(1) = "verbose") in
+  if not valid_usage
+  then print_endline ("usage error: correct usage: ./simu [verbose] <filename>")
   else
-    let prog = Interf.parse Sys.argv.(1) in
+    let verbose = (len = 3) in
+    let prog = Interf.parse Sys.argv.(if verbose then 2 else 1) in
     let code = Encoder.encode_program prog in
-    match run_simulation code with
-    | Halted final_value -> print_endline (pp_value final_value)
-    | Crashed msg -> print_endline msg
+    run_simulation code verbose
 ;;
 
 main ();;
