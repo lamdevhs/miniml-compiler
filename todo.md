@@ -11,7 +11,6 @@ ccam:
 
 caml compiler:
 - clean up the caml code
-- add back the parameter to RmDefs so we don't have to explain why it isn't here
 
 parser:
 - sugar: let (rec) f x y = ...
@@ -28,7 +27,6 @@ global:
 - move all the ml code into a subfolder of the project
 
 simu:
-- add an option to trace the execution?
 
 READMEs:
 - mention versions, etc
@@ -124,3 +122,5 @@ These are in chronological order, hopefully:
 - fix generated-all.sh so that it copies the .c files instead
 - remove size of arrays in code generation if apparently it doesn't matter
 anymore
+- add back the parameter to RmDefs so we don't have to explain why it isn't here
+- add an option to trace the execution of simulator

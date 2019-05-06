@@ -6,6 +6,7 @@ open Encoder;;
 type flat_instr
   = FlatHalt
   | FlatUnary of unop
+  | FlatTest of testop
   | FlatArith of barith
   | FlatCompare of bcompar
   | FlatCons
@@ -64,6 +65,8 @@ let rec flatten_code
       (n, defsDict, refCode, mainCode @ [FlatArith(op)])
     | PrimInstr(BinOp (BCompar op)) ->
       (n, defsDict, refCode, mainCode @ [FlatCompare(op)])
+    | PrimInstr(TestOp op) ->
+      (n, defsDict, refCode, mainCode @ [FlatTest(op)])
     | Cons -> (n, defsDict, refCode, mainCode @ [FlatCons])
     | Push -> (n, defsDict, refCode, mainCode @ [FlatPush])
     | Swap -> (n, defsDict, refCode, mainCode @ [FlatSwap])

@@ -9,12 +9,15 @@ type barith = BAadd | BAsub | BAmul | BAdiv | BAmod
 (* Binary Comparison operators *)
 type bcompar = BCeq | BCge | BCgt | BCle | BClt | BCne
 
+type testop = IsEmpty
+
 type binop =
   BArith of barith
 | BCompar of bcompar
 
 type primop =
   UnOp of unop
+| TestOp of testop
 | BinOp of binop
 
 type mlexp =
@@ -48,21 +51,24 @@ let pp_barith : barith -> string = function
 ;;
 
 
-let pp_bcompar : bcompar ->  string = function
+let pp_bcompar : bcompar -> string = function
   BCeq -> "=" | BCge -> ">=" | BCgt -> ">" | BCle -> "<=" | BClt -> "<" | BCne -> "<>"
 ;;
 
-let pp_binop : binop ->  string = function
+let pp_binop : binop -> string = function
     BArith b -> pp_barith b
   | BCompar b -> pp_bcompar b
 ;;
 
+let pp_testop : testop -> string = function
+  | IsEmpty -> "is_empty"
+;;
 
 let pp_primop : primop ->  string = function
   | UnOp x -> pp_unop x
+  | TestOp x -> pp_testop x
   | BinOp x -> pp_binop x
 ;;
-
 
 let rec pp_exp : mlexp -> string = function
   | Var v -> v
@@ -71,7 +77,7 @@ let rec pp_exp : mlexp -> string = function
   | PrimOp po -> pp_primop po
   | Cond (i, t, e) -> "(if " ^ pp_exp i ^ " then " ^ pp_exp t ^ " else " ^ pp_exp e ^ ")"
   | Pair (x, y) -> "(" ^ pp_exp x ^ "," ^ pp_exp y ^ ")"
-  | App (PrimOp op, Pair (x, y)) -> "(" ^ pp_exp x ^ " " ^ pp_primop op ^ " " ^ pp_exp y ^ ")"
+  | App (PrimOp (BinOp op), Pair (x, y)) -> "(" ^ pp_exp x ^ " " ^ pp_binop op ^ " " ^ pp_exp y ^ ")"
   | App (f, x) -> "(" ^ pp_exp f ^ " " ^ pp_exp x ^ ")"
   | Fn (v, b) -> "(fun " ^ v ^ " -> " ^ pp_exp b ^ ")"
   | Fix (d :: defs, exp) -> "let rec " ^ pp_def d ^ pp_defs defs ^ " in " ^ pp_exp exp

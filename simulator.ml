@@ -82,6 +82,10 @@ let pp_compare = function
   | BCne -> "Neq"
 ;;
 
+let pp_test = function
+  | IsEmpty -> "TestIsEmpty"
+;;
+
 let pp_code : code -> string =
   let parens x = "(" ^ x ^ ")" in
   function
@@ -91,6 +95,7 @@ let pp_code : code -> string =
   | PrimInstr (UnOp op) -> "Unary" ^ parens (pp_unary op)
   | PrimInstr (BinOp (BArith op)) -> "Arith" ^ parens (pp_arith op)
   | PrimInstr (BinOp (BCompar op)) -> "Compare" ^ parens (pp_compare op)
+  | PrimInstr (TestOp op) -> "Test" ^ parens (pp_test op)
   | Cons -> "Cons"
   | Push -> "Push"
   | Swap -> "Swap"
@@ -128,6 +133,11 @@ let eval_compar : bcompar -> 'a -> 'a -> bool = function
   | BCne -> (<>)
 ;;
 
+let eval_test : (testop * value) -> bool = function
+  | (IsEmpty, ListV EmptyListV) -> true
+  | (IsEmpty, _) -> false
+;;
+
 let execute_next_instruction : machine_state -> status =
   let crashed msg = Stopped (Crashed msg) in
   function
@@ -151,6 +161,8 @@ let execute_next_instruction : machine_state -> status =
   | (_, Return :: c, _, fds) -> crashed
       "MachineFailure: can't return: stacktop is not code"
   (* --------- primInstr --------- *)
+  | (term, PrimInstr (TestOp op) :: c, st, fds) -> AllOk
+      (BoolV(eval_test (op, term)), c, st, fds)
   | (PairV(x, y), PrimInstr (UnOp Fst) :: c, st, fds) -> AllOk (x, c, st, fds)
   | (_, PrimInstr (UnOp Fst) :: c, _, fds) -> crashed
       "TypeError: can't get first: not a pair"

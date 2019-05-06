@@ -27,6 +27,10 @@ let c_of_compare = function
   | BCne -> "Neq"
 ;;
 
+let c_of_test = function
+  | IsEmpty -> "TestIsEmpty"
+;;
+
 let c_of_flat_instr : flat_instr -> string =
   let union_field field content = "{." ^ field ^ " = " ^ content ^ "}," in
   let c_of_instruction content = union_field "instruction" content in
@@ -41,6 +45,8 @@ let c_of_flat_instr : flat_instr -> string =
     ^ c_of_operation (c_of_arith op)
   | FlatCompare op -> c_of_instruction "Compare"
     ^ c_of_operation (c_of_compare op)
+  | FlatTest op -> c_of_instruction "Test"
+    ^ c_of_operation (c_of_test op)
   | FlatCons -> c_of_instruction "Cons"
   | FlatPush -> c_of_instruction "Push"
   | FlatSwap -> c_of_instruction "Swap"

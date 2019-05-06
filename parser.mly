@@ -37,6 +37,7 @@ let rec has_item x = function
 %token AND ARROW FUN IN LET REC TYPE
 %token EOF
 %token LIST_CONS HEAD TAIL LBRACKET RBRACKET
+%token IS_EMPTY
 
 %right ELSE
 
@@ -181,6 +182,7 @@ lowest_exp
   | BCONSTANT { Bool($1) }
   | INTCONSTANT { Int($1) }
   | unary { PrimOp (UnOp($1)) }
+  | test { PrimOp (TestOp($1)) }
   /* OMITTED: string-literal */
 ;
 
@@ -202,4 +204,8 @@ unary
   | SND { Snd }
   | HEAD { Head }
   | TAIL { Tail }
+;
+
+test
+  : IS_EMPTY { IsEmpty }
 ;

@@ -45,6 +45,7 @@ rule token = parse
 | "snd"        {SND}
 | "head"       {HEAD}
 | "tail"       {TAIL}
+| "is_empty"   {IS_EMPTY}
 | "if"         {IF}
 | "then"       {THEN}
 | "else"       {ELSE}
