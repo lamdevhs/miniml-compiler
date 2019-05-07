@@ -1,6 +1,9 @@
 #!/bin/bash
 
-folder=demo-programs
+demo=demo-programs
+ocaml=ocaml
+ccam=ccam
+tmp=__tmp_folder_generate_all__
 
 Msg ()
 {
@@ -20,33 +23,38 @@ Done ()
 }
 
 if [ "$1" = "clean" ] ; then
-  echo rm ./$folder/*.c ./$folder/*.out
+  echo rm ./$demo/*.c ./$demo/*.out
   echo press enter to delete those files
   read PAUSE
-  rm ./$folder/*.c ./$folder/*.out
+  rm ./$demo/*.c ./$demo/*.out
   Done
 fi
 
-make all || Crash "could not build ./comp"
+[ -d ./$ocaml ] || Crash "could not find folder ./$ocaml"
+[ -d ./$ccam ] || Crash "could not find folder ./$ccam"
+[ -d ./$demo ] || Crash "could not find folder ./$demo"
+! [ -e ./$tmp ] || Crash "could not create temporary folder ./$tmp"
+
+cd $ocaml
+make comp || Crash "could not build executable comp"
 echo
-[ -d ./ccam ] || Crash "could not find folder ./ccam"
-[ -d ./$folder ] || Crash "could not find folder ./$folder"
-! [ -e ./tmp_ccam ] || Crash "could not create temporary folder ./tmp_ccam"
-cp -r ./ccam ./tmp_ccam || Crash "could not create temporary folder ./tmp_ccam"
-cd ./tmp_ccam
-for path in ../$folder/*.ml ; do
+cd ../
+cp -r ./$ccam ./$tmp || Crash "could not create temporary folder ./$tmp"
+cp ./$ocaml/comp ./$tmp
+cd ./$tmp
+for path in ../$demo/*.ml ; do
   filename="$(basename "$path")"
   shortname="${filename%.ml}"
   echo "### compiling $filename"
-  ../comp "$path" "$shortname.c" && \
+  ./comp "$path" "$shortname.c" && \
     make build in="$shortname.c" out="$shortname.out" && \
-    mv "$shortname.out" "../$folder/$shortname.out" && \
+    mv "$shortname.out" "../$demo/$shortname.out" && \
     make build in="$shortname.c" out="$shortname.out" DBG=y && \
-    mv "$shortname.out" "../$folder/$shortname.dbg.out" && \
-    mv "$shortname.c" "../$folder/$shortname.c"
+    mv "$shortname.out" "../$demo/$shortname.dbg.out" && \
+    mv "$shortname.c" "../$demo/$shortname.c"
   echo
 done
 
 cd ../
-rm -r ./tmp_ccam || Msg "warning: could not erase temporary folder ./tmp_ccam"
+rm -r ./$tmp || Msg "warning: could not erase temporary folder ./$tmp"
 Done

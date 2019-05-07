@@ -24,7 +24,8 @@ parser:
   - add operator `not`
 
 global:
-- move all the ml code into a subfolder of the project
+- rename folder into demo/
+- delete use.ml
 
 simu:
 
@@ -124,3 +125,4 @@ These are in chronological order, hopefully:
 anymore
 - add back the parameter to RmDefs so we don't have to explain why it isn't here
 - add an option to trace the execution of simulator
+- move all the ml code into a subfolder of the project

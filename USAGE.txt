@@ -1,6 +1,9 @@
---> Makefile de la partie OCaml (./Makefile) :
+--> Makefile de la partie OCaml (./ocaml/Makefile) :
 
-Pour compiler les deux exécutables OCaml (./simu et ./comp) :
+Prérequis :
+  $ cd ocaml/
+
+Pour compiler les deux exécutables OCaml (simu et comp) :
   $ make
 
 Ou bien, pour compiler le simulateur et le compilateur séparément :
@@ -8,7 +11,7 @@ Ou bien, pour compiler le simulateur et le compilateur séparément :
   $ make simu
 
 
---> Utilisation des exécutables ./simu et ./comp :
+--> Utilisation des exécutables simu et comp :
 
 Pour utiliser le simulateur OCaml avec un fichier mini-ML appelé foo.ml :
   $ ./simu foo.ml
@@ -24,9 +27,7 @@ un fichier foo.c :
 
 --> Makefile de la partie en C (./ccam/Makefile) :
 
-/!\ ATTENTION :
-Le Makefile pour la partie en C n'est pas le même que pour la partie OCaml.
-Donc, avant toute chose :
+Prérequis :
   $ cd ccam/
 
 Pour compiler la CCAM (implémentation en C de la CAM) avec un fichier foo.c
@@ -53,11 +54,15 @@ par test :
 
 --> Utilisation du script ./generate-all.sh :
 
-Pour compiler tous les programmes-exemple avec ./comp et la CCAM :
+Pour compiler tous les programmes-exemple du dossier ./demo-programs/
+avec ./comp et la CCAM :
   $ bash generate-all.sh
-Produit, pour chaque programme-example foo.ml, deux exécutables :
-  $ foo.out # mode normal
-  $ foo.dbg.out # mode avec trace
+
+Ce script produit, pour chaque programme-example foo.ml, deux exécutables :
+- mode normal :
+  $ ./demo-programs/foo.out
+- mode avec trace :
+  $ ./demo-programs/foo.dbg.out
 
 Pour effacer tous les fichiers *.c, *.out et *.dbg.out générés par le script :
   $ bash generate-all.sh clean
