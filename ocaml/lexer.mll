@@ -74,6 +74,7 @@ rule token = parse
 
 | "&&"         {BLAND}
 | "||"         {BLOR}
+| "not"         {NOT}
 
 | eof          {EOF}
 

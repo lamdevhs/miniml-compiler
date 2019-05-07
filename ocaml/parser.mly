@@ -30,7 +30,7 @@ let rec has_item x = function
 %token FST SND
 %token ADD SUB MUL DIV MOD
 %token EQ GE GT LE LT NE
-%token BLAND BLOR
+%token BLAND BLOR NOT
 %token LPAREN RPAREN LBRACE RBRACE
 %token COMMA SEMICOLON COLON QMARK
 %token IF THEN ELSE WHILE FOR RETURN
@@ -171,6 +171,7 @@ mult_exp
 /* application is left associative: f a b -> (f a) b */
 app_exp
   : app_exp lowest_exp { App($1, $2) }
+  | NOT lowest_exp { Cond($2, Bool(false), Bool(true)) }
   | lowest_exp { $1 }
 ;
 
