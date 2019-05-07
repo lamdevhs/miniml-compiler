@@ -9,6 +9,6 @@
 /*.cmo
 *~
 /ccam/*.out
-/test-programs/*.out
-/test-programs/*.c
+/demo-programs/*.out
+/demo-programs/*.c
 /NEXT_COMMIT_MESSAGE

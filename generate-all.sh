@@ -1,6 +1,6 @@
 #!/bin/bash
 
-folder=test-programs
+folder=demo-programs
 
 Msg ()
 {
