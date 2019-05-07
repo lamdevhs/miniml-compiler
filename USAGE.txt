@@ -1,0 +1,63 @@
+--> Makefile de la partie OCaml (./Makefile) :
+
+Pour compiler les deux exécutables OCaml (./simu et ./comp) :
+  $ make
+
+Ou bien, pour compiler le simulateur et le compilateur séparément :
+  $ make comp
+  $ make simu
+
+
+--> Utilisation des exécutables ./simu et ./comp :
+
+Pour utiliser le simulateur OCaml avec un fichier mini-ML appelé foo.ml :
+  $ ./simu foo.ml
+
+Pour afficher une trace de l'exécution de la machine, instruction
+par instruction :
+  $ ./simu verbose foo.ml
+
+Pour utiliser le compilateur, et générer à partir d'un fichier foo.ml,
+un fichier foo.c :
+  $ ./comp foo.ml foo.c
+
+
+--> Makefile de la partie en C (./ccam/Makefile) :
+
+/!\ ATTENTION :
+Le Makefile pour la partie en C n'est pas le même que pour la partie OCaml.
+Donc, avant toute chose :
+  $ cd ccam/
+
+Pour compiler la CCAM (implémentation en C de la CAM) avec un fichier foo.c
+qui aurait été généré précédemment avec ./comp :
+  $ make build in=foo.c out=foo.out
+  $ ./foo.out
+
+Pour compiler et lancer l'exécutable juste après automatiquement :
+  $ make run in=foo.c out=foo.out
+
+Pour afficher une trace de l'exécution de la machine, instruction par
+instruction :
+  $ make build in=foo.c out=foo.out DBG=y ; ./foo.out
+ou bien
+  $ make run in=foo.c out=foo.out DBG=y
+
+Pour lancer les tests unitaires de la CCAM :
+  $ make tests
+
+Pour lancer les tests unitaires en mode verbeux, une ligne d'information
+par test :
+  $ make tests V=y
+
+
+--> Utilisation du script ./generate-all.sh :
+
+Pour compiler tous les programmes-exemple avec ./comp et la CCAM :
+  $ bash generate-all.sh
+Produit, pour chaque programme-example foo.ml, deux exécutables :
+  $ foo.out # mode normal
+  $ foo.dbg.out # mode avec trace
+
+Pour effacer tous les fichiers *.c, *.out et *.dbg.out générés par le script :
+  $ bash generate-all.sh clean
