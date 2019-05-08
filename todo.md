@@ -36,7 +36,7 @@ READMEs:
 
 
 final tasks:
-- clean up the test-programs list
+- clean up the demo/ folder
 - read the makefiles to make sure there aren't any mistakes
 - delete dev.c, ideas.txt, cours.pdf
 

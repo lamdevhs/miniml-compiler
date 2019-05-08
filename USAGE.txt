@@ -54,15 +54,16 @@ par test :
 
 --> Utilisation du script ./generate-all.sh :
 
-Pour compiler tous les programmes-exemple du dossier ./demo-programs/
+Pour compiler tous les programmes-exemple du dossier ./demo/
 avec ./comp et la CCAM :
   $ bash generate-all.sh
 
-Ce script produit, pour chaque programme-example foo.ml, deux exécutables :
-- mode normal :
-  $ ./demo-programs/foo.out
-- mode avec trace :
-  $ ./demo-programs/foo.dbg.out
+Ce script produit, pour chaque programme-example foo.ml dans ./demo/, deux
+exécutables :
+  mode normal :
+  $ ./demo/foo.out
+  mode avec trace :
+  $ ./demo/foo.dbg.out
 
 Pour effacer tous les fichiers *.c, *.out et *.dbg.out générés par le script :
   $ bash generate-all.sh clean

@@ -8,7 +8,7 @@
 /ocaml/*.mli
 /ocaml/*.cmi
 /ocaml/*.cmo
-/demo-programs/*.out
-/demo-programs/*.c
+/demo/*.out
+/demo/*.c
 /ccam/*.out
 *~

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-demo=demo-programs
+demo=demo
 ocaml=ocaml
 ccam=ccam
 tmp=__tmp_folder_generate_all__
