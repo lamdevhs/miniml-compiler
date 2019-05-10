@@ -30,13 +30,7 @@ tests: unit-tests.c testing.c testing.h $(SOURCES)
 	 && $(PAUSE) \
 	 && ./unit-tests.out
 
-# dev experiments and tests:
-dev: dev.c $(SOURCES)
-	gcc -Wall -o dev.out $^ \
-	 && $(PAUSE) \
-	 && ./dev.out
-
 .PHONY: clean
 
 clean:
-	rm -f unit-tests.out dev.out
+	rm -f unit-tests.out

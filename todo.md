@@ -1,20 +1,11 @@
 # TODO
 
-simple ones:
-- fix comments in machine.c's exec_zzz functions based on the new simulator.ml
-- replace BoolValue() with Bool()/Boolean()?
-- test if the parser accepts the empty program
-- remove dev comments
-
 ccam:
-- incremental execution?
 - use enum boole anywhere it makes sense
 
 caml compiler:
-- clean up the caml code
 
 parser:
-- sugar: let (rec) f x y = ...
   optional stuff:
   - prevent restricted tokens to be used for variables (e.g. head, let, etc)
   - add null value to parser
@@ -22,28 +13,10 @@ parser:
   - allow underscores and dashes and maybe
     even dots in variable names
   - fix the built_in_test error: "(fst, snd);;"
-  - add operator `not`
 
 global:
-- rename folder into demo/
-- delete use.ml
-
-simu:
 
 READMEs:
-- mention versions, etc
-- read what the specifications of the projects are about what to put in the README
-- write Usage.md
-----
-    - test effectues
-    - observation : taille du code, optimalité
-    - version + 64bit, taille des entiers/pointeurs
-    - java class Config == MachineStateT
-    - parser: cf expression.html
-    - mini démo
-    - italics: OCaml, C, CAM, Lex, Yacc, let-rec, parser, lexer, let-rec bindings, encoder, pattern-matching
-    - bold: CCAM, Mini-ML, mini-ML,
-
 
 final tasks:
 - clean up the demo/ folder
@@ -59,14 +32,6 @@ final tasks:
   then it could be "manually" done by user e.g.:
   match x with (0, val) -> ... | (1, val) -> ...
 - we'd still need "is_pair", "is_empty", "is_bool", "is_int", "is_null"...
-
-README:
-- Part -1: Usage, versions of software (mention of List.assoc_opt and read)
-- Part 0: overview of all the files
-- Part 1: parser, encoder, simulator
-- Part 2: code generation and execution model for CCAM, based on an example:
-  if true then 3 else fst 4 ;;
-- Part 3: Implementation details of CCAM
 
 # BAD IDEAS
 - fuse Return and Halt, so that Return stops the vm if the stack is empty? or at least if
@@ -134,5 +99,11 @@ These are in chronological order, hopefully:
 - remove size of arrays in code generation if apparently it doesn't matter
 anymore
 - add back the parameter to RmDefs so we don't have to explain why it isn't here
+- sugar: let (rec) f x y = ...
 - add an option to trace the execution of simulator
+- write Usage.md
 - move all the ml code into a subfolder of the project
+- add operator `not`
+- rename folder into demo/
+- delete use.ml
+- mention versions in README

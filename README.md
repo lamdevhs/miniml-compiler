@@ -16,20 +16,20 @@ J'ai aussi testé brièvement le projet sur un ordinateur de l'université. Il s
 - `gcc` : gcc version 6.3.0 20170516 (Debian 6.3.0-18+deb9u1)
 - `bash` : GNU bash, version 4.4.12(1)-release (x86_64-pc-linux-gnu)
 
-Le projet pourrait ne pas fonctionner avec d'autres versions, en particulier plus anciennes. Par exemple, les développeurs de Ocaml ont tendance à ajouter des fonctions à leurs librairies standards assez régulièrement. Et les différentes versions de `bash` ne sont pas toujours compatibles.
+Le projet pourrait ne pas fonctionner avec d'autres versions, en particulier plus anciennes. Par exemple, les développeurs de _OCaml_ ont tendance à ajouter des fonctions à leurs librairies standards assez régulièrement. Et les différentes versions de _bash_ ne sont pas toujours compatibles.
 
-Quant au code C de ce projet, je n'ai aucune idée s'il compile et fonctionne correctement sur une architecture 32 bits (même si j'ai essayé de ne pas faire de suppositions sur la taille des pointeurs et des entiers).
+Quant au code _C_ de ce projet, je n'ai aucune idée s'il compile et fonctionne correctement sur une architecture 32 bits (même si j'ai essayé de ne pas faire de suppositions sur la taille des pointeurs et des entiers).
 
 
 ## Organisation de ce fichier
 
-Je n'ai pas présenté pas les choses ici dans un ordre synthétique, mais plutôt dans un ordre didactique, afin de profiter au maximum des liens à faire entre les différentes parties du projet. Dans l'ensemble ce document a donc été écrit pour être lu de haut en bas de manière linéaire.
+Je n'ai pas présenté les choses ici dans un ordre synthétique, mais plutôt dans un ordre didactique, afin de profiter au maximum des liens à faire entre les différentes parties du projet. Dans l'ensemble ce document a donc été écrit pour être lu de haut en bas de manière linéaire.
 
 ## Terminologie
 
 **Mini-ML** : Mini-langage fonctionnel similaire en syntaxe à OCaml, mais non typé et restreint en fonctionnalité, utilisé comme langage source initial pour ce projet de compilation. Extension de fichier : `.ml`, comme pour OCaml, puisque la syntaxe est virtuellement identique.
 
-**CAM** : Acronyme pour _Categorical Abstract Machine_. Modèle abstrait d'exécution d'un langage fonctionnel de type _ML_ représenté sous la forme d'une suite d'instructions atomiques. Les instructions modifient l'état de la machine virtuelle, qui est constitué d'un triplet de trois valeurs : un **terme** représentant le registre principal d'opération, une **pile** qui fait office de pile d'exécution, et enfin, le **code** restant à exécuter.
+**CAM** : Acronyme pour _Categorical Abstract Machine_. Modèle abstrait d'exécution d'un langage fonctionnel de type _ML_ représenté sous la forme d'une suite d'instructions atomiques. Les instructions modifient l'état de la machine virtuelle, qui est constitué d'un triplet de trois valeurs : un **terme** représentant le registre principal d'opération, une **pile** qui fait office de pile d'exécution, et enfin, le **code** à exécuter.
 
 [_Référence_ : Cousineau, Curien, Mauny: _The Categorical Abstract Machine_, Science of Computer Programming 8 (1987), pp. 173-202]
 
@@ -38,11 +38,11 @@ Je n'ai pas présenté pas les choses ici dans un ordre synthétique, mais plut�
 
 ## Résumé du projet
 
-Le projet est composé d'un compilateur appelé **comp**, écrit en _OCaml_ à l'aide de _Lex_ et _Yacc_, dont le rôle est de parser et de compiler un fichier source _mini-ML_, produisant alors un fichier intermédiaire en _C_.
+Le projet est composé d'un compilateur appelé **comp**, écrit en _OCaml_ à l'aide de _Lex_ et _Yacc_, dont le rôle est de parser et de compiler un fichier source _Mini-ML_, produisant alors un fichier intermédiaire en _C_.
 
-Ce fichier intermédiaire peut alors être à son tour compilé avec `gcc` et les sources _C_ de la **CCAM** pour obtenir un fichier exécutable final, dont l'exécution correspond à l'évaluation du fichier _mini-ML_ d'origine.
+Ce fichier intermédiaire peut alors être à son tour compilé avec `gcc` et les sources _C_ de la **CCAM** pour obtenir un fichier exécutable final, dont l'exécution correspond à l'évaluation du fichier _Mini-ML_ d'origine.
 
-Le projet contient aussi un simulateur **simu** écrit en _OCaml_ dont le rôle est de parser, compiler et interpréter un fichier source _mini-ML_, toujours selon le modèle de la CAM.
+Le projet contient aussi un simulateur **simu** écrit en _OCaml_ dont le rôle est de parser, compiler et interpréter un fichier source _Mini-ML_, toujours selon le modèle de la CAM.
 
 
 ## Entrée en matière
@@ -106,7 +106,7 @@ Le projet est divisé en deux grosses parties :
 
 - _Partie OCaml_ : sous-dossier **ocaml/**. Contient les sources pour le compilateur **comp** et le simulateur **simu**. Un Makefile **ocaml/Makefile** permet de les générer.
 
-- _Partie C_ : sous-dossier **ccam/**. Contient les sources pour la machine virtuelle **CCAM**. Un Makefile **ccam/Makefile** permet de générer un exécutable à partir des ces sources et du code généré par **comp** à partir d'un fichier _mini-ML_ source. Contient aussi des tests unitaires.
+- _Partie C_ : sous-dossier **ccam/**. Contient les sources pour la machine virtuelle **CCAM**. Un Makefile **ccam/Makefile** permet de générer un exécutable à partir des ces sources et du code généré par **comp** à partir d'un fichier _Mini-ML_ source. Contient aussi des tests unitaires.
 
 Autres fichiers du projet :
 
@@ -192,7 +192,7 @@ Quelques notes :
 - les opérations booléennes `(&&)`, `(||)`, et `not`, sont traduites en branchements conditionnels `if..then..else`
 - _let-rec bindings_ : `let rec ... and ... in ...`
 
-  Pour éviter les bugs causés par la limitation de cette implémentation de la récursivité, j'ai fait en sorte que le _parser_ refuse tout programme contenant un let-rec inclus comme sous-expression d'une autre expression plus grande. Ainsi l'unique manière autorisée d'utiliser un let-rec dans ce langage _mini-ML_ est de le mettre en expression principale, au plus haut de la hiérarchie du programme.
+  Pour éviter les bugs causés par la limitation de cette implémentation de la récursivité, j'ai fait en sorte que le _parser_ refuse tout programme contenant un let-rec inclus comme sous-expression d'une autre expression plus grande. Ainsi l'unique manière autorisée d'utiliser un let-rec dans ce langage _Mini-ML_ est de le mettre en expression principale, au plus haut de la hiérarchie du programme.
 
 - valeurs de type `list` : la syntaxe est la même qu'en _OCaml_, c'est-à-dire, `[]`, `2 :: [1]`, `[3;4;]` (trailing semicolon allowed).
 - sucre syntactique :
@@ -490,7 +490,7 @@ typedef struct ValueT {
 } ValueT;
 ```
 
-Le membre `as` est donc une union. Au besoin, on pourra définir donc définir une `ValueT` de différentes manières. Les commentaires dans l'exemple suivant font le lien avec la syntaxe _OCaml_.
+Le membre `as` est donc une union. Au besoin, on pourra donc définir une `ValueT` de différentes manières. Les commentaires dans l'exemple suivant font le lien avec la syntaxe _OCaml_.
 
 ```C
 ValueT a, b, c, d; CodeT *x = NULL;
@@ -570,7 +570,7 @@ StackT *u = CodeOnStack(foo, ValueOnStack(IntValue(3), EmptyStack()));
 
 ## Pattern-matching
 
-Une fois que l'on a instancié une `ValueT` ou une `StackT`, on veut pouvoir effectuer un _pattern-matching_, pour :
+Une fois que l'on a instancié une `ValueT` ou une `StackT`, on peut vouloir effectuer un _pattern-matching_, pour :
 - vérifier que le type d'objet correspond bien à ce que l'on veut. Par exemple, un entier, une liste non vide, une valeur nulle, une pile avec du code (pointeur vers `CodeT`) comme élément de tête, une pile avec une `ValueT` comme élément de tête, etc.
 - si c'est bien le cas, récupérer le contenu de la valeur. Par exemple :
   - si c'est une paire, récupérer les deux champs `first` et `second` de la structure `PairT` contenue dans le champ `as` de la valeur en question

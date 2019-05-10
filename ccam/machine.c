@@ -200,7 +200,7 @@ enum Status exec_Compare(MachineStateT *ms)
 
   ms->term = BoolValue(result);
   ms->code += 2;
-  // ms->stack unchanged
+  //| ms->stack unchanged
   return AllOk;
 }
 
@@ -242,7 +242,7 @@ enum Status exec_QuoteBool(MachineStateT *ms)
 
   ms->term = BoolValue(v);
   ms->code += 2;
-  // ms->stack unchanged
+  //| ms->stack unchanged
   return AllOk;
 }
 
@@ -254,7 +254,7 @@ enum Status exec_QuoteInt(MachineStateT *ms)
 
   ms->term = IntValue(v);
   ms->code += 2;
-  // ms->stack unchanged
+  //| ms->stack unchanged
   return AllOk;
 }
 
@@ -326,7 +326,7 @@ enum Status exec_Return(MachineStateT *ms)
     return Crashed_CannotReturn;
   }
 
-  // ms->term unchanged
+  //| ms->term unchanged
   ms->code = pattern.top;
   ms->stack = pattern.bottom;
   return AllOk;
@@ -382,7 +382,7 @@ enum Status exec_QuoteEmptyList(MachineStateT *ms)
 
   ms->term = EmptyListValue(v);
   ms->code += 1;
-  // ms->stack unchanged
+  //| ms->stack unchanged
   return AllOk;
 }
 
