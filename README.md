@@ -1,10 +1,6 @@
-
-
-
 # Projet : Compilation d'un langage fonctionnel vers C
 
 /!\ This file is a work in progress right now. But soon it'll be done.
-
 
 ## Organisation de ce fichier
 
@@ -75,6 +71,7 @@ Ce qui suit n'est qu'une brève description du contenu de chaque fichier dans ce
 - **codeGenerator.ml** est responsable de la traduction du `flat_code` en source _C_.
 - **comp.ml** contient la fonction `main` pour l'exécutable **comp**.
 - **tools.ml** contient des fonctions utilitaires génériques importées par plusieurs modules, comme par exemple la fonction _zip_.
+
 
 ## _Mini-ML_ : description du langage
 
@@ -164,6 +161,7 @@ Le flot d'exécution du simulateur est lui aussi similaire à celui de la **CCAM
 
     puis, dans les deux cas, on termine la simulation.
 
+
 ## Représentation des instructions dans la **CCAM**
 
 En _C_, la manière la plus simple de représenter une suite d'instructions est de l'enregistrer sous la forme d'un tableau. Comme les instructions du modèle de la CAM contiennent parfois des paramètres (par exemple l'instruction `QuoteBool` contient une valeur littérale booléenne), le type des éléments du tableau doit être suffisamment flexible pour pouvoir contenir au besoin :
@@ -244,6 +242,7 @@ Le tableau `main_code` dans le code _C_ précédent est spécial dans le sens qu
 
 Tous les autres morceaux de code qui peuvent avoir été générés, comme ici `else_branch1` et `if_branch0`, proviennent d'instructions comme `Branch` ou `Call`. Ces autres tableaux "périphériques" sont reliées les uns aux autres et au tableau `main_code` par le biais des cellules de `.reference`, comme ici `{.reference = if_branch0}`.
 
+
 ## Phase de _code flattening_
 
 Fichier : **flattener.ml**
@@ -262,6 +261,7 @@ Il faut de plus s'assurer que le code du _binding_ termine bien par l'instructio
 
 Je n'en dirai pas plus, l'opération de _code flattening_ est de loin la plus compliquée à mettre en mots. Le résultat final de cette phase de compilation est une `fragment list`, avec `type fragment = string * flat_code`. En d'autres termes, on récupère une liste d'association de _placeholders_ et de `flat_instr list` qui sont prêts à être traduits en _C_ en tableaux de `CodeT`.
 
+
 ## Phase de génération de code _C_
 
 Fichier : **codeGenerator.ml**
@@ -275,52 +275,95 @@ Autant que possible, j'ai essayé de conserver les mêmes noms, entre la **CCAM*
 - `type value ---> struct ValueT`
 - `PairV ---> struct PairT`, `ListConsV ---> struct ListConsT`, etc.
 - `type stack ---> struct StackT`
-- `type machine_state ---> MachineStateT`
+- `type machine_state ---> struct MachineStateT`
 - `type status ---> enum Status`
 - `Halted/AllOk`
 - `run_machine()`, `execute_next_instruction()`, `blank_state()`
 
 Note : le type `MachineStateT` est un triplet, au lieu d'un quadruplet comme `machine_state`, ceci car on s'est débarrassé du besoin du paramètre `defstack` lors de la phase de _code flattening_.
+```C
+/* ccam.h */
+typedef struct MachineStateT {
+  ValueT *term;
+  CodeT *code;
+  StackT *stack;
+} MachineStateT;
+```
+Le champ `code` correspond à un pointeur vers le début de la prochaine instruction à exécuter.
 
-Le flot d'exécution est également volontairement très similaire (_c.f._ section un peu plus bas pour une description détaillée).
+Le flot d'exécution de la **CCAM** est également volontairement très similaire à celui du simulateur ; _c.f._ la section là-dessus un peu plus bas.
+
 
 ## Organisation du dossier **ccam/**
 
 Ce dossier contient les sources de mon implémentation de la CAM en C. Fichiers notables :
 
-- **Makefile** est le fichier `make` pour la **CCAM**. Il permet de compiler un fichier généré avec le compilateur **comp** en un exécutable (_c.f._ **USAGE.txt**).
+- **Makefile** est le fichier `make` pour la **CCAM** (_c.f._ **USAGE.txt**).
 - **ccam.h** est le fichier d'en-tête principal. Il définit les `struct`, `union` et `enum` utilisés par la **CCAM**, et déclare aussi toutes les fonctions définies dans les fichiers **enums.c**, **value.c**, **stack.c** et **machine.c**.
-- **enums.c** regroupe diverses fonctions utilitaires qui concernent les divers `enum` utilisés par la **CCAM**.
-- **value.c** contient les fonctions de construction et de pattern-matching pour le type `ValueT`, qui correspond au `type value` du simulateur OCaml.
-- **stack.c** contient les divers constructeurs et fonctions de pattern-matching pour le type `StackT`, qui correspond au `type stack` du simulateur OCaml.
-- **machine.c** contient les constructeurs pour le type `MachineStateT`, ainsi que toutes les fonctions d'exécution individuelles des diverses instructions -- _e.g_ `exec_Apply()` ou `exec_Branch()`.
-- **runtime.c** contient la fonction `main()` de la **CCAM**, et fait directement appel au pointeur/tableau `main_code`, ce qui permet de faire le lien avec le code généré par **comp**.
-- **unit-tests.c** contient des tests unitaires pour vérifier le comportement de chaque instruction et des divers constructeurs de `ValueT`.
-- **testing.h** et **testing.c** contiennent des fonctions uniquement nécessaires pour les tests unitaires.
+- **enums.c** regroupe diverses fonctions utilitaires qui concernent les divers `enum` utilisés dans la **CCAM**.
+- **value.c** contient les fonctions de construction et de pattern-matching pour le type `ValueT`.
+- **stack.c** contient les divers constructeurs et fonctions de pattern-matching pour le type `StackT`.
+- **machine.c** contient les constructeurs pour le type `MachineStateT`, ainsi que toutes les fonctions d'exécution individuelles des diverses instructions : `exec_Apply()`, `exec_Branch()`, etc.
+- **runtime.c** contient la fonction `main()` de la **CCAM**.
+- **unit-tests.c** contient des tests unitaires pour vérifier le comportement de chaque instruction et des divers constructeurs de `ValueT` (_c.f._ **USAGE.txt** pour comment lancer les tests).
+- **testing.h** et **testing.c** contiennent du code nécessaire uniquement pour les tests unitaires.
 
 
 ## Flot d'exécution de la **CCAM**
 
-La fonction `main()` se trouve dans **runtime.c**.
+La fonction `main()` se trouve dans **runtime.c**. À partir du pointeur `main_code` (définit dans le code généré par **comp**), un état initial pour la machine virtuelle est créé, via la fonction
+```C
+MachineStateT *blank_state(CodeT *code) /* machine.c */
+```
+Puis on lance la fonction :
+```C
+enum Status run_machine(MachineStateT *ms, int verbose) /* machine.c */
+```
+Elle réalise une boucle `while` qui ne prend fin que lorsque le `status` de la machine virtuelle passe de `AllOk` à une autre valeur (`Halted` si l'instruction `Halt` est atteinte, une valeur d'erreur dans tout autre cas).
 
-À partir du pointeur `main_code`, un état initial pour la machine virtuelle est créé (**machine.c**: `MachineStateT *blank_state(CodeT *code)`). Puis la fonction `run_machine(MachineStateT *ms, int verbose)` est lancée.
+Dans le corps de cette boucle `while`, on appelle alors la fonction
+```C
+enum Status execute_next_instruction(MachineStateT *ms) /* enum.c */
+```
+Elle lit la prochaine cellule de code depuis l'état (`ms`) de la machine virtuelle. :
+```C
+/* enum.c: execute_next_instruction() */
+int instruction = ms->code[0].instruction;
+```
+Cet entier doit normalement contenir une constante de `enum instruction`.
 
-Cette fonction se trouve dans **machine.c**. Elle réalise une boucle `while` qui ne prend fin que lorsque le `status` de la machine virtuelle passe de `AllOk` à une autre valeur (`Halted` si l'instruction `Halt` est atteinte, une valeur d'erreur dans tout autre cas).
+Un `switch(instruction)` réalise alors le choix de la bonne fonction d'exécution à appeler. Par exemple :
+```C
+/* enum.c: execute_next_instruction() */
+case Halt: status = exec_Halt(ms); break;
+case Branch: status = exec_Branch(ms); break;
+// etc.
+```
+Toutes les fonctions de la forme `exec_Zzzz(ms)` sont définies dans le fichier **machine.c**.
 
-Dans le corps de cette boucle, la fonction `execute_next_instruction(MachineStateT *ms);` est appelée. Elle est définie dans **enum.c**. Elle lit la prochaine cellule de code enregistrée dans l'état (`ms`) de la machine virtuelle. Cette cellule (`ms->code[0]`), de type `CodeT`, doit normalement contenir une des constantes du type `enum instruction`. Un `switch` réalise le choix de la bonne fonction d'exécution à appeler. Par exemple si `ms->code[0] == Apply`, alors c'est `exec_Apply(ms)` qui sera appelée. Toutes les fonctions de la forme `exec_...` se trouvent dans **machine.c**.
+La fonction d'exécution choisie par le `switch` (par exemple `exec_Apply()`) modifie alors l'état de la machine virtuelle d'une certaine manière. Elle peut :
+- modifier le **terme** `ms->term`, qui est une `ValueT`,
+- modifier le pointeur **code** `ms->code`, qui est du type `CodeT *`,
+- modifier la **pile** `ms->stack`, qui est une `StackT`
 
-La fonction d'exécution choisie (par exemple `exec_Apply()`) modifie alors l'état de la machine virtuelle de la manière attendue pour l'instruction en question. Elle peut :
-- modifier le **terme** (`ms->term`), qui est de type `ValueT *`
-- modifier le pointeur **code** (`ms->code`), qui est de type `CodeT *`
-- modifier la **pile** (`ms->stack`), qui est de type `StackT *`
+En fait, sauf dans le cas d'instructions comme `Branch` ou `Call`, qui changent radicalement la valeur de `ms->code`, toutes les autres instructions incrémentent `ms->code` du bon nombre de cellules pour pointer à l'instruction suivante.
 
 Par exemple :
-- l'instruction `Push` copie le **terme** et l'ajoute à la **pile**, et incrémente le pointeur **code** de 1 (car l'instruction `Push` est encodée avec une seule cellule de type `CodeT`).
-- L'instruction `Branch` vérifie que le **terme** est un booléen, ajoute à la **pile** le pointeur vers l'instruction qui suit le `Branch` (qui correspond à `ms->code + 3` car l'instruction `Branch` est encodée sur trois cellules de type `CodeT`), et remplace le pointeur **code** par la cellule `ms->code[1]` si le **terme** vaut `true`, et `ms->code[2]` si le **terme** vaut `false` -- correspondant à choisir la branche _if_ ou la branche _else_.
+- l'instruction `Push` copie le **terme** et l'ajoute au dessus de la **pile**, puis incrémente le pointeur **code** de 1 (car l'instruction `Push` est encodée sur une seule cellule de type `CodeT`).
+- L'instruction `Branch` :
+  - vérifie que le **terme** est un booléen,
+  - ajoute à la **pile** le pointeur vers l'instruction qui suit, c'est-à-dire `ms->code + 3` puisque l'instruction `Branch` est encodée sur trois cellules,
+  - remplace le pointeur **code** par la cellule :
+    - `ms->code[1]` si le **terme** vaut `true`, ce qui correspond à choisir la branche _if_, _i.e._ le premier paramètre de `Branch`,
+    - `ms->code[2]` si le **terme** vaut `false` (branche _else_).
 
-Et de même pour toutes les autres instruction.
+Et ainsi de suite pour toutes les autres instruction.
 
-À la fin de l'exécution, on affiche un message d'erreur en cas d'erreur, dans le cas contraire on affiche la valeur (de type `ValueT`) finale du **terme** principal de l'état de la machine virtuelle (_i.e._, `ms->term`).
+À la fin de l'exécution, on affiche un message d'erreur en cas d'erreur, dans le cas contraire on affiche la valeur finale du **terme** principal de l'état de la machine virtuelle (_i.e._, `ms->term`), à l'aide de
+```C
+void print_value(ValueT *value) /* value.c */
+```
+
 
 ## Modèle de données du code _C_
 
@@ -361,9 +404,10 @@ d.tag = ValueIsPair;
 ```
 Et ainsi de suite.
 
-Bien sûr, la construction de nouvelles valeurs est une tâche répétitive, qui est donc rendue automatique par les fonctions de construction suivantes, toutes définies dans **value.c** :
+Bien sûr, la construction de nouvelles valeurs est une tâche répétitive. Les fonctions de construction suivantes simplifie le processus :
 
 ```C
+//| value.c
 ValueT *PairValue(ValueT *first, ValueT *second);
 ValueT *ClosureValue(CodeT *code, ValueT *closure_value);
 ValueT *BoolValue(long b);
@@ -378,10 +422,10 @@ Réécriture de l'exemple précédent avec ces fonctions de constructions (et en
 ValueT *d = PairValue(BoolValue(True), ClosureValue(NULL, IntValue(3)));
 ```
 
-Par exemple `ValueT *d = PairValue(b, c);` équivaut aux trois dernières lignes de l'exemple plus haut (sauf que le résultat de `PairValue` est un pointeur au lieu d'être une valeur locale).
 
-Tout ce que je viens de dire pour `ValueT` s'applique tout aussi bien au type `StackT` :
+Tout ce qui vient d'être dit pour `ValueT` s'applique aussi au type `StackT` :
 ```C
+/* ccam.h */
 typedef struct StackT {
   enum StackTag tag;
   union {
@@ -390,12 +434,14 @@ typedef struct StackT {
   } as;
 } StackT;
 ```
- qui correspond au type _OCaml_ :
+ qui correspond aux types _OCaml_ :
 ```OCaml
 type stackelem = Val of value | Cod of code and stack = stackelem list
 ```
-Sauf que les objets alloués de type `StackT` ne sont pas gérés par _reference counting_ (on n'en a pas besoin).
-Utilisation de `StackT`, pour continuer l'exemple précédent :
+
+Une différence tout de même entre `StackT` et `ValueT` : les objets alloués de type `StackT` ne sont pas gérés par _reference counting_ (on n'en a pas besoin).
+
+Exemple d'utilisation de `StackT` :
 ```C
 StackT s, t, u;
 s.tag = StackIsEmpty; // let s = [] ;;
@@ -406,8 +452,9 @@ u.tag = StackTopIsCode;
   u.as.with_code.top = foo;
   u.as.with_code.bottom = t; // let u = Cod(foo) :: t ;;
 ```
-Fonctions de construction pour `StackT` (dans **stack.c**) :
+Et les fonctions de construction pour `StackT` qui automatisent ce processus :
 ```C
+//| stack.c
 StackT *EmptyStack();
 StackT *ValueOnStack(ValueT *value, StackT *old_stack);
 StackT *CodeOnStack(CodeT *code, StackT *old_stack);
@@ -417,14 +464,17 @@ Réécriture de l'exemple précédent pour en faire usage :
 StackT *u = CodeOnStack(foo, ValueOnStack(IntValue(3), EmptyStack()));
 ```
 
+
 ## Pattern-matching
 
 Une fois que l'on a instancié une `ValueT` ou une `StackT`, on veut pouvoir effectuer un pattern-matching, pour :
-- vérifier que le type d'objet (une liste non vide, une valeur nulle, une pile avec du code (pointeur vers `CodeT`) comme élément de tête, etc) correspond bien à ce que l'on veut
-- si c'est le cas, récupérer le contenu de la valeur ; par exemple, si c'est une paire, récupérer les deux champs `first` et `second` de la structure `PairT` contenue dans l'union `as` de la valeur en question ; si c'est une pile avec une valeur au-dessus, récupérer les champs `top` (`ValueT *`) et `bottom` (`StackT *`) de la structure `ValueOnStackT`, correspondant respectivement à la valeur au dessus de pile et au reste de la pile.
-- une fois cela fait, on doit alors libérer la mémoire (si nécessaire) de l'objet que l'on a déconstruit par pattern-matching pour éviter les fuites de mémoire.
+- vérifier que le type d'objet correspond bien à ce que l'on veut. Par exemple, un entier, une liste non vide, une valeur nulle, une pile avec du code (pointeur vers `CodeT`) comme élément de tête, une pile avec une `ValueT` comme élément de tête, etc.
+- si c'est bien le cas, récupérer le contenu de la valeur. Par exemple :
+  - si c'est une paire, récupérer les deux champs `first` et `second` de la structure `PairT` contenue dans le champ `as` de la valeur en question
+  - si c'est une pile avec une `ValueT` au-dessus, récupérer les champs `top` (`ValueT *`) et `bottom` (`StackT *`) de la structure `ValueOnStackT`, correspondant respectivement à la `ValueT` qui constitue le dessus de pile, et au reste de la pile
+- une fois cela fait, pour éviter les fuites de mémoire, on doit alors libérer la mémoire (si nécessaire) de l'objet que l'on vient de déconstruit par pattern-matching.
 
-C'est le travail des fonctions suivantes :
+C'est le travail qu'effectuent les fonctions suivantes :
 ```C
 //| value.c
 enum result match_value_with_pair(ValueT *value, PairT *output);
@@ -449,29 +499,30 @@ PairT pattern; // <- pattern à remplir par le matching plus bas
 if (match_value_with_pair(x, &pattern) == Success) {
   // success: cela implique que x a été libéré (sauf s'il existe
   // à d'autres endroits en mémoire), et que son contenu a été
-  // transféré à pattern.first (contient IntValue(3)) et pattern.second
-  // (contient BoolValue(True)).
+  // transféré dans pattern.first (qui contient maintenant IntValue(3))
+  // et pattern.second (qui contient maintenant BoolValue(True))
 }
 else {
-  // matching failure: cela implique que x est intact, n'a pas été
-  // libéré en mémoire, et pattern n'a pas été modifié, donc n'est
-  // toujours pas initialisé
+  // matching failure: cela implique que `x` est intact, n'a pas été
+  // libéré en mémoire, et `pattern` n'a pas été modifié, donc
+  // en particulier n'est toujours pas initialisé
 }
 ```
 Toutes les fonctions de pattern-matching fonctionnent selon ce modèle.
 
+
 ## Gestion de la mémoire
 
-Les objets de type `StackT` sont libérés au fur et à mesure par pattern-matching. Ils n'ont jamais besoin d'être copiés, donc on n'a pas besoin de les gérer avec _reference counting_.
+Les objets de type `StackT` sont libérés au fur et à mesure par pattern-matching. Ils n'ont jamais besoin d'être copiés, donc on n'a pas besoin de les gérer par _reference counting_.
 
 À l'inverse, les objets de type `ValueT` sont susceptibles d'être copiés fréquemment, du fait de l'existence de l'instruction `Push`, qui place une copie du **terme** principal sur la **pile**.
 
-Au lieu de réellement copier les `ValueT` récursivement, il est plus économe de simplement incrémenter un `copy_count` (récursivement là encore), et de modifier le système de libération de mémoire pour que les objets de type `ValueT` ne soient libérés pour de vrai que lorsque leur `copy_count` tombe à zéro.
+Au lieu de réellement copier les `ValueT` récursivement, il est plus économe de simplement incrémenter un champ interne `copy_count` (récursivement là encore), et de modifier le système de libération de mémoire pour que les objets de type `ValueT` ne soient libérés pour de vrai que lorsque leur `copy_count` tombe à zéro.
 
 Les fonctions assurant ce travail de _mini garbage collecting_ (**value.c**):
 ```C
 ValueT *malloc_value();
-  // ^ initialise le copy_count
+  // ^ alloue une nouvelle ValueT et initialise son copy_count
 void free_value(ValueT *value);
   // ^ décrémente le copy_count, et éventuellement libère la ValueT
 void deepfree_value(ValueT *value);
@@ -486,7 +537,7 @@ ValueT *deepcopy_value(ValueT *value);
   // avant de renvoyer son argument d'entrée tel quel
 ```
 
-Les variables globales suivantes sont uniquement utilisées pour vérifier le comportement du _reference counting_ :
+Les variables globales suivantes sont uniquement utilisées pour vérifier (durant le _debugging_) le comportement du _reference counting_ :
 ```C
 int mallocated_values_count;
 int freed_values_real_count;
