@@ -16,34 +16,56 @@ Le projet est composé d'un compilateur appelé **comp**, écrit en _OCaml_ à l
 Le projet est aussi composé d'un simulateur **simu** écrit en _OCaml_ dont le rôle est de parser, compiler et interpréter un fichier source _mini-ML_, toujours selon le modèle de la CAM.
 
 
-## Organisation concrète du projet
+## Organisation globale concrète du projet
 
 Le projet est divisé en deux grosses parties :
 
-- **Partie OCaml** : sous-dossier **./ocaml**. Contient les sources pour le compilateur **comp** (_mini-ML_ --> _C_) et le simulateur **simu**. Un Makefile **./ocaml/Makefile** permet de les générer.
+- **Partie OCaml** : sous-dossier **ocaml/**. Contient les sources pour le compilateur **comp** (_mini-ML_ --> _C_) et le simulateur **simu**. Un Makefile **ocaml/Makefile** permet de les générer.
 
-- **Partie C** : sous-dossier **./ccam**. Contient les sources pour la machine virtuelle **CCAM**. Un Makefile **./ccam/Makefile** permet de générer un exécutable à partir des ces sources et du code généré par **comp** à partir du fichier _mini-ML_ source. Contient aussi des tests unitaires.
+- **Partie C** : sous-dossier **ccam/**. Contient les sources pour la machine virtuelle **CCAM**. Un Makefile **ccam/Makefile** permet de générer un exécutable à partir des ces sources et du code généré par **comp** à partir du fichier _mini-ML_ source. Contient aussi des tests unitaires.
 
 Autres fichiers du projet :
 
-- **Jeu de tests** : sous-dossier **./demo**. Contient divers programmes écrits en _Mini-ML_.
-- **./generate-all.sh** : script qui permet de générer des exécutables pour chacun des programmes dans **./demo**, en les compilant, d'abord avec **comp**, puis avec **./ccam/Makefile**.
-- **./USAGE.txt** : informations sur comment utiliser le projet.
+- **Jeu de tests** : sous-dossier **demo**. Contient divers programmes écrits en _Mini-ML_.
+- **generate-all.sh** : script qui permet de générer des exécutables pour chacun des programmes dans **demo**, en les compilant, d'abord avec **comp**, puis avec **ccam/Makefile**.
+- **USAGE.txt** : informations sur comment utiliser le projet.
 
 
 ## Usage des fichiers du projet
 
-Lire **./USAGE.txt**. Ce fichier contient toutes les informations d'usage pour :
-- **./ocaml/Makefile** et **./ccam/Makefile**
+Lire **USAGE.txt**. Ce fichier contient toutes les informations d'usage pour :
+- **ocaml/Makefile** et **ccam/Makefile**
 - **comp** et **simu**
-- le script **./generate-all.sh**
+- le script **generate-all.sh**
 
+
+## Mini démonstration
+
+Juste pour briser la glace :
+```sh
+$
+```
+
+
+## Organisation du dossier **ocaml/**
+
+Sources du compilateur **comp** `Mini-ML -> C` et du simulateur **simu**, tous deux écrits en _OCaml_. Ce qui suit n'est qu'une brève description du contenu de chaque fichier dans ce dossier ; de plus amples explications suivent dans le reste de ce document.
+
+- **Makefile** permet de compiler les exécutables **comp** et **simu**. _c.f._ **USAGE.txt**.
+- **lexer.mly** et **parser.mly** contiennent le code _Lex_ et _Yacc_ du lexer et du parseur _Mini-ML_, respectivement.
+- **interf.ml** contient la fonction `parse` qui fait office d'interface entre le parser _Yacc_ et le reste du code _OCaml_.
+- **miniml.ml** définit le `type mlexp`, dont le but est de représenter l'arbre syntaxique d'un programme _Mini-ML_. Un _pretty-printer_ `pp_prog/pp_exp` est aussi contenu dans ce fichier, mais il n'est plus très utile, c'était un outil de débuggage durant les premières tentatives de modification du parser.
+- **encoder.ml** contient les fonctions permettant de transformer un arbre syntaxique de `type mlexp` en suite d'instructions `type instr`, selon le modèle d'instructions de la CAM vu en cours.
+- **simulator.ml** contient la fonction `main` et le reste du code principal de l'exécutable **simu**, qui réalise une simulation _OCaml_ d'exécution de `instr list`, toujours selon le modéle vu en cours.
+- **flattener.ml** contient les fonctions permettant d'"aplatir" le code généré par **encoder.ml** en un nouveau `type flat_code`, beaucoup plus proche du modèle de données que j'ai utilisé en _C_ dans la **CCAM**.
+- **codeGenerator.ml** est responsable de la traduction du `flat_code` en code _C_ (sous la forme d'une `string`).
+- **tools.ml** contient des fonctions utilitaires importées par plusieurs modules, comme par exemple la fonction _zip_.
 
 ## _Mini-ML_ : description du langage
 
 Fichiers sources du lexer/parser : **lexer.mll**, **parser.mly**, **miniml.ml**
 
-Le langage est similaire à _OCaml_ en syntaxe. Il n'est pas typé. Le programme **./demo/language.ml** expose tous les éléments de syntaxe et de sémantique valides en _Mini-ML_ :
+Le langage est similaire à _OCaml_ en syntaxe. Il n'est pas typé. Le programme **demo/language.ml** expose tous les éléments de syntaxe et de sémantique valides en _Mini-ML_ :
 
 ```OCaml
 (* language.ml *)
@@ -91,7 +113,7 @@ Cette suite d'instructions constitue par ailleurs la valeur d'entrée du simulat
 
 Fichiers : **simulator.ml**, **simu** (exécutable)
 
-Le simulateur dépend de l'encoder et bien sûr du parser et du lexer. Il exécute les instructions de `type instr` selon le modèle de la CAM vu en cours. **simulator.ml** contient par ailleurs une fonction `main`, ce qui permet de générer un exécutable **simu**, qui prend en paramètre un fichier **Mini-ML** et lance la simulation d'exécution sur son contenu. Il y a aussi une option `verbose` (_c.f._ **./USAGE.txt**) que l'on peut passer à **simu**, permettant d'afficher une trace du processus d'exécution de chaque instruction et de l'évolution de l'état de la CAM.
+Le simulateur dépend de l'encoder et bien sûr du parser et du lexer. Il exécute les instructions de `type instr` selon le modèle de la CAM vu en cours. **simulator.ml** contient par ailleurs une fonction `main`, ce qui permet de générer un exécutable **simu**, qui prend en paramètre un fichier **Mini-ML** et lance la simulation d'exécution sur son contenu. Il y a aussi une option `verbose` (_c.f._ **USAGE.txt**) que l'on peut passer à **simu**, permettant d'afficher une trace du processus d'exécution de chaque instruction et de l'évolution de l'état de la CAM.
 
 Je décris ci-dessous les principaux types utilisés dans le code de la simulation. Le double intérêt de cette description est que la deuxième implémentation de la CAM, celle que j'ai réalisée en _C_ (**CCAM**), est vraiment très proche de cette implémentation-ci en _OCaml_ (aussi proche que les différences de paradigme et d'abstraction entre _C_ et _OCaml_ me l'ont permis).
 
@@ -132,7 +154,7 @@ Le flot d'exécution du simulateur est lui aussi similaire à celui de la **CCAM
 
 ## Représentation des instructions dans la **CCAM**
 
-En _C_, la manière la plus simple de représenter une suite d'instructions est de la coder sous forme d'un tableau. Comme les instructions contiennent parfois des paramètres (par exemple l'instruction `QuoteBool` contient une valeur littérale booléenne), le type des éléments du tableau doit être suffisamment flexible pour pouvoir contenir au besoin :
+En _C_, la manière la plus simple de représenter une suite d'instructions est de l'enregistrer sous forme d'un tableau. Comme les instructions du modèle de la CAM contiennent parfois des paramètres (par exemple l'instruction `QuoteBool` contient une valeur littérale booléenne), le type des éléments du tableau doit être suffisamment flexible pour pouvoir contenir au besoin :
 
 - une constante représentant une instruction, comme `QuoteBool` ou `Swap`
 - une valeur littérale (entier ou booléen)
@@ -141,87 +163,39 @@ En _C_, la manière la plus simple de représenter une suite d'instructions est 
 
 Ce quatrième type de cellule est nécessaire pour le cas d'instructions qui sont censées "contenir" du code, comme l'instruction `Branch`, qui, en tant que constructeur pour le `type instr` en _OCaml_, est censé lui-même contenir les instructions pour les branches `if` et `else`.
 
-
-
-TODO: continue
-
-On peut alors conserver dans l'état de la machine virtuelle un pointeur vers la prochaine case du tableau d'instructions à exécuter.
-
-TODO: instruction Call, traitement de la récursion
-
-
-## Phase de _flattening_
-
-Fichier : **flattener.ml**
-
-Le modèle de représentation du code offert par le `type instr` et `type code = list instr` n'est pas compatible avec le format de code que la **CCAM** attend en _C_.
-
-Le code
-
-## Partie C
-
-Dossier: **ccam/**
-
-Implémentation de la CAM en C. Fichiers dans ce sous-projets:
-
-- **Makefile** est le fichier `make` pour la **CCAM**. Il permet de compiler un fichier généré avec le compilateur **comp** en un exécutable.
-- **ccam.h** est le fichier d'en-tête principal. Il définit les `struct` et `enum` utilisés par la **CCAM**, et déclare toutes les fonctions des fichiers **enums.c**, **value.c**, **stack.c**, **machine.c**. Il contient aussi la déclaration de la fonction `get_main_code()`, qui est attendue dans le fichier généré par le compilateur **comp**.
-- **enums.c** contient divers fonctions utilitaires qui sont fortement concernées par les divers `enum` de la **CCAM**, par exemple une fonction d'affichage d'un message d'erreur à partir d'un `enum Status`.
-- **value.c** contient les divers constructeurs et fonctions de pattern-matching pour le type `ValueT`, qui correspond au `type value` du simulateur OCaml.
-- **stack.c** contient les divers constructeurs et fonctions de pattern-matching pour le type `StackT`, qui correspond au `type stack` du simulateur OCaml.
-- **machine.c** contient les constructeurs pour le type `MachineStateT`, qui correspond au triplet `(value * code * stack)` du simulateur OCaml, c'est-à-dire le type de la configuration de la CAM. Il contient aussi toutes les fonctions d'exécution des instructions, par exemple `exec_Apply()` ou `exec_Branch()`.
-- **runtime.c** contient la fonction `main()` de la **CCAM**, et appelle la fonction `get_main_code()` afin de faire le lien avec le code généré par le compilateur OCaml **comp**.
-- **unit-tests.c** contient des tests unitaires pour vérifier le comportement de chaque instruction et des divers constructeurs de `ValueT`.
-- **testing.h** et **testing.c** contiennent des fonctions uniquement nécessaires pour les tests unitaires.
-
-### Usage de **ccam/Makefile**
-
-En supposant que vous avez compilé un fichier _mini-ML_ en fichier source C à l'aide du compilateur OCaml **comp**, et que le fichier généré s'appelle **generated.c**, la commande :
-```sh
-$ make build in=generated.c out=generated.out
+C'est cette stratégie que j'ai employé pour encoder les instructions en _C_ dans la **CCAM**. Le type correspondant à une cellule de tableau de code s'appelle `CodeT`. Il est déclaré dans le fichier d'en-tête **ccam.h** :
+```C
+  union CodeT; typedef union CodeT {
+    int instruction;
+    int operation;
+    union CodeT *reference;
+    long data;
+  } CodeT;
 ```
-permet de générer l'exécutable **generated.out**. Si vous ne renseignez pas les deux paramètres, la commande :
-```sh
-$ make build
+Note : le `union CodeT;` placé juste avant le `typedef` est juste là pour permettre une définition récursive : la ligne `union CodeT *reference;` nécessite que `union CodeT` soit déclaré _a priori_.
+
+Les unions en _C_ s'utilisent assez similairement à un type somme ; en pseudo-code _OCaml_ la même structure serait définie par :
+```OCaml
+type code_t = Instruction of int | Operation of int
+  | Code of code_t pointer | Data of long ;;
 ```
-partira du principe par défaut que `in=gen.c` et `out=gen.out`.
+Par similarité de concept, j'appellerai "constructeur" les différents membres d'une `union` -- ici `.instruction`, `.operation`, `.reference` et `.data`.
 
-Il y a deux options de compilation que vous pouvez choisir d'activer :
-- `DBG` pour avoir une trace de toute l'exécution de la **CCAM**, instruction par instruction. Attention, pour certains programmes, l'affichage dans certains terminaux pourrait poser des problèmes à cause de la quantité affichée en sortie.
-- `MEM` pour avoir, à la toute fin de l'exécution, après avoir affiché la valeur finale calculée par la **CCAM**, un rapport d'information concernant le _garbage collecting_ des objets de type `ValueT`.
-
-Pour activer une des options, ou bien les deux à la fois :
-```sh
-$ make build in=foo.c out=bar DBG=y
-$ make build in=foo.c out=bar MEM=y
-$ make build in=foo.c out=bar DBG=y MEM=y # <-- les deux seront activés
+En _C_ une valeur de type union peut se définir de la sorte :
+```C
+CodeT foo = { .operation = 3 } ;
+// altenative :
+CodeT bar; bar.reference = &foo;
 ```
+Ici on a choisit le constructeur `.operation` pour `foo`, et le constructeur `.reference` pour `bar`. Une valeur de type `union` n'est pas censé initialiser plus d'un constructeur (sous peine de comportements imprévisibles).
 
-Dans le code source, l'option `DBG` correspond à définir la variable de pré-processeur `DEBUGMODE` ; l'option `MEM` correspond elle à la variable `TRACE_MEMORY`.
-
-Pour lancer les tests unitaires, mode non verbeux :
-```sh
-$ make tests
-```
-Affiche "All tests passed." si tout s'est bien passé. Mode verbeux :
-```sh
-$ make tests V=y
-```
-Affiche une ligne commençant par `[ok]` pour chaque test vérifié avec la description du test en question.
-
-### Encodage des instructions dans la **CCAM**
-
-Le code est représenté par un tableaux dont les cellules sont du type `CodeT`.
-Ce type, définit dans **ccam.h**, est une `union` (un type somme), qui peut selon les cas :
-- représenter une instruction (`int instruction`).
-- représenter une valeur brut (`int data`). Utilisé notamment pour encoder les paramètres des instructions `QuoteInt of int` et `QuoteBool of bool`.
-- représenter une opération (`int operation`). Utilisé pour encoder l'instruction `PrimOp`
-- représenter une référence vers une autre section de code, c'est-à-dire un pointeur vers `CodeT` (`CodeT *reference`).
-
-Comme exemple concret, voici deux représentations équivalentes de la même suite d'instructions, l'une en OCaml, l'autre en C, telle que générée par le compilateur :
-```ocaml
+Pour revenir à la représentation des instructions de la CAM dans l'implémentation **CCAM** : l'exemple qui suit sera peut-être plus parlant.
+```OCaml
 [QuoteInt(3); Swap; PrimInstr (UnOp (Fst)); Branch([Push], [App])] : instr list
 ```
+Il s'agit d'une liste d'instructions arbitraire, telle que celles produites par **encoder.ml** et consommées par **simulator.ml** -- mis à part le fait qu'elle n'ait pas le moindre sens.
+
+Voici maintenant sa représentation en _C_ pour la **CCAM**  après avoir subi tous les traitements effectués par **comp** :
 ```C
 #include "ccam.h"
 
@@ -244,98 +218,261 @@ CodeT main_code[] =
     {.instruction = Unary},{.operation = Fst},
     {.instruction = Branch},{.reference = if_branch0},{.reference = else_branch1},
 };
-
-CodeT *get_main_code()
-{
-    return main_code;
-}
 ```
-(La suite d'instruction n'a pas de sens à priori, c'est juste une démonstration visuelle.)
 
-Le code principal de l'exemple (`main_code[]`) est une série de quatre instructions. La première est encodée sur 2 cellules du tableau, une pour spécifier l'instruction (`.instruction = QuoteInt`), l'autre pour la donnée brut contenue (`.data = 3L`).
-L'instruction `Branch` est encodée avec 3 cellules, une première pour l'instruction (`.instruction = Branch`), les deux autres pour référencer d'autres fragments de code, ce sont donc bien des pointeurs vers `CodeT` (`.reference = if_branch0`).
+Les instructions comme `QuoteInt` ou `Unary` ou `Branch`, qui contiennent des paramètres, sont codées sur plusieurs cellules du tableau. Le constructeur choisit pour chaque chaque cellule est adapté à son contenu.
 
-### Flot d'exécution de la **CCAM**
+Le tableau `main_code` est spécial dans le sens que c'est le point de départ du programme exécuté par la **CCAM**. Il est d'ailleurs directement utilisé dans la fonction `main()` de **runtime.c**.
+
+Tous les autres morceaux de code qui peuvent avoir été générés, comme ici `else_branch1` et `if_branch0`, proviennent d'instructions comme `Branch` ou `Call` qui sont censées modifier la liste d'instructions que la machine virtuelle exécute. Ces autres tableaux "périphériques" sont reliées les uns aux autres et au tableau `main_code` par le biais des cellules de `.reference`.
+
+## Phase de _flattening_
+
+Fichier : **flattener.ml**
+
+Pour passer d'instructions du `type instr` (avec des constructeurs comme `Branch of instr list * instr list`), à une représentation en _C_ "plate" (sans structure directement récursive), on a besoin de passer par un format d'instructions intermédiaire qui soit débarrassé de cette récursion structurelle.
+
+C'est le rôle de `type flat_instr` et `type flat_code = flat_instr list` définis dans **flattener.ml**. Essentiellement, on remplace chaque constructeur souffrant de récursion structurelle par un nouveau constructeur "plat" ne contenant plus que des _placeholders_ (de type `string`). Ces chaînes de caractère correspondent dans la représentation finale en _C_ aux noms des tableaux périphériques référencés : `"if_branch0"` par exemple.
+
+Le code _OCaml_ du fichier **flattener.ml** est particulièrement compliqué/pénible, avec beaucoup de récursion, de récursion mutuelles, et une foule de variables difficiles à nommer. La raison en est que l'opération qui permet de transformer une `instr list` en `flat_code` est une opération particulièrement _stateful_. En particulier, il faut conserver et mettre à jour un compteur (que j'ai généralement appelé `n` ou `nextN`, etc) pour s'assurer que les _placeholders_ que l'on utilise sont uniques (puisqu'ils correspondent à des noms de tableaux de `CodeT` en _C_).
+
+Un point qui mérite peut-être quelques explications : le traitement des instructions `Call`, `AddDefs` et `RmDefs` durant la traduction de `type instr` vers `flat_code`. Par soucis de simplicité et d'efficacité, toutes les définitions contenues dans toutes les instructions `AddDefs` (à travers tout le programme) sont automatiquement transcrites en tableaux périphériques uniques (comme pour les branches `if` et `else` de `Branch`).
+
+À partir de là, on n'a plus vraiment besoin des instructions `AddDefs` et `RmDefs` dans le type `flat_instr`, ni, par extension, dans le modèle d'exécution de la **CCAM**. Il suffit de faire en sorte que `FlatCall` contienne le _placeholder_ correspondant au bon _let-rec binding_, et de définir le comportement de cette instruction comme étant identique à un `Branch` non conditionnel (un seul chemin qui est forcément emprunté).
+Il faut de plus s'assurer que le code du _binding_ termine bien par l'instruction `Return` (comme pour le cas des branchements conditionnels), chose qui n'était pas prévue dans le modèle d'origine (celui du simulateur _OCaml_).
+
+Je n'en dirai pas plus, l'opération de _code flattening_ est de loin la plus compliquée à mettre en mots. Le résultat final de cette phase de compilation est une `fragment list`, avec `type fragment = string * flat_code`. En d'autres termes, on récupère une liste d'association de _placeholders_ et de `flat_instr list` qui sont prêts à être traduits en _C_.
+
+## Phase de génération de code _C_
+
+Fichier : **codeGenerator.ml**
+
+Une fois qu'on a récupéré la `fragment list` de la phase précédente, il ne reste plus grand chose à faire : simplement à construire la chaîne de caractère qui sera le contenu du fichier _C_ généré par **comp**. L'opération n'a rien de très compliqué ni rien de très intéressant : c'est essentiallement un _printer_ un peu spécial.
+
+## Organisation du dossier **ccam/**
+
+Ce dossier contient les sources de mon implémentation de la CAM en C (**CCAM**). Fichiers notables :
+
+- **Makefile** est le fichier `make` pour la **CCAM**. Il permet de compiler un fichier généré avec le compilateur **comp** en un exécutable. _c.f._ **USAGE.txt**.
+- **ccam.h** est le fichier d'en-tête principal. Il définit les `struct`, `union` et `enum` utilisés par la **CCAM**, et déclare aussi toutes les fonctions définies dans les fichiers **enums.c**, **value.c**, **stack.c**, **machine.c**.
+- **enums.c** regroupe diverses fonctions utilitaires qui concernent les divers `enum` utilisés par la **CCAM**.
+- **value.c** contient les divers constructeurs et fonctions de pattern-matching pour le type `ValueT`, qui correspond au `type value` du simulateur OCaml.
+- **stack.c** contient les divers constructeurs et fonctions de pattern-matching pour le type `StackT`, qui correspond au `type stack` du simulateur OCaml.
+- **machine.c** contient les constructeurs pour le type `MachineStateT`, ainsi que toutes les fonctions d'exécution individuelles des diverses instructions -- _e.g_ `exec_Apply()` ou `exec_Branch()`.
+- **runtime.c** contient la fonction `main()` de la **CCAM**, et fait directement appel au pointeur/tableau `main_code`, ce qui permet de faire le lien avec le code généré par **comp**.
+- **unit-tests.c** contient des tests unitaires pour vérifier le comportement de chaque instruction et des divers constructeurs de `ValueT`.
+- **testing.h** et **testing.c** contiennent des fonctions uniquement nécessaires pour les tests unitaires.
+
+## Lien entre **CCAM** et **simu**
+
+Autant que possible, j'ai aussi essayé de conserver les mêmes noms, entre la **CCAM** et le simulateur _OCaml_ (**simulator.ml**), pour des types remplissant des rôles équivalents dans les deux implémentations :
+- `type value` --> `ValueT`
+- constructeur `PairV()` --> `PairT`, etc
+- constructeur `ListConsV()` --> `ListConsT`
+- `type stack` --> `StackT`
+- `type machine_state` --> `MachineStateT`
+- `type status` --> `enum Status`
+- constructeur `Halted/AllOk` --> constante (_enum value_) `Halted/AllOk`
+
+Note : le type `MachineStateT` est cependant un triplet, au lieu d'un quadruplet comme `machine_state`, puisqu'on s'est débarrassé du besoin du paramètre `defstack` lors de la phase de _code flattening_.
+
+Même les fonctions gardent les mêmes noms autant que possible : `run_machine()`, `execute_next_instruction()`, `blank_state()` remplissent tous le même rôle dans la **CCAM** que leurs homologues _OCaml_ dans **simulator.ml**.
+
+Le flôt d'exécution est également extrêmement proche.
+
+## Flot d'exécution de la **CCAM**
 
 La fonction `main()` se trouve dans **runtime.c**.
-Le pointeur vers le code principal généré par le compilateur OCaml est récupéré grâce à `get_main_code()` (contenue dans le code généré).
 
-À partir de ce pointeur, un état initial pour la machine virtuelle est créé (**machine.c**: `MachineStateT *blank_state()`). Puis la fonction `run_machine()` est lancée.
+À partir du pointeur `main_code`, un état initial pour la machine virtuelle est créé (**machine.c**: `MachineStateT *blank_state(CodeT *code)`). Puis la fonction `run_machine(MachineStateT *ms, int verbose)` est lancée.
 
-Cette fonction se trouve dans **machine.c**. Elle réalise une boucle `while` qui ne prend fin que lorsqu'une erreur est observée par le status de la `CCAM`, ou bien lorsque l'instruction `Halt` est atteinte, après quoi ledit status passe de `AllOk` à `Halted`.
+Cette fonction se trouve dans **machine.c**. Elle réalise une boucle `while` qui ne prend fin que lorsque le `status` de la machine virtuelle passe de `AllOk` à une autre valeur (`Halted` si l'instruction `Halt` est atteinte, une valeur d'erreur dans tout autre cas).
 
-Dans le corps de cette boucle, la fonction `execute_next_instruction(ms)` est appelée. Elle est définie dans **enum.c**. Elle lit la prochaine cellule de code enregistrée dans l'état (`ms`) de la machine virtuelle. Cette cellule (`ms->code[0]`), de type `CodeT`, doit normalement contenir une des constantes du type `enum instruction`. Un `switch` réalise le choix de la bonne fonction d'exécution à appeler. Par exemple si `ms->code[0] == Apply`, alors c'est `exec_Apply(ms)` qui sera appelée. Toutes les fonctions de la forme `exec_...` se trouvent dans **machine.c**.
+Dans le corps de cette boucle, la fonction `execute_next_instruction(MachineStateT *ms);` est appelée. Elle est définie dans **enum.c**. Elle lit la prochaine cellule de code enregistrée dans l'état (`ms`) de la machine virtuelle. Cette cellule (`ms->code[0]`), de type `CodeT`, doit normalement contenir une des constantes du type `enum instruction`. Un `switch` réalise le choix de la bonne fonction d'exécution à appeler. Par exemple si `ms->code[0] == Apply`, alors c'est `exec_Apply(ms)` qui sera appelée. Toutes les fonctions de la forme `exec_...` se trouvent dans **machine.c**.
 
-La fonction d'exécution choisie modifie alors l'état de la machine virtuelle de la manière attendue pour l'instruction en question. Elle peut :
-- modifier le **terme** (`ms->term`), de type `ValueT *`
-- modifier le pointeur **code** (`ms->code`), de type `CodeT *`
-- modifier la **pile** (`ms->stack`), de type `StackT *`
+La fonction d'exécution choisie (par exemple `exec_Apply()`) modifie alors l'état de la machine virtuelle de la manière attendue pour l'instruction en question. Elle peut :
+- modifier le **terme** (`ms->term`), qui est de type `ValueT *`
+- modifier le pointeur **code** (`ms->code`), qui est de type `CodeT *`
+- modifier la **pile** (`ms->stack`), qui est de type `StackT *`
 
 Par exemple :
 - l'instruction `Push` copie le **terme** et l'ajoute à la **pile**, et incrémente le pointeur **code** de 1 (car l'instruction `Push` est encodée avec une seule cellule de type `CodeT`).
-- L'instruction `Branch` vérifie que le **terme** est un booléen, ajoute à la **pile** le pointeur vers la prochaine instruction (qui correspond à `ms->code + 3` car l'instruction `Branch` est encodée sur trois cellules de type `CodeT`), et remplace le pointeur **code** par la cellule `ms->code[1]` si le **terme** vaut `true`, et `ms->code[2]` si le **terme** vaut `false`.
+- L'instruction `Branch` vérifie que le **terme** est un booléen, ajoute à la **pile** le pointeur vers l'instruction qui suit le `Branch` (qui correspond à `ms->code + 3` car l'instruction `Branch` est encodée sur trois cellules de type `CodeT`), et remplace le pointeur **code** par la cellule `ms->code[1]` si le **terme** vaut `true`, et `ms->code[2]` si le **terme** vaut `false` -- correspondant å choisir la branche _if_ ou la branche _else_.
 
-Et ainsi de suite pour toutes les autres instruction.
+Et de même pour toutes les autres instruction.
 
-### Pattern-matching
+À la fin de l'exécution, on affiche un message d'erreur en cas d'erreur, dans le cas contraire on affiche la valeur (de type `ValueT`) finale du **terme** principal de l'état de la machine virtuelle (_i.e._, `ms->term`).
 
-Le modèle de données de la **CCAM** est fortement inspiré du modèle de données d'un langage fonctionnel.
+## Modèle de données du code _C_
 
-............ ................ ............
+Fichiers : **ccam.h**
 
-## Partie OCaml
+Le modèle de données de la **CCAM** est fortement inspiré du modèle de données d'un langage fonctionnel. On utilise un tag au lieu de constructeurs, et le pattern-matching est fait par des fonctions individuelles comme `match_value_with_pair()` (**value.c**), mais cela mis à part, j'ai essayé de garder le même esprit.
 
-### Usage
+Puisqu'une valeur (`ValueT`) manipulée par la **CCAM** peut être selon les cas un booléen, un entier, une valeur nulle (`NullV()`), une paire, etc, la solution que j'ai choisie a été de définir `ValueT` comme une structure comprenant trois champ distincts : `copy_count` pour gérer la mémoire, `tag` pour identifier le type de valeur en question (fait office de constructeur, au sens qu'il permet de faire un _pattern-match_ sur une valeur), et `as` (comme le mot anglais qui signifie ici "considéré en tant que") pour contenir le vrai contenu de la valeur :
 
-Pour générer les exécutables **comp** et **simu** :
-```sh
-$ make comp
-$ make simu
-$ make    # <- pour générer les deux
+```C
+typedef struct ValueT {
+  int copy_count;
+  enum ValueTag tag;
+  union {
+    long integer;
+    long boolean;
+    PairT pair;
+    ClosureT closure;
+    ListConsT listcons;
+  } as;
+} ValueT;
 ```
-Pour compiler un fichier `mini-ML` vers source `C` (à destination de la **CCAM**) :
-```sh
-$ ./comp input-file.ml output-file.c
+
+Le membre `as` est donc une union. Au besoin, on pourra définir donc définir une `ValueT` de différentes manières. Les commentaires dans l'exemple suivant font le lien avec la syntaxe _OCaml_.
+
+```C
+ValueT a, b, c, d; CodeT *x = NULL;
+a.tag = ValueIsInt;
+  a.as.integer = 3; // let a = IntV(3) ;;
+b.tag = ValueIsBool;
+  b.as.boolean = True; // let b = BoolV(true) ;;
+c.tag = ValueIsClosure;
+  c.as.closure.code = x;
+  c.as.closure.value = a; // let c = ClosureV([], a) ;;
+d.tag = ValueIsPair;
+  d.as.pair.first = b;
+  d.as.pair.second = c; // let d = PairV(b, c) ;;
 ```
-Pour lancer la simulation d'exécution OCaml sur un fichier `mini-ML` :
+Et ainsi de suite.
+
+Bien sûr, la construction de nouvelles valeurs est une tâche répétitive, qui est donc rendue automatique par les fonctions de construction suivantes, toutes définies dans **value.c** :
+
+```C
+ValueT *PairValue(ValueT *first, ValueT *second);
+ValueT *ClosureValue(CodeT *code, ValueT *closure_value);
+ValueT *BoolValue(long b);
+ValueT *IntValue(long x);
+ValueT *NullValue();
+ValueT *EmptyListValue();
+ValueT *ListConsValue(ValueT *head, ValueT *tail);
 ```
-$ ./simu input-file.ml
+
+Réécriture de l'exemple précédent avec ces fonctions de constructions (et en travaillant avec des pointeurs) :
+```C
+ValueT *d = PairValue(BoolValue(True), ClosureValue(NULL, IntValue(3)));
 ```
 
-### Lexer/Parser
+Par exemple `ValueT *d = PairValue(b, c);` équivaut aux trois dernières lignes de l'exemple plus haut (sauf que le résultat de `PairValue` est un pointeur au lieu d'être une valeur locale).
 
-[deleted]
+Tout ce que je viens de dire pour `ValueT` s'applique tout aussi bien au type `StackT` :
+```C
+typedef struct StackT {
+  enum StackTag tag;
+  union {
+    ValueOnStackT with_value;
+    CodeOnStackT with_code;
+  } as;
+} StackT;
+```
+ qui correspond au type _OCaml_ :
+```OCaml
+type stackelem = Val of value | Cod of code and stack = stackelem list
+```
+Sauf que les objets alloués de type `StackT` ne sont pas gérés par _reference counting_ (on n'en a pas besoin).
+Utilisation de `StackT`, pour continuer l'exemple précédent :
+```C
+StackT s, t, u;
+s.tag = StackIsEmpty; // let s = [] ;;
+t.tag = StackTopIsValue;
+  t.as.with_value.top = IntValue(3);
+  t.as.with_value.bottom = s; // let t = Val(IntV(3)) :: s ;;
+u.tag = StackTopIsCode;
+  u.as.with_code.top = foo;
+  u.as.with_code.bottom = t; // let u = Cod(foo) :: t ;;
+```
+Fonctions de construction pour `StackT` (dans **stack.c**) :
+```C
+StackT *EmptyStack();
+StackT *ValueOnStack(ValueT *value, StackT *old_stack);
+StackT *CodeOnStack(CodeT *code, StackT *old_stack);
+```
+Réécriture de l'exemple précédent pour en faire usage :
+```C
+StackT *u = CodeOnStack(foo, ValueOnStack(IntValue(3), EmptyStack()));
+```
 
-### Processus de compilation
+## Pattern-matching
 
-Fichiers : **encoder.ml**, **flattener.ml**, **codeGenerator.ml**
+Une fois que l'on a instancié une `ValueT` ou une `StackT`, on veut pouvoir effectuer un pattern-matching, pour :
+- vérifier que le type d'objet (une liste non vide, une valeur nulle, une pile avec du code (pointeur vers `CodeT`) comme élément de tête, etc) correspond bien à ce que l'on veut
+- si c'est le cas, récupérer le contenu de la valeur ; par exemple, si c'est une paire, récupérer les deux champs `first` et `second` de la structure `PairT` contenue dans l'union `as` de la valeur en question ; si c'est une pile avec une valeur au-dessus, récupérer les champs `top` (`ValueT *`) et `bottom` (`StackT *`) de la structure `ValueOnStackT`, correspondant respectivement à la valeur au dessus de pile et au reste de la pile.
+- une fois cela fait, on doit alors libérer la mémoire (si nécessaire) de l'objet que l'on a déconstruit par pattern-matching pour éviter les fuites de mémoire.
 
-J'ai remplacé le fichier instrs.ml par ces trois fichiers, qui réalisent chacuns et dans cet ordre, une partie du processus de compilation :
-- **encoder.ml** : prend une expression de type `mlexp` et produit du `code`, qui peut ensuite ou bien être passé au simulateur Ocaml (c.f. plus bas) **simulator.ml**, ou bien être passé à l'étape suivante de la compilation
-- **flattener.ml** : prend du `code` en entrée, et retourne des fragments nommés de `flat_code`, c'est à dire une `fragment list`, avec `type fragment = string * flat_code`, et `type flat_code` = `flat_instr list`.
+C'est le travail des fonctions suivantes :
+```C
+//| value.c
+enum result match_value_with_pair(ValueT *value, PairT *output);
+enum result match_value_with_closure(ValueT *value, ClosureT *output);
+enum result match_value_with_boolean(ValueT *value, long *output);
+enum result match_value_with_integer(ValueT *value, long *output);
+enum result match_value_with_list_cons(ValueT *value, ListConsT *output);
+enum result match_value_with_empty_list(ValueT *value);
+//| stack.c
+enum result match_stacktop_with_value(StackT *stack, ValueOnStackT *output);
+enum result match_stacktop_with_code(StackT *stack, CodeOnStackT *output);
+```
 
-  L'idée est que pour compiler les instructions en C sous la forme de simples tableaux, on doit se débarrasser de la récursivité du type `code` : les instructions `Branch` et `AddDefs` contiennent eux-même du `code`.
+Exemple d'utilisation :
+```C
+ValueT *x = PairValue(IntValue(3), BoolValue(True));
 
-  On fait donc en sorte d'obtenir du code non-récursif (`flat_code`) sous forme de fragments isolés et nommés (`fragment list`) qui se font référence les uns aux autres, ce qui se traduit en C par des pointeurs de morceaux de code vers d'autre morceaux de code.
+PairT pattern; // <- pattern à remplir par le matching plus bas
 
-  Le gros du travail est effectué par flatten_code, qui est un très gros fold_left, avec récursion interne (en plus du folding) et mutuelle avec flatten_defs dont le rôle est d'aplatir les let-rec bindings... Autant dire que c'est assez tentaculaire. Ce qui complique les choses tout particulièrement c'est qu'on a besoin de garder un compteur (de type `int`) que l'on incrémente tout au long du processus, afin de pouvoir créer des noms de fragments uniques.
+// les fonctions de matching retournent une des deux valeurs
+// `Success` ou `Failure` de `enum result`
+if (match_value_with_pair(x, &pattern) == Success) {
+  // success: cela implique que x a été libéré (sauf s'il existe
+  // à d'autres endroits en mémoire), et que son contenu a été
+  // transféré à pattern.first (contient IntValue(3)) et pattern.second
+  // (contient BoolValue(True)).
+}
+else {
+  // matching failure: cela implique que x est intact, n'a pas été
+  // libéré en mémoire, et pattern n'a pas été modifié, donc n'est
+  // toujours pas initialisé
+}
+```
+Toutes les fonctions de matching fonctionnent selon ce modèle.
 
-- **codeGenerator.ml** : génère du code source C (sous la forme d'une chaine de caractère) à partir de ce que renvoie l'étape précédente.
+## Gestion de la mémoire
 
-  Plus précisément, prend les fragments nommés `fragment list` et les transforme chacun en tableau de CodeT. Les tableaux se font mutuellement référence, donc on a besoin de tous les déclarer tout au début du fichier généré avant d'écrire leurs définitions.
+Les objets de type `StackT` sont libérés au fur et à mesure par pattern-matching. Ils n'ont jamais besoin d'être copiés, donc on n'a pas besoin de les gérer avec _reference counting_.
 
-### Encoder
+À l'inverse, les objets de type `ValueT` sont susceptibles d'être copiés fréquemment, du fait de l'existence de l'instruction `Push`, qui place une copie du **terme** principal sur la **pile**.
 
-Fichier : **encoder.ml**
+Au lieu de réellement copier les `ValueT` récursivement, il est plus économe de simplement incrémenter un `copy_count` (récursivement là encore), et de modifier le système de libération de mémoire pour que les objets de type `ValueT` ne soient libérés pour de vrai que lorsque leur `copy_count` tombe à zéro.
 
-Ce fichier contient la fonction `encode`, qui prend une expression de type `mlexp` et renvoie une liste de `instr`, c'est-à-dire une valeur de type `code`.
+Les fonctions assurant ce travail de _mini garbage collecting_ (**value.c**):
+```C
+ValueT *malloc_value();
+  // ^ initialise le copy_count
+void free_value(ValueT *value);
+  // ^ décrémente le copy_count, et éventuellement libère la ValueT
+void deepfree_value(ValueT *value);
+  // ^ version récursive de free_value(), qui fait appel à free_value()
+void deepincrement_copy_count(ValueT *value);
+  // ^ incrémente de 1 le copy_count d'une valeur, et récursivement
+  // de toutes les valeurs contenues dans cette valeur (si par exemple
+  // il s'agit d'une paire)
+ValueT *deepcopy_value(ValueT *value);
+  // ^ fait semblant de copier une valeur,
+  // mais ne fait qu'appeler deep_increment_copy_count()
+  // avant de renvoyer son argument d'entrée tel quel
+```
 
-
-
-### Simulator
-
-Fichier : **simulateur.ml**, **simu**
-
-Contient le code qui permet de simuler l'exécution de la CAM en OCaml, selon le modèle vu dans les transparents du cours. La seule différence notable est l'existence de l'instruction `Halt`, qui arrête explicitement la simulation et affiche en sortie standard la dernière valeur prise par le **terme**.
-
-###
+Les variables globales suivantes sont uniquement utilisées pour vérifier le comportement du _reference counting_ :
+```C
+int mallocated_values_count;
+int freed_values_real_count;
+int freed_values_fake_count;
+void memory_value_report();
+  // ^ affiche un court rapport d'information
+  // se basant sur les trois variables globales précédentes
+```

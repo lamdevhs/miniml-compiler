@@ -8,6 +8,7 @@ simple ones:
 
 ccam:
 - incremental execution?
+- use enum boole anywhere it makes sense
 
 caml compiler:
 - clean up the caml code
