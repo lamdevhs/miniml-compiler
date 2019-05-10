@@ -1,34 +1,48 @@
 
+
+
 # Projet : Compilation d'un langage fonctionnel vers C
+
+/!\ This file is a work in progress right now. But soon it'll be done.
+
+
+## Organisation de ce fichier
+
+Je n'ai pas présenté pas les choses ici dans un ordre synthétique, mais plutôt dans un ordre didactique, afin de profiter au maximum des liens à faire entre les différentes parties du projet. Dans l'ensemble ce document a donc été écrit pour être lu de haut en bas de manière linéaire.
 
 ## Terminologie
 
-**Mini-ML** : Mini-langage fonctionnel similaire en syntaxe à OCaml, mais non typé et restreint en fonctionnalité, utilisé comme langage source initial pour ce projet de compilation. Extension de fichier : `.ml`.
+**Mini-ML** : Mini-langage fonctionnel similaire en syntaxe à OCaml, mais non typé et restreint en fonctionnalité, utilisé comme langage source initial pour ce projet de compilation. Extension de fichier : `.ml`, comme pour OCaml, puisque la syntaxe est virtuellement identique.
 
-**CAM** : Acronyme pour _Categorical Abstract Machine_. Modèle abstrait d'exécution d'un langage fonctionnel de type _ML_ sous la forme d'une suite d'instructions atomiques. Les instructions modifient l'état de la machine virtuelle, qui est constitué d'un triplet de trois valeurs : un **terme** représentant le registre principal d'opération, une **pile** qui fait office de pile d'exécution, et enfin, le **code** lui-même restant à exécuter. _Référence_ : Cousineau, Curien, Mauny: _The Categorical Abstract Machine_, Science of Computer Programming 8 (1987), pp. 173-202.
+**CAM** : Acronyme pour _Categorical Abstract Machine_. Modèle abstrait d'exécution d'un langage fonctionnel de type _ML_ représenté sous la forme d'une suite d'instructions atomiques. Les instructions modifient l'état de la machine virtuelle, qui est constitué d'un triplet de trois valeurs : un **terme** représentant le registre principal d'opération, une **pile** qui fait office de pile d'exécution, et enfin, le **code** restant à exécuter.
 
-**CCAM** : l'implémentation de la CAM que j'ai écrite en C et qui fait office de machine virtuelle pour les instructions compilées en C depuis le code source _mini-ML_.
+[_Référence_ : Cousineau, Curien, Mauny: _The Categorical Abstract Machine_, Science of Computer Programming 8 (1987), pp. 173-202]
+
+**CCAM** : l'implémentation de la CAM que j'ai écrite en C et qui fait office de machine virtuelle pour les instructions compilées en C depuis le code source _Mini-ML_.
 
 
 ## Résumé du projet
 
-Le projet est composé d'un compilateur appelé **comp**, écrit en _OCaml_ à l'aide de _Lex_ et _Yacc_, dont le rôle est de parser et de compiler un fichier source _mini-ML_, produisant alors un fichier intermédiaire en _C_, qui peut alors être à son tour compilé avec `gcc` et les sources de la **CCAM** (écrite en _C_) pour obtenir finalement un fichier exécutable, dont l'exécution correspond à l'évaluation du fichier _mini-ML_ d'origine.
-Le projet est aussi composé d'un simulateur **simu** écrit en _OCaml_ dont le rôle est de parser, compiler et interpréter un fichier source _mini-ML_, toujours selon le modèle de la CAM.
+Le projet est composé d'un compilateur appelé **comp**, écrit en _OCaml_ à l'aide de _Lex_ et _Yacc_, dont le rôle est de parser et de compiler un fichier source _mini-ML_, produisant alors un fichier intermédiaire en _C_.
+
+Ce fichier intermédiaire peut alors être à son tour compilé avec `gcc` et les sources _C_ de la **CCAM** pour obtenir un fichier exécutable final, dont l'exécution correspond à l'évaluation du fichier _mini-ML_ d'origine.
+
+Le projet contient aussi un simulateur **simu** écrit en _OCaml_ dont le rôle est de parser, compiler et interpréter un fichier source _mini-ML_, toujours selon le modèle de la CAM.
 
 
 ## Organisation globale concrète du projet
 
 Le projet est divisé en deux grosses parties :
 
-- **Partie OCaml** : sous-dossier **ocaml/**. Contient les sources pour le compilateur **comp** (_mini-ML_ --> _C_) et le simulateur **simu**. Un Makefile **ocaml/Makefile** permet de les générer.
+- _Partie OCaml_ : sous-dossier **ocaml/**. Contient les sources pour le compilateur **comp** et le simulateur **simu**. Un Makefile **ocaml/Makefile** permet de les générer.
 
-- **Partie C** : sous-dossier **ccam/**. Contient les sources pour la machine virtuelle **CCAM**. Un Makefile **ccam/Makefile** permet de générer un exécutable à partir des ces sources et du code généré par **comp** à partir du fichier _mini-ML_ source. Contient aussi des tests unitaires.
+- _Partie C_ : sous-dossier **ccam/**. Contient les sources pour la machine virtuelle **CCAM**. Un Makefile **ccam/Makefile** permet de générer un exécutable à partir des ces sources et du code généré par **comp** à partir d'un fichier _mini-ML_ source. Contient aussi des tests unitaires.
 
 Autres fichiers du projet :
 
-- **Jeu de tests** : sous-dossier **demo**. Contient divers programmes écrits en _Mini-ML_.
-- **generate-all.sh** : script qui permet de générer des exécutables pour chacun des programmes dans **demo**, en les compilant, d'abord avec **comp**, puis avec **ccam/Makefile**.
-- **USAGE.txt** : informations sur comment utiliser le projet.
+- _Jeu de tests_ : sous-dossier **demo/**. Contient un petit nombre de programmes écrits en _Mini-ML_, représentatif des capacités du langage.
+- Un script **generate-all.sh** qui permet de générer d'un seul coup un exécutable pour chacun des programmes dans **demo/**, en les compilant, d'abord avec **comp**, puis avec les sources de la **CCAM**.
+- **USAGE.txt** : informations d'usages pour tout le projet.
 
 
 ## Usage des fichiers du projet
@@ -39,33 +53,34 @@ Lire **USAGE.txt**. Ce fichier contient toutes les informations d'usage pour :
 - le script **generate-all.sh**
 
 
-## Mini démonstration
+## Mini démonstration d'utilisation
 
 Juste pour briser la glace :
 ```sh
-$
+$ TODO
 ```
 
 
 ## Organisation du dossier **ocaml/**
 
-Sources du compilateur **comp** `Mini-ML -> C` et du simulateur **simu**, tous deux écrits en _OCaml_. Ce qui suit n'est qu'une brève description du contenu de chaque fichier dans ce dossier ; de plus amples explications suivent dans le reste de ce document.
+Ce qui suit n'est qu'une brève description du contenu de chaque fichier dans ce dossier ; de plus amples explications suivent dans le reste de ce document.
 
-- **Makefile** permet de compiler les exécutables **comp** et **simu**. _c.f._ **USAGE.txt**.
-- **lexer.mly** et **parser.mly** contiennent le code _Lex_ et _Yacc_ du lexer et du parseur _Mini-ML_, respectivement.
-- **interf.ml** contient la fonction `parse` qui fait office d'interface entre le parser _Yacc_ et le reste du code _OCaml_.
-- **miniml.ml** définit le `type mlexp`, dont le but est de représenter l'arbre syntaxique d'un programme _Mini-ML_. Un _pretty-printer_ `pp_prog/pp_exp` est aussi contenu dans ce fichier, mais il n'est plus très utile, c'était un outil de débuggage durant les premières tentatives de modification du parser.
-- **encoder.ml** contient les fonctions permettant de transformer un arbre syntaxique de `type mlexp` en suite d'instructions `type instr`, selon le modèle d'instructions de la CAM vu en cours.
-- **simulator.ml** contient la fonction `main` et le reste du code principal de l'exécutable **simu**, qui réalise une simulation _OCaml_ d'exécution de `instr list`, toujours selon le modéle vu en cours.
-- **flattener.ml** contient les fonctions permettant d'"aplatir" le code généré par **encoder.ml** en un nouveau `type flat_code`, beaucoup plus proche du modèle de données que j'ai utilisé en _C_ dans la **CCAM**.
-- **codeGenerator.ml** est responsable de la traduction du `flat_code` en code _C_ (sous la forme d'une `string`).
-- **tools.ml** contient des fonctions utilitaires importées par plusieurs modules, comme par exemple la fonction _zip_.
+- **Makefile** permet de compiler les exécutables **comp** et **simu**.
+- **lexer.mll** et **parser.mly** contiennent le code _Lex_ et _Yacc_ du lexer et du parseur _Mini-ML_, respectivement.
+- **interf.ml** contient la fonction `parse` qui fait office d'interface entre le parser et le reste du code _OCaml_.
+- **miniml.ml** définit le `type mlexp`, dont le but est de représenter l'arbre syntaxique d'un programme _Mini-ML_. Un _pretty-printer_ `pp_prog/pp_exp` est aussi contenu dans ce fichier, mais il n'est plus très utile, c'était un outil de _debugging_ durant les premières tentatives de modification du parser pour visualiser l'arbre syntaxique.
+- **encoder.ml** contient les fonctions permettant de transformer un arbre syntaxique de `type mlexp` en suite d'instructions de `type instr`, selon le modèle d'instructions de la CAM vu en cours. Note : ce fichier est grosso modo un remplacement du fichier **instrs.ml**, que j'ai supprimé.
+- **simulator.ml** contient la fonction `main` pour l'exécutable **simu**, et le reste du code principal de ce simulateur _OCaml_ d'exécution de la CAM.
+- **flattener.ml** contient les fonctions permettant d'´aplatir´ les instructions généré par **encoder.ml** en un nouveau `type flat_instr`, très proche du modèle de données que j'ai utilisé en _C_ dans la **CCAM**.
+- **codeGenerator.ml** est responsable de la traduction du `flat_code` en source _C_.
+- **comp.ml** contient la fonction `main` pour l'exécutable **comp**.
+- **tools.ml** contient des fonctions utilitaires génériques importées par plusieurs modules, comme par exemple la fonction _zip_.
 
 ## _Mini-ML_ : description du langage
 
-Fichiers sources du lexer/parser : **lexer.mll**, **parser.mly**, **miniml.ml**
+Fichiers : **lexer.mll**, **parser.mly**, **miniml.ml**
 
-Le langage est similaire à _OCaml_ en syntaxe. Il n'est pas typé. Le programme **demo/language.ml** expose tous les éléments de syntaxe et de sémantique valides en _Mini-ML_ :
+Le langage est similaire à _OCaml_ en syntaxe, mais il n'est pas typé du tout. Ci-dessous le contenu du fichier **demo/language.ml**, qui expose tous les éléments de syntaxe et de sémantique valides en _Mini-ML_ :
 
 ```OCaml
 (* language.ml *)
@@ -73,55 +88,52 @@ TODO: include language.ml here
 ```
 
 Quelques notes :
-- _let bindings_ : `let x = e in t` est traduit en `(fun x -> t) e`
-- opérations booléennes : `(&&)`, `(||)`, et `not`, sont traduits en branchements conditionnels `if..then..else`
+- les _let bindings_ `let x = e in t` sont traduits en `(fun x -> t) e`
+- les opérations booléennes `(&&)`, `(||)`, et `not`, sont traduites en branchements conditionnels `if..then..else`
 - _let-rec bindings_ : `let rec ... and ... in ...`
 
   Pour éviter les bugs causés par la limitation de cette implémentation de la récursivité, j'ai fait en sorte que le parser refuse tout programme contenant un let-rec inclus comme sous-expression d'une autre expression plus grande. Ainsi l'unique manière autorisée d'utiliser un let-rec dans ce langage _mini-ML_ est de le mettre en expression principale, au plus haut de la hiérarchie du programme.
 
+- valeurs de type `list` : la syntaxe est la même qu'en _OCaml_, c'est-à-dire, `[]`, `2 :: [1]`, `[3;4;]` (trailing semicolon allowed).
 - sucre syntactique :
 
-  - `fun x y z ->` devient `fun x -> fun y -> fun z ->`.
-  - `let f x y = ... in ... ` devient `let f = fun x -> fun y -> ... in ...` ; même sucre autorisé dans le cas de _let-rec bindings_.
-
-- valeurs de type `list` : la syntaxe est la même qu'en _OCaml_, c'est-à-dire, `[]`, `2 :: [1]`, `[3;4;]` (trailing semicolon allowed).
+  - `fun x y -> e` devient `fun x -> fun y -> e`.
+  - `let f x y = a in b ` devient `let f = fun x -> fun y -> a in b`
+  - `let rec f x y = a in b ` devient `let rec f = fun x -> fun y -> a in b`
 
   Deux opérateurs élémentaires `head` et `tail` ont aussi été rajoutés, dans la même veine que `fst` et `snd`. Un opérateur supplémentaire de test (`is_empty`) permet de vérifier si une valeur est une liste vide. Note : ne provoque pas d'erreur si la valeur n'est pas une liste.
 
-Pour écrire la grammaire dans **parser.mly**, et donc en particulier choisir l'associativité et la précédence de chacun des éléments syntaxiques, je me suis basé sur la documentation d'_OCaml_ trouvé au lien suivant : https://caml.inria.fr/pub/docs/manual-ocaml/expr.html
+Pour déterminer l'associativité et la précédence de chacun des éléments syntaxiques, je me suis basé sur la documentation d'_OCaml_ trouvé au lien suivant : https://caml.inria.fr/pub/docs/manual-ocaml/expr.html
 
 
 ## Phase d'encodage
 
 Fichiers : **miniml.ml**, **encoder.ml**
 
-Note : le fichier **encoder.ml** est grosso modo un remplacement du fichier **instrs.ml**, que j'ai supprimé.
+Le résultat du _parsing_ d'un fichier source _Mini-ML_ est un arbre syntaxique de `type mlexp` (**miniml.ml**) représentant le programme d'origine. Cet arbre est alors traduit en une liste d'instructions de `type instr` (**encoder.ml**). Cette traduction suit assez fidèlement les règles de compilation vues en cours.
 
-Une fois le fichier source _Mini-ML_ parsé, l'on se retrouve avec un programme sous forme d'arbre syntaxique (**miniml.ml**: `type mlexp`). Cet arbre est alors traduit en une liste d'instructions (**encoder.ml**: `type instr`). Cette traduction suit assez fidèlement les règles de compilation vues en cours.
-
-Quelques ajouts et modifications du `type instr`, tout de même :
-- `Halt` : pour indiquer explicitement à la machine virtuelle qu'elle doit s'arrêter, en fin de programme.
-- `QuoteBool`, `QuoteInt` : remplace le constructeur `Quote of value` qui n'était pas assez _type-safe_ pour la suite de la compilation.
-- `Call`, `AddDefs`, `RmDefs` : pour exécuter des expressions de type `let-rec`.
+Quelques ajouts et modifications du `type instr` à noter :
+- `Halt` : instruction pour indiquer explicitement à la CAM que le programme est terminé, pour qu'elle s'arrête.
+- `QuoteBool`, `QuoteInt` : remplace le constructeur `Quote of value` qui n'était pas assez _type-safe_ pour les phases suivantes de la compilation.
 - `QuoteEmptyList` : pour implémenter la valeur `[]`, _i.e._ la liste vide.
 - `MakeList` : joue le rôle de l'opérateur `::` dans la construction de listes. Calquée sur le modèle de l'instruction `Cons` qui construit des paires à partir du **terme** et de l'élément de tête de la **pile**.
-
-Cette suite d'instructions constitue par ailleurs la valeur d'entrée du simulateur écrit en _OCaml_.
 
 
 ## Simulateur _OCaml_
 
 Fichiers : **simulator.ml**, **simu** (exécutable)
 
-Le simulateur dépend de l'encoder et bien sûr du parser et du lexer. Il exécute les instructions de `type instr` selon le modèle de la CAM vu en cours. **simulator.ml** contient par ailleurs une fonction `main`, ce qui permet de générer un exécutable **simu**, qui prend en paramètre un fichier **Mini-ML** et lance la simulation d'exécution sur son contenu. Il y a aussi une option `verbose` (_c.f._ **USAGE.txt**) que l'on peut passer à **simu**, permettant d'afficher une trace du processus d'exécution de chaque instruction et de l'évolution de l'état de la CAM.
+Le code de **simulator.ml** exécute les instructions de `type instr` générées par l'encoder selon le modèle de la CAM vu en cours. L'exécutable **simu** prend en paramètre un fichier **Mini-ML** et lance la simulation d'exécution sur son contenu.
 
-Je décris ci-dessous les principaux types utilisés dans le code de la simulation. Le double intérêt de cette description est que la deuxième implémentation de la CAM, celle que j'ai réalisée en _C_ (**CCAM**), est vraiment très proche de cette implémentation-ci en _OCaml_ (aussi proche que les différences de paradigme et d'abstraction entre _C_ et _OCaml_ me l'ont permis).
+Il y a aussi une option `verbose` (_c.f._ **USAGE.txt**) que l'on peut passer à **simu**, permettant d'afficher une trace de l'évolution de l'état de la CAM durant le processus d'exécution.
+
+Je décris ci-dessous les principaux types utilisés dans le simulateur. Le double intérêt de cette description est que la deuxième implémentation de la CAM, celle que j'ai réalisée en _C_ (**CCAM**), est vraiment très proche de cette implémentation-ci en _OCaml_ (aussi proche que les différences de paradigme et d'abstraction entre _C_ et _OCaml_ me l'ont permis).
 
 - `type value` : valeurs manipulées par la CAM.
 - `type code = instr list` : les instructions dont on simule l'exécution.
-- `type stack` : pile d'exécution de la CAM (permet de stocker valeurs et code).
-- `type defstack` : pile de définitions, utilisée pour implémenter la récursivité autorisée par les _let-rec bindings_. C'est une liste d'association `var * code` (`var` étant un alias pour `string` utilisé pour représenter le nom d'une variable).
-- `type machine_state = (value * code * stack * defstack)` : ce quadruplet représente l'état de la CAM à tout instant durant la simulation, c'est l'état sur lequel les instructions opèrent.
+- `type stack` : pile d'exécution de la CAM (permet de stocker valeurs intermédiaires et code).
+- `type defstack` : pile de définitions, utilisée pour implémenter la récursivité autorisée par les _let-rec bindings_. C'est une liste d'association `(var * code) list` qui associe des noms de variables récursives à leur code.
+- `type machine_state = (value * code * stack * defstack)` : ce quadruplet représente l'état de la CAM à tout instant durant la simulation, c'est l'état sur lequel les instructions opèrent. Le premier élément est appelé le **terme**, et fait office de registre principal.
 
 - `type status` : utilisé pour savoir quand s'arrêter (à la fin du programme ou bien lorsqu'on tombe sur une erreur).
 
@@ -135,26 +147,26 @@ Je décris ci-dessous les principaux types utilisés dans le code de la simulati
     ;;
     ```
 Le flot d'exécution du simulateur est lui aussi similaire à celui de la **CCAM**. En voici une courte description :
--  `main` appelle `run_simulation` avec les options de verbosité et le `code` compilé par l'encoder.
-- `run_simulation` construit l'état initial de la machine à l'aide de `blank_state` et du `code` récupéré. Puis elle lance la simulation à l'aide de `run_machine`, qui prend en paramètre un `machine_state` et une option de verbosité.
-- `run_machine` est une fonction récursive. Ses paramètres sont `verbose` (indicateur de verbosité), et `ms` (de type `machine_state`, l'état de la machine).
-  Si l'option `verbose` est activée, elle commence par afficher l'état de la machine : valeur du **terme**, valeur de sommet de **pile**, prochaine instruction à exécuter.
-  Une fois cela fait, elle appelle `execute_next_instruction` avec `ms` en paramètre.
-- `execute_next_instruction` correspond au cœur du travail de la simulation : elle lit la prochaine instruction à exécuter, et retourne une valeur de `type status`. Selon les cas :
+-  `main` appelle `run_simulation` avec l'option `verbose` et le `code` compilé par l'encoder.
+- `run_simulation` construit l'état initial de la machine à l'aide de `blank_state` et du `code` récupéré. Puis elle lance la simulation à l'aide de `run_machine`, qui prend en paramètre `ms : machine_state` et l'option `verbose`.
+- `run_machine` est une fonction récursive. Si l'option `verbose` est activée, elle commence par afficher l'état de la machine : valeur du **terme**, valeur de sommet de **pile**, prochaine instruction à exécuter. Une fois cela fait, elle appelle `execute_next_instruction` avec `ms` en paramètre.
+- `execute_next_instruction` correspond au cœur du travail de la simulation : elle lit la prochaine instruction à exécuter, modifie `ms` en conséquence, et retourne une valeur de `type status`. Selon les cas :
+
     - si l'instruction s'avère être `Halt` : la valeur de retour est alors `Stopped (Halted term)` où `term` correspond à la valeur finale calculée par la machine
-    - sinon, si l'instruction ne provoque pas d'erreurs : la valeur de retour est alors `AllOk new_ms`, où `new_ms` est le nouvel état de la machine après exécution de l'instruction en question
-    - sinon, une erreur s'est produite (par exemple, tentative d'évaluer `fst 4`) : la valeur est alors `Stopped (Crashed error_msg)`.
-- de retour dans `run_machine` : on vérifie le `status` récupéré. Si `AllOk`, on réitère `run_machine` avec le nouvel état de la machine. Si `Stopped`, on retourne le `final_status`.
+    - sinon, et si l'instruction ne provoque pas d'erreurs : la valeur de retour est alors `AllOk new_ms`, où `new_ms` est le nouvel état de la machine calculé
+    - sinon, une erreur s'est produite (_e.g._ `fst 4`) : la valeur de retour est alors `Stopped (Crashed error_msg)`.
+
+- de retour dans `run_machine` : on _match_ sur le `status` récupéré. Si `AllOk`, on rappelle récursivement `run_machine` avec le nouvel état de la machine récupéré. Si `Stopped`, on retourne le `final_status`.
 - de retour dans `run_simulation` : selon que le constructeur de `final_status` soit :
 
-    - `Halted`, on affiche la valeur finale calculée par la machine, et on termine la simulation
-    - `Crashed`, on affiche le message d'erreur et on termine la simulation
+    - `Halted`, on affiche la valeur finale calculée par la machine
+    - `Crashed`, on affiche le message d'erreur
 
-    dans les deux cas, on termine la simulation.
+    puis, dans les deux cas, on termine la simulation.
 
 ## Représentation des instructions dans la **CCAM**
 
-En _C_, la manière la plus simple de représenter une suite d'instructions est de l'enregistrer sous forme d'un tableau. Comme les instructions du modèle de la CAM contiennent parfois des paramètres (par exemple l'instruction `QuoteBool` contient une valeur littérale booléenne), le type des éléments du tableau doit être suffisamment flexible pour pouvoir contenir au besoin :
+En _C_, la manière la plus simple de représenter une suite d'instructions est de l'enregistrer sous la forme d'un tableau. Comme les instructions du modèle de la CAM contiennent parfois des paramètres (par exemple l'instruction `QuoteBool` contient une valeur littérale booléenne), le type des éléments du tableau doit être suffisamment flexible pour pouvoir contenir au besoin :
 
 - une constante représentant une instruction, comme `QuoteBool` ou `Swap`
 - une valeur littérale (entier ou booléen)
@@ -163,37 +175,43 @@ En _C_, la manière la plus simple de représenter une suite d'instructions est 
 
 Ce quatrième type de cellule est nécessaire pour le cas d'instructions qui sont censées "contenir" du code, comme l'instruction `Branch`, qui, en tant que constructeur pour le `type instr` en _OCaml_, est censé lui-même contenir les instructions pour les branches `if` et `else`.
 
-C'est cette stratégie que j'ai employé pour encoder les instructions en _C_ dans la **CCAM**. Le type correspondant à une cellule de tableau de code s'appelle `CodeT`. Il est déclaré dans le fichier d'en-tête **ccam.h** :
+C'est cette stratégie de tableau à contenu variable que j'ai employé pour encoder les instructions en _C_ dans la **CCAM**. Le type d'une cellule de tableau de code s'appelle `CodeT` (déclaré dans le fichier d'en-tête **ccam.h**) :
 ```C
-  union CodeT; typedef union CodeT {
-    int instruction;
-    int operation;
-    union CodeT *reference;
-    long data;
-  } CodeT;
+/* ccam.h */
+union CodeT; typedef union CodeT {
+  int instruction;
+  int operation;
+  union CodeT *reference;
+  long data;
+} CodeT;
 ```
-Note : le `union CodeT;` placé juste avant le `typedef` est juste là pour permettre une définition récursive : la ligne `union CodeT *reference;` nécessite que `union CodeT` soit déclaré _a priori_.
+Pour info, le "`union CodeT;`" placé juste avant le `typedef` est nécessaire pour permettre une définition récursive : la ligne `union CodeT *reference;` nécessite que `union CodeT` soit déclaré _a priori_.
 
-Les unions en _C_ s'utilisent assez similairement à un type somme ; en pseudo-code _OCaml_ la même structure serait définie par :
+Les unions en _C_ s'utilisent assez similairement à un type somme ; en pseudo-code _OCaml_ la même structure pourrait être définie ainsi :
 ```OCaml
 type code_t = Instruction of int | Operation of int
   | Code of code_t pointer | Data of long ;;
 ```
-Par similarité de concept, j'appellerai "constructeur" les différents membres d'une `union` -- ici `.instruction`, `.operation`, `.reference` et `.data`.
+Par similarité de concept, j'appellerai "constructeur" les différents membres possibles d'une `union` -- ici `.instruction`, `.operation`, `.reference` et `.data`.
 
-En _C_ une valeur de type union peut se définir de la sorte :
+En _C_ une valeur de type union se définit de la sorte :
 ```C
 CodeT foo = { .operation = 3 } ;
-// altenative :
+// alternative :
 CodeT bar; bar.reference = &foo;
 ```
-Ici on a choisit le constructeur `.operation` pour `foo`, et le constructeur `.reference` pour `bar`. Une valeur de type `union` n'est pas censé initialiser plus d'un constructeur (sous peine de comportements imprévisibles).
+Ici on a choisit le constructeur `.operation` pour `foo`, et le constructeur `.reference` pour `bar`. Une valeur de type `union` n'est pas censée être utilisée avec plus d'un constructeur (sous peine de comportements imprévisibles).
 
 Pour revenir à la représentation des instructions de la CAM dans l'implémentation **CCAM** : l'exemple qui suit sera peut-être plus parlant.
 ```OCaml
-[QuoteInt(3); Swap; PrimInstr (UnOp (Fst)); Branch([Push], [App])] : instr list
+let (main_code : instr list) = [
+  QuoteInt(3);
+  Swap;
+  PrimInstr (UnOp (Fst));
+  Branch([Push], [App])
+] ;;
 ```
-Il s'agit d'une liste d'instructions arbitraire, telle que celles produites par **encoder.ml** et consommées par **simulator.ml** -- mis à part le fait qu'elle n'ait pas le moindre sens.
+Il s'agit d'une liste d'instructions quelconque, du même type que celles produites par **encoder.ml** et consommées par **simulator.ml**.
 
 Voici maintenant sa représentation en _C_ pour la **CCAM**  après avoir subi tous les traitements effectués par **comp** :
 ```C
@@ -220,65 +238,66 @@ CodeT main_code[] =
 };
 ```
 
-Les instructions comme `QuoteInt` ou `Unary` ou `Branch`, qui contiennent des paramètres, sont codées sur plusieurs cellules du tableau. Le constructeur choisit pour chaque chaque cellule est adapté à son contenu.
+Les instructions comme `QuoteInt` ou `Unary` ou `Branch`, qui contiennent des paramètres, sont codées sur plusieurs cellules du tableau. Le constructeur de l'`union CodeT` choisi pour chaque chaque cellule est adapté à son contenu.
 
-Le tableau `main_code` est spécial dans le sens que c'est le point de départ du programme exécuté par la **CCAM**. Il est d'ailleurs directement utilisé dans la fonction `main()` de **runtime.c**.
+Le tableau `main_code` dans le code _C_ précédent est spécial dans le sens que c'est le point de départ du programme exécuté par la **CCAM**. Il est d'ailleurs directement utilisé dans la fonction `main()` de **runtime.c**.
 
-Tous les autres morceaux de code qui peuvent avoir été générés, comme ici `else_branch1` et `if_branch0`, proviennent d'instructions comme `Branch` ou `Call` qui sont censées modifier la liste d'instructions que la machine virtuelle exécute. Ces autres tableaux "périphériques" sont reliées les uns aux autres et au tableau `main_code` par le biais des cellules de `.reference`.
+Tous les autres morceaux de code qui peuvent avoir été générés, comme ici `else_branch1` et `if_branch0`, proviennent d'instructions comme `Branch` ou `Call`. Ces autres tableaux "périphériques" sont reliées les uns aux autres et au tableau `main_code` par le biais des cellules de `.reference`, comme ici `{.reference = if_branch0}`.
 
-## Phase de _flattening_
+## Phase de _code flattening_
 
 Fichier : **flattener.ml**
 
 Pour passer d'instructions du `type instr` (avec des constructeurs comme `Branch of instr list * instr list`), à une représentation en _C_ "plate" (sans structure directement récursive), on a besoin de passer par un format d'instructions intermédiaire qui soit débarrassé de cette récursion structurelle.
 
-C'est le rôle de `type flat_instr` et `type flat_code = flat_instr list` définis dans **flattener.ml**. Essentiellement, on remplace chaque constructeur souffrant de récursion structurelle par un nouveau constructeur "plat" ne contenant plus que des _placeholders_ (de type `string`). Ces chaînes de caractère correspondent dans la représentation finale en _C_ aux noms des tableaux périphériques référencés : `"if_branch0"` par exemple.
+C'est le rôle de `type flat_instr` et `type flat_code = flat_instr list`, définis dans **flattener.ml**. Essentiellement, on remplace chaque constructeur souffrant de récursion structurelle par un nouveau constructeur "plat" ne contenant plus que des _placeholders_ (de type `string`). Ces chaînes de caractère correspondent dans la représentation finale en _C_ aux noms des tableaux périphériques référencés : `"if_branch0"` par exemple.
 
-Le code _OCaml_ du fichier **flattener.ml** est particulièrement compliqué/pénible, avec beaucoup de récursion, de récursion mutuelles, et une foule de variables difficiles à nommer. La raison en est que l'opération qui permet de transformer une `instr list` en `flat_code` est une opération particulièrement _stateful_. En particulier, il faut conserver et mettre à jour un compteur (que j'ai généralement appelé `n` ou `nextN`, etc) pour s'assurer que les _placeholders_ que l'on utilise sont uniques (puisqu'ils correspondent à des noms de tableaux de `CodeT` en _C_).
+Le code _OCaml_ du fichier **flattener.ml** est particulièrement compliqué/pénible, avec beaucoup de récursion, de récursion mutuelles, et une foule de variables difficiles à nommer. La raison en est que l'opération qui permet de transformer une `instr list` en `flat_code` est une opération particulièrement _stateful_. En particulier, il faut conserver et mettre à jour un compteur de type `int` (que j'ai généralement appelé `n` ou `nextN`, etc) pour s'assurer que les _placeholders_ que l'on utilise sont uniques (puisqu'ils correspondent à des noms de tableaux de `CodeT` en _C_).
 
-Un point qui mérite peut-être quelques explications : le traitement des instructions `Call`, `AddDefs` et `RmDefs` durant la traduction de `type instr` vers `flat_code`. Par soucis de simplicité et d'efficacité, toutes les définitions contenues dans toutes les instructions `AddDefs` (à travers tout le programme) sont automatiquement transcrites en tableaux périphériques uniques (comme pour les branches `if` et `else` de `Branch`).
+Un point qui mérite peut-être quelques explications : le traitement des instructions `Call`, `AddDefs` et `RmDefs` durant la traduction de `type instr` vers `flat_code`. Par soucis de simplicité et d'efficacité, toutes les définitions contenues dans toutes les instructions `AddDefs` (à travers tout le programme) sont automatiquement transcrites en tableaux périphériques uniques et isolés (comme pour les branches `if` et `else` de `Branch`).
 
-À partir de là, on n'a plus vraiment besoin des instructions `AddDefs` et `RmDefs` dans le type `flat_instr`, ni, par extension, dans le modèle d'exécution de la **CCAM**. Il suffit de faire en sorte que `FlatCall` contienne le _placeholder_ correspondant au bon _let-rec binding_, et de définir le comportement de cette instruction comme étant identique à un `Branch` non conditionnel (un seul chemin qui est forcément emprunté).
+À partir de là, on n'a plus vraiment besoin des instructions `AddDefs` et `RmDefs` dans le type `flat_instr`, ni, par extension, dans le modèle d'exécution de la **CCAM**. Il suffit de faire en sorte que `FlatCall` (la version "plate" du constructeur `Call`) contienne le _placeholder_ correspondant au bon _let-rec binding_, et de définir dans la **CCAM** le comportement de cette instruction comme étant identique à un `Branch` non conditionnel : un seul chemin qui est forcément emprunté.
+
 Il faut de plus s'assurer que le code du _binding_ termine bien par l'instruction `Return` (comme pour le cas des branchements conditionnels), chose qui n'était pas prévue dans le modèle d'origine (celui du simulateur _OCaml_).
 
-Je n'en dirai pas plus, l'opération de _code flattening_ est de loin la plus compliquée à mettre en mots. Le résultat final de cette phase de compilation est une `fragment list`, avec `type fragment = string * flat_code`. En d'autres termes, on récupère une liste d'association de _placeholders_ et de `flat_instr list` qui sont prêts à être traduits en _C_.
+Je n'en dirai pas plus, l'opération de _code flattening_ est de loin la plus compliquée à mettre en mots. Le résultat final de cette phase de compilation est une `fragment list`, avec `type fragment = string * flat_code`. En d'autres termes, on récupère une liste d'association de _placeholders_ et de `flat_instr list` qui sont prêts à être traduits en _C_ en tableaux de `CodeT`.
 
 ## Phase de génération de code _C_
 
 Fichier : **codeGenerator.ml**
 
-Une fois qu'on a récupéré la `fragment list` de la phase précédente, il ne reste plus grand chose à faire : simplement à construire la chaîne de caractère qui sera le contenu du fichier _C_ généré par **comp**. L'opération n'a rien de très compliqué ni rien de très intéressant : c'est essentiallement un _printer_ un peu spécial.
+Une fois qu'on a récupéré la `fragment list` de la phase précédente, il ne reste plus grand chose à faire : simplement à construire la chaîne de caractère qui sera le contenu du fichier _C_ généré par **comp**. L'opération n'a rien de très compliqué ni rien de très intéressant : c'est essentiellement juste un _printer_.
+
+
+## Lien entre **CCAM** et **simu**
+
+Autant que possible, j'ai essayé de conserver les mêmes noms, entre la **CCAM** et le simulateur _OCaml_ (**simulator.ml**), pour les types et les fonctions qui remplissent des rôles équivalents dans les deux implémentations :
+- `type value ---> struct ValueT`
+- `PairV ---> struct PairT`, `ListConsV ---> struct ListConsT`, etc.
+- `type stack ---> struct StackT`
+- `type machine_state ---> MachineStateT`
+- `type status ---> enum Status`
+- `Halted/AllOk`
+- `run_machine()`, `execute_next_instruction()`, `blank_state()`
+
+Note : le type `MachineStateT` est un triplet, au lieu d'un quadruplet comme `machine_state`, ceci car on s'est débarrassé du besoin du paramètre `defstack` lors de la phase de _code flattening_.
+
+Le flot d'exécution est également volontairement très similaire (_c.f._ section un peu plus bas pour une description détaillée).
 
 ## Organisation du dossier **ccam/**
 
-Ce dossier contient les sources de mon implémentation de la CAM en C (**CCAM**). Fichiers notables :
+Ce dossier contient les sources de mon implémentation de la CAM en C. Fichiers notables :
 
-- **Makefile** est le fichier `make` pour la **CCAM**. Il permet de compiler un fichier généré avec le compilateur **comp** en un exécutable. _c.f._ **USAGE.txt**.
-- **ccam.h** est le fichier d'en-tête principal. Il définit les `struct`, `union` et `enum` utilisés par la **CCAM**, et déclare aussi toutes les fonctions définies dans les fichiers **enums.c**, **value.c**, **stack.c**, **machine.c**.
+- **Makefile** est le fichier `make` pour la **CCAM**. Il permet de compiler un fichier généré avec le compilateur **comp** en un exécutable (_c.f._ **USAGE.txt**).
+- **ccam.h** est le fichier d'en-tête principal. Il définit les `struct`, `union` et `enum` utilisés par la **CCAM**, et déclare aussi toutes les fonctions définies dans les fichiers **enums.c**, **value.c**, **stack.c** et **machine.c**.
 - **enums.c** regroupe diverses fonctions utilitaires qui concernent les divers `enum` utilisés par la **CCAM**.
-- **value.c** contient les divers constructeurs et fonctions de pattern-matching pour le type `ValueT`, qui correspond au `type value` du simulateur OCaml.
+- **value.c** contient les fonctions de construction et de pattern-matching pour le type `ValueT`, qui correspond au `type value` du simulateur OCaml.
 - **stack.c** contient les divers constructeurs et fonctions de pattern-matching pour le type `StackT`, qui correspond au `type stack` du simulateur OCaml.
 - **machine.c** contient les constructeurs pour le type `MachineStateT`, ainsi que toutes les fonctions d'exécution individuelles des diverses instructions -- _e.g_ `exec_Apply()` ou `exec_Branch()`.
 - **runtime.c** contient la fonction `main()` de la **CCAM**, et fait directement appel au pointeur/tableau `main_code`, ce qui permet de faire le lien avec le code généré par **comp**.
 - **unit-tests.c** contient des tests unitaires pour vérifier le comportement de chaque instruction et des divers constructeurs de `ValueT`.
 - **testing.h** et **testing.c** contiennent des fonctions uniquement nécessaires pour les tests unitaires.
 
-## Lien entre **CCAM** et **simu**
-
-Autant que possible, j'ai aussi essayé de conserver les mêmes noms, entre la **CCAM** et le simulateur _OCaml_ (**simulator.ml**), pour des types remplissant des rôles équivalents dans les deux implémentations :
-- `type value` --> `ValueT`
-- constructeur `PairV()` --> `PairT`, etc
-- constructeur `ListConsV()` --> `ListConsT`
-- `type stack` --> `StackT`
-- `type machine_state` --> `MachineStateT`
-- `type status` --> `enum Status`
-- constructeur `Halted/AllOk` --> constante (_enum value_) `Halted/AllOk`
-
-Note : le type `MachineStateT` est cependant un triplet, au lieu d'un quadruplet comme `machine_state`, puisqu'on s'est débarrassé du besoin du paramètre `defstack` lors de la phase de _code flattening_.
-
-Même les fonctions gardent les mêmes noms autant que possible : `run_machine()`, `execute_next_instruction()`, `blank_state()` remplissent tous le même rôle dans la **CCAM** que leurs homologues _OCaml_ dans **simulator.ml**.
-
-Le flôt d'exécution est également extrêmement proche.
 
 ## Flot d'exécution de la **CCAM**
 
@@ -297,7 +316,7 @@ La fonction d'exécution choisie (par exemple `exec_Apply()`) modifie alors l'é
 
 Par exemple :
 - l'instruction `Push` copie le **terme** et l'ajoute à la **pile**, et incrémente le pointeur **code** de 1 (car l'instruction `Push` est encodée avec une seule cellule de type `CodeT`).
-- L'instruction `Branch` vérifie que le **terme** est un booléen, ajoute à la **pile** le pointeur vers l'instruction qui suit le `Branch` (qui correspond à `ms->code + 3` car l'instruction `Branch` est encodée sur trois cellules de type `CodeT`), et remplace le pointeur **code** par la cellule `ms->code[1]` si le **terme** vaut `true`, et `ms->code[2]` si le **terme** vaut `false` -- correspondant å choisir la branche _if_ ou la branche _else_.
+- L'instruction `Branch` vérifie que le **terme** est un booléen, ajoute à la **pile** le pointeur vers l'instruction qui suit le `Branch` (qui correspond à `ms->code + 3` car l'instruction `Branch` est encodée sur trois cellules de type `CodeT`), et remplace le pointeur **code** par la cellule `ms->code[1]` si le **terme** vaut `true`, et `ms->code[2]` si le **terme** vaut `false` -- correspondant à choisir la branche _if_ ou la branche _else_.
 
 Et de même pour toutes les autres instruction.
 
@@ -439,7 +458,7 @@ else {
   // toujours pas initialisé
 }
 ```
-Toutes les fonctions de matching fonctionnent selon ce modèle.
+Toutes les fonctions de pattern-matching fonctionnent selon ce modèle.
 
 ## Gestion de la mémoire
 

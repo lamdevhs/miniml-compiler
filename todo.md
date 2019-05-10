@@ -34,6 +34,15 @@ READMEs:
 - mention versions, etc
 - read what the specifications of the projects are about what to put in the README
 - write Usage.md
+----
+    - test effectues
+    - observation : taille du code, optimalité
+    - version + 64bit, taille des entiers/pointeurs
+    - java class Config == MachineStateT
+    - parser: cf expression.html
+    - mini démo
+    - italics: OCaml, C, CAM, Lex, Yacc, let-rec, parser, lexer, let-rec bindings, encoder, pattern-matching
+    - bold: CCAM, Mini-ML, mini-ML,
 
 
 final tasks:
