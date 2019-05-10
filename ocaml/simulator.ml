@@ -41,7 +41,7 @@ let pp_value : value -> string = fun v ->
     | ListV l -> "[" ^ go_value_list l ^ "]"
     | ClosureV (code, x) ->
       let value_x = go_value x in
-      "Closure(" ^ value_x ^ ", <code>)"
+      "Closure(<code>, " ^ value_x ^ ")"
   and go_value_list = function
     | EmptyListV -> ""
     | ListConsV (x, tail) ->

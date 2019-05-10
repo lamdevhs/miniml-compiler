@@ -2,6 +2,25 @@
 
 /!\ This file is a work in progress right now. But soon it'll be done.
 
+## Ingrédients de base
+
+Projet testé et développé sous Linux (x86_64, _i.e._ architecture 64 bits) avec les outils suivants :
+- `ocaml` : The OCaml toplevel, version 4.07.1
+- `make` : GNU Make 4.2.1, Built for x86_64-pc-linux-gnu
+- `gcc` : gcc (GCC) 8.3.0
+- `bash` : GNU bash, version 5.0.3(1)-release (x86_64-pc-linux-gnu)
+
+J'ai aussi testé brièvement le projet sur un ordinateur de l'université. Il semble fonctionner avec les versions suivantes :
+- `ocaml` : version 4.02.3
+- `make` : GNU Make 4.1, Construit pour x86_64-pc-linux-gnu
+- `gcc` : gcc version 6.3.0 20170516 (Debian 6.3.0-18+deb9u1)
+- `bash` : GNU bash, version 4.4.12(1)-release (x86_64-pc-linux-gnu)
+
+Le projet pourrait ne pas fonctionner avec d'autres versions, en particulier plus anciennes. Par exemple, les développeurs de Ocaml ont tendance à ajouter des fonctions à leurs librairies standards assez régulièrement. Et les différentes versions de `bash` ne sont pas toujours compatibles.
+
+Quant au code C de ce projet, je n'ai aucune idée s'il compile et fonctionne correctement sur une architecture 32 bits (même si j'ai essayé de ne pas faire de suppositions sur la taille des pointeurs et des entiers).
+
+
 ## Organisation de ce fichier
 
 Je n'ai pas présenté pas les choses ici dans un ordre synthétique, mais plutôt dans un ordre didactique, afin de profiter au maximum des liens à faire entre les différentes parties du projet. Dans l'ensemble ce document a donc été écrit pour être lu de haut en bas de manière linéaire.
@@ -24,6 +43,61 @@ Le projet est composé d'un compilateur appelé **comp**, écrit en _OCaml_ à l
 Ce fichier intermédiaire peut alors être à son tour compilé avec `gcc` et les sources _C_ de la **CCAM** pour obtenir un fichier exécutable final, dont l'exécution correspond à l'évaluation du fichier _mini-ML_ d'origine.
 
 Le projet contient aussi un simulateur **simu** écrit en _OCaml_ dont le rôle est de parser, compiler et interpréter un fichier source _mini-ML_, toujours selon le modèle de la CAM.
+
+
+## Entrée en matière
+
+Petit exemple d'utilisation du projet.
+
+```
+[miniml-compiler] $ cat -n demo/map.ml
+     1	let rec map f xs =
+     2	  if is_empty xs
+     3	    then []
+     4	    else f (head xs) :: map f (tail xs) in
+     5	let f x = x + 100 in
+     6	map f [1;2;3;4;5;6;] ;;
+```
+```
+[miniml-compiler] $ cd ocaml/
+[ocaml] $ make
+ocamlc -c miniml.ml
+ocamlyacc -v parser.mly
+ocamlc -c parser.mli
+ocamlc -c parser.ml
+ocamllex lexer.mll
+103 states, 4561 transitions, table size 18862 bytes
+ocamlc -c lexer.ml
+ocamlc -c tools.ml
+ocamlc -c encoder.ml
+ocamlc -c flattener.ml
+ocamlc -c codeGenerator.ml
+ocamlc -c interf.ml
+ocamlc -c comp.ml
+ocamlc -o comp miniml.cmo parser.cmo lexer.cmo tools.cmo encoder.cmo flattener.cmo codeGenerator.cmo interf.cmo comp.cmo
+ocamlc -c simulator.ml
+ocamlc -o simu miniml.cmo parser.cmo lexer.cmo tools.cmo encoder.cmo interf.cmo simulator.cmo
+```
+```
+[ocaml] $ ./simu ../demo/map.ml
+[101; 102; 103; 104; 105; 106]
+```
+```
+[ocaml] $ ./comp ../demo/map.ml ../ccam/map.c
+Finished compiling miniml to C.
+```
+```
+[ocaml] $ cd ../ccam/
+```
+```
+[ccam] $ make build in=map.c out=map.out
+gcc -Wall   \
+ -o map.out map.c runtime.c stack.c machine.c value.c enums.c ccam.h
+```
+```
+[ccam] $ ./map.out
+[101; 102; 103; 104; 105; 106]
+```
 
 
 ## Organisation globale concrète du projet
@@ -49,22 +123,14 @@ Lire **USAGE.txt**. Ce fichier contient toutes les informations d'usage pour :
 - le script **generate-all.sh**
 
 
-## Mini démonstration d'utilisation
-
-Juste pour briser la glace :
-```sh
-$ TODO
-```
-
-
 ## Organisation du dossier **ocaml/**
 
 Ce qui suit n'est qu'une brève description du contenu de chaque fichier dans ce dossier ; de plus amples explications suivent dans le reste de ce document.
 
 - **Makefile** permet de compiler les exécutables **comp** et **simu**.
-- **lexer.mll** et **parser.mly** contiennent le code _Lex_ et _Yacc_ du lexer et du parseur _Mini-ML_, respectivement.
-- **interf.ml** contient la fonction `parse` qui fait office d'interface entre le parser et le reste du code _OCaml_.
-- **miniml.ml** définit le `type mlexp`, dont le but est de représenter l'arbre syntaxique d'un programme _Mini-ML_. Un _pretty-printer_ `pp_prog/pp_exp` est aussi contenu dans ce fichier, mais il n'est plus très utile, c'était un outil de _debugging_ durant les premières tentatives de modification du parser pour visualiser l'arbre syntaxique.
+- **lexer.mll** et **parser.mly** contiennent le code _Lex_ et _Yacc_ du _lexer_ et du _parser_ _Mini-ML_, respectivement.
+- **interf.ml** contient la fonction `parse` qui fait office d'interface entre le _parser_ et le reste du code _OCaml_.
+- **miniml.ml** définit le `type mlexp`, dont le but est de représenter l'arbre syntaxique d'un programme _Mini-ML_. Un _pretty-printer_ `pp_prog/pp_exp` est aussi contenu dans ce fichier, mais il n'est plus très utile, c'était un outil de _debugging_ durant les premières tentatives de modification du _parser_ pour visualiser l'arbre syntaxique.
 - **encoder.ml** contient les fonctions permettant de transformer un arbre syntaxique de `type mlexp` en suite d'instructions de `type instr`, selon le modèle d'instructions de la CAM vu en cours. Note : ce fichier est grosso modo un remplacement du fichier **instrs.ml**, que j'ai supprimé.
 - **simulator.ml** contient la fonction `main` pour l'exécutable **simu**, et le reste du code principal de ce simulateur _OCaml_ d'exécution de la CAM.
 - **flattener.ml** contient les fonctions permettant d'´aplatir´ les instructions généré par **encoder.ml** en un nouveau `type flat_instr`, très proche du modèle de données que j'ai utilisé en _C_ dans la **CCAM**.
@@ -81,7 +147,44 @@ Le langage est similaire à _OCaml_ en syntaxe, mais il n'est pas typé du tout.
 
 ```OCaml
 (* language.ml *)
-TODO: include language.ml here
+let rec constantes = (1, false, [])
+  (* entiers, booléens, liste vide, paires *)
+  (* ici ce "triplet" est parsé en (1, (true, [])) *)
+and listes = (4, 5) :: [2; true;]
+  (* les listes ne sont pas typées *)
+  (* trailing semicolon allowed in [...;...;] syntax *)
+and arith = [3 + 2; 3 - 2; 3 * 2; 3 / 2; 3 mod 2]
+and comparaisons = [3 = 2; 3 <> 2; 3 > 2; 3 >= 2; 3 < 2; 3 <= 2]
+and unaires = let x = (1, 2) in let y = [3; 4] in
+  [fst x; snd x; head y; head (tail y)]
+  (* opérateurs unaires *)
+  (* syntaxe `let x = ... in ...` *)
+and tests = [is_empty [1;2]; is_empty []; is_empty 4]
+  (* is_empty vérifie si son argument est une liste vide *)
+  (* ne provoque pas d'erreurs même si la valeur n'est pas une liste *)
+and cond = if 3 > 4 then 1 / 0 else 42
+  (* évaluation paresseuse des arguments du if *)
+and andOr = is_empty [1] && 3 < 4 || (true || 3 / 0 > 2)
+  (* évaluation paresseuse *)
+  (* (&&) est prioritaire sur (||), ici le résultat est `true` *)
+  (* opérations arithmétiques prioritaires sur les comparaisons,
+  elles-mêmes prioritaires sur les opérations booléennes *)
+and notExp = not true && true || not true
+  (* opérateur booléen `not` *)
+and plus3 = (fun x y -> x + y) 3
+  (* fonctions comme valeurs *) (* currying (application partielle) *)
+  (* syntaxe `fun x y z -> ...` *)
+and deuxPuissanceQuatre = let f x = x * x in f (f 2)
+  (* syntaxe `let f x y z = ... in ...` *)
+and fac n = if n <= 0 then 1 else n * fac (n - 1)
+  (* récursion classique *) (* syntaxe `let rec f x y z = ... in ...` *)
+and even x = x = 0 || odd (x - 1)
+and odd x = x <> 0 && even (x - 1)
+  (* récursion mutuelle *)
+in [
+  constantes; listes; arith; comparaisons; unaires; tests; cond;
+  (andOr, notExp); plus3; deuxPuissanceQuatre; fac 6; (even 42, odd 100);
+] ;;
 ```
 
 Quelques notes :
@@ -89,7 +192,7 @@ Quelques notes :
 - les opérations booléennes `(&&)`, `(||)`, et `not`, sont traduites en branchements conditionnels `if..then..else`
 - _let-rec bindings_ : `let rec ... and ... in ...`
 
-  Pour éviter les bugs causés par la limitation de cette implémentation de la récursivité, j'ai fait en sorte que le parser refuse tout programme contenant un let-rec inclus comme sous-expression d'une autre expression plus grande. Ainsi l'unique manière autorisée d'utiliser un let-rec dans ce langage _mini-ML_ est de le mettre en expression principale, au plus haut de la hiérarchie du programme.
+  Pour éviter les bugs causés par la limitation de cette implémentation de la récursivité, j'ai fait en sorte que le _parser_ refuse tout programme contenant un let-rec inclus comme sous-expression d'une autre expression plus grande. Ainsi l'unique manière autorisée d'utiliser un let-rec dans ce langage _mini-ML_ est de le mettre en expression principale, au plus haut de la hiérarchie du programme.
 
 - valeurs de type `list` : la syntaxe est la même qu'en _OCaml_, c'est-à-dire, `[]`, `2 :: [1]`, `[3;4;]` (trailing semicolon allowed).
 - sucre syntactique :
@@ -301,8 +404,8 @@ Ce dossier contient les sources de mon implémentation de la CAM en C. Fichiers 
 - **Makefile** est le fichier `make` pour la **CCAM** (_c.f._ **USAGE.txt**).
 - **ccam.h** est le fichier d'en-tête principal. Il définit les `struct`, `union` et `enum` utilisés par la **CCAM**, et déclare aussi toutes les fonctions définies dans les fichiers **enums.c**, **value.c**, **stack.c** et **machine.c**.
 - **enums.c** regroupe diverses fonctions utilitaires qui concernent les divers `enum` utilisés dans la **CCAM**.
-- **value.c** contient les fonctions de construction et de pattern-matching pour le type `ValueT`.
-- **stack.c** contient les divers constructeurs et fonctions de pattern-matching pour le type `StackT`.
+- **value.c** contient les fonctions de construction et de _pattern-matching_ pour le type `ValueT`.
+- **stack.c** contient les divers constructeurs et fonctions de _pattern-matching_ pour le type `StackT`.
 - **machine.c** contient les constructeurs pour le type `MachineStateT`, ainsi que toutes les fonctions d'exécution individuelles des diverses instructions : `exec_Apply()`, `exec_Branch()`, etc.
 - **runtime.c** contient la fonction `main()` de la **CCAM**.
 - **unit-tests.c** contient des tests unitaires pour vérifier le comportement de chaque instruction et des divers constructeurs de `ValueT` (_c.f._ **USAGE.txt** pour comment lancer les tests).
@@ -369,7 +472,7 @@ void print_value(ValueT *value) /* value.c */
 
 Fichiers : **ccam.h**
 
-Le modèle de données de la **CCAM** est fortement inspiré du modèle de données d'un langage fonctionnel. On utilise un tag au lieu de constructeurs, et le pattern-matching est fait par des fonctions individuelles comme `match_value_with_pair()` (**value.c**), mais cela mis à part, j'ai essayé de garder le même esprit.
+Le modèle de données de la **CCAM** est fortement inspiré du modèle de données d'un langage fonctionnel. On utilise un tag au lieu de constructeurs, et le _pattern-matching_ est fait par des fonctions individuelles comme `match_value_with_pair()` (**value.c**), mais cela mis à part, j'ai essayé de garder le même esprit.
 
 Puisqu'une valeur (`ValueT`) manipulée par la **CCAM** peut être selon les cas un booléen, un entier, une valeur nulle (`NullV()`), une paire, etc, la solution que j'ai choisie a été de définir `ValueT` comme une structure comprenant trois champ distincts : `copy_count` pour gérer la mémoire, `tag` pour identifier le type de valeur en question (fait office de constructeur, au sens qu'il permet de faire un _pattern-match_ sur une valeur), et `as` (comme le mot anglais qui signifie ici "considéré en tant que") pour contenir le vrai contenu de la valeur :
 
@@ -467,12 +570,12 @@ StackT *u = CodeOnStack(foo, ValueOnStack(IntValue(3), EmptyStack()));
 
 ## Pattern-matching
 
-Une fois que l'on a instancié une `ValueT` ou une `StackT`, on veut pouvoir effectuer un pattern-matching, pour :
+Une fois que l'on a instancié une `ValueT` ou une `StackT`, on veut pouvoir effectuer un _pattern-matching_, pour :
 - vérifier que le type d'objet correspond bien à ce que l'on veut. Par exemple, un entier, une liste non vide, une valeur nulle, une pile avec du code (pointeur vers `CodeT`) comme élément de tête, une pile avec une `ValueT` comme élément de tête, etc.
 - si c'est bien le cas, récupérer le contenu de la valeur. Par exemple :
   - si c'est une paire, récupérer les deux champs `first` et `second` de la structure `PairT` contenue dans le champ `as` de la valeur en question
   - si c'est une pile avec une `ValueT` au-dessus, récupérer les champs `top` (`ValueT *`) et `bottom` (`StackT *`) de la structure `ValueOnStackT`, correspondant respectivement à la `ValueT` qui constitue le dessus de pile, et au reste de la pile
-- une fois cela fait, pour éviter les fuites de mémoire, on doit alors libérer la mémoire (si nécessaire) de l'objet que l'on vient de déconstruit par pattern-matching.
+- une fois cela fait, pour éviter les fuites de mémoire, on doit alors libérer la mémoire (si nécessaire) de l'objet que l'on vient de déconstruit par _pattern-matching_.
 
 C'est le travail qu'effectuent les fonctions suivantes :
 ```C
@@ -508,12 +611,12 @@ else {
   // en particulier n'est toujours pas initialisé
 }
 ```
-Toutes les fonctions de pattern-matching fonctionnent selon ce modèle.
+Toutes les fonctions de _pattern-matching_ fonctionnent selon ce modèle.
 
 
 ## Gestion de la mémoire
 
-Les objets de type `StackT` sont libérés au fur et à mesure par pattern-matching. Ils n'ont jamais besoin d'être copiés, donc on n'a pas besoin de les gérer par _reference counting_.
+Les objets de type `StackT` sont libérés au fur et à mesure par _pattern-matching_. Ils n'ont jamais besoin d'être copiés, donc on n'a pas besoin de les gérer par _reference counting_.
 
 À l'inverse, les objets de type `ValueT` sont susceptibles d'être copiés fréquemment, du fait de l'existence de l'instruction `Push`, qui place une copie du **terme** principal sur la **pile**.
 
