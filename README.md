@@ -1,7 +1,5 @@
 # Projet : Compilation d'un langage fonctionnel vers C
 
-/!\ This file is a work in progress right now. But soon it'll be done.
-
 ## Ingrédients de base
 
 Projet testé et développé sous Linux (x86_64, _i.e._ architecture 64 bits) avec les outils suivants :

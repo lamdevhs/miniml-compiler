@@ -31,20 +31,23 @@ lexer.cmo: lexer.ml parser.cmo
 parser.cmo: parser.ml parser.cmi miniml.cmo
 	ocamlc -c $<
 
-##~~~~ >>> Added to the original Makefile:
 simu: miniml.cmo parser.cmo lexer.cmo tools.cmo encoder.cmo interf.cmo simulator.cmo
 	ocamlc -o simu $^
+
 simulator.cmo: simulator.ml miniml.cmo encoder.cmo
 	ocamlc -c $<
+
 tools.cmo:  tools.ml
-		ocamlc -c $<
+	ocamlc -c $<
+
 encoder.cmo:  encoder.ml miniml.cmo tools.cmo
 	ocamlc -c $<
+
 flattener.cmo:  flattener.ml encoder.cmo
 	ocamlc -c $<
+
 codeGenerator.cmo:  codeGenerator.ml flattener.cmo
 	ocamlc -c $<
-##~~~~ <<< end
 
 #### Generic rules
 

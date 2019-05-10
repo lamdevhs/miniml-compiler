@@ -1,27 +1,17 @@
 # TODO
 
 ccam:
-- use enum boole anywhere it makes sense
 
 caml compiler:
 
 parser:
-  optional stuff:
-  - prevent restricted tokens to be used for variables (e.g. head, let, etc)
-  - add null value to parser
-  - recognize negative numbers (no real need we can always write (0-42))
-  - allow underscores and dashes and maybe
-    even dots in variable names
-  - fix the built_in_test error: "(fst, snd);;"
 
 global:
 
 READMEs:
 
 final tasks:
-- clean up the demo/ folder
-- read the makefiles to make sure there aren't any mistakes
-- delete dev.c, ideas.txt, cours.pdf
+
 
 # PITFALLS
 - warning: we must forbid | (x,x) -> patterns.
@@ -32,6 +22,18 @@ final tasks:
   then it could be "manually" done by user e.g.:
   match x with (0, val) -> ... | (1, val) -> ...
 - we'd still need "is_pair", "is_empty", "is_bool", "is_int", "is_null"...
+
+ccam:
+- use enum boole anywhere it makes sense
+
+parser:
+  optional stuff:
+  - prevent restricted tokens to be used for variables (e.g. head, let, etc)
+  - add null value to parser
+  - recognize negative numbers (no real need we can always write (0-42))
+  - allow underscores and dashes and maybe
+    even dots in variable names
+  - fix the built_in_test error: "(fst, snd);;"
 
 # BAD IDEAS
 - fuse Return and Halt, so that Return stops the vm if the stack is empty? or at least if
@@ -107,3 +109,6 @@ anymore
 - rename folder into demo/
 - delete use.ml
 - mention versions in README
+- delete dev.c, ideas.txt, cours.pdf
+- clean up the demo/ folder
+- read the makefiles to make sure there aren't any mistakes
