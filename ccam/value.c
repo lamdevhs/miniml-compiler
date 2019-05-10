@@ -142,7 +142,7 @@ enum result match_value_with_integer(ValueT *value, long *output)
   return Success;
 }
 
-enum result match_value_with_listcons(ValueT *value, ListConsT *output)
+enum result match_value_with_list_cons(ValueT *value, ListConsT *output)
 {
   if (value == NULL || value->tag != ValueIsListCons) return Failure;
 

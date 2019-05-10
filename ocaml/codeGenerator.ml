@@ -70,25 +70,22 @@ let c_declaration_of_fragment (name, _) = "CodeT " ^ name ^ "[];" ;;
 let c_definition_of_fragment (name, instrs) =
   let first_line = "CodeT " ^ name ^ "[] =" in
   let frag_content = Tools.with_indent 4 (List.map c_of_flat_instr instrs) in
-  first_line :: ["{"] @ frag_content @ ["};"]
+  [first_line]
+  @ ["{"]
+  @ frag_content
+  @ ["};"]
 ;;
 
 let c_of_flat_program : fragment list -> string = fun fragments ->
-let include_ccam = "#include \"ccam.h\"" in
+let include_ccam_h = "#include \"ccam.h\"" in
   let declarations = List.map c_declaration_of_fragment fragments in
   let definitions = List.map c_definition_of_fragment fragments in
-  let code_accessor =
-    "CodeT *get_main_code()"
-    :: "{"
-    :: "    return main_code;"
-    :: ["}"] in
   let c_lines
-    = [include_ccam]
+    = [include_ccam_h]
     @ [""]
     @ declarations
     @ [""]
     @ List.concat definitions
-    @ [""]
-    @ code_accessor in
+    @ [""] in
   Tools.lines_to_string c_lines ^ "\n"
 ;;

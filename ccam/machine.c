@@ -91,7 +91,7 @@ enum Status exec_Unary(MachineStateT *ms)
       ValueT *term = ms->term;
 
       ListConsT pattern;
-      if (match_value_with_listcons(term, &pattern) == Failure) {
+      if (match_value_with_list_cons(term, &pattern) == Failure) {
         return Crashed_Unary_Headless;
       }
       ValueT *h = pattern.head;
